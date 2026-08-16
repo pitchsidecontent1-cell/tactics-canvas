@@ -1,0 +1,56 @@
+Here are four changes to the existing formation builder. Read the current
+code first and make these changes additively — don't restructure files or
+rewrite components that already work.
+
+1. SHIRT NUMBERS INSTEAD OF POSITION LABELS
+Replace the position abbreviation shown on each player circle with a number,
+using this mapping:
+GK=1, RB=2, LB=3, LCB=4, RCB=5, DM=6, RW=7, CM=8, ST/CF=9, AM=10, LW=11
+Fallbacks: RM=7, LM=11, any second CM in a formation also shows 8, any
+second striker also shows 9. Duplicate numbers within one formation are
+allowed and expected — do not auto-increment to avoid them.
+Keep the underlying position code in the data model; the number is display
+only, so hovering a circle should still show the position name in a tooltip.
+Define the mapping in one exported constant so it's easy to edit later.
+
+2. "CORE IDEAS" PANEL
+In the sidebar, directly beneath the existing box, add a second box titled
+"Core Ideas". It updates whenever the selected formation changes and shows:
+  - Shape in possession vs out of possession
+  - 3–5 key principles (e.g. how width is created, who screens the back line)
+  - The 2 most important roles in this system and what they're asked to do
+  - Main strength and main vulnerability
+Match the existing box's styling exactly — same border, padding, font sizes,
+spacing. It should read as a sibling of the box above it, not a new design.
+
+3. ARROWS ON THE PITCH
+Add an arrow-drawing mode toggled by a button above the pitch.
+  - When active, click-and-drag from a player circle to anywhere on the pitch
+    to draw an arrow with a filled arrowhead at the release point.
+  - Support three arrow styles selectable before drawing: solid (run with the
+    ball), dashed (pass), curved (off-ball movement). Curved arrows bow toward
+    the drag direction.
+  - Arrows are selectable: clicking one highlights it, Delete/Backspace removes
+    it. Include a "Clear all arrows" button.
+  - Arrows anchor to the player, so if a circle is dragged to a new position
+    the arrow's start point follows it.
+  - Render arrows as SVG in a layer above the pitch but below the player
+    circles, so circles stay clickable.
+  - Arrows persist while the formation is unchanged and clear when a different
+    formation is selected.
+
+4. FUN FACTS
+Add a "Did You Know" section below the Core Ideas box with 3–5 facts for the
+selected formation, cycling on a click or a small next/prev control. Facts
+should cover: where and when the formation emerged, a manager strongly
+associated with it, and how that manager's specific version differed from the
+textbook one. Keep each fact to 1–2 sentences and factually accurate — no
+invented quotes or stats.
+
+DATA
+Put the core ideas and the fun facts for every formation in a single data file
+keyed by formation ID, separate from the components, so content can be edited
+without touching the UI code.
+
+After implementing, tell me which files you changed and anything you had to
+guess about.

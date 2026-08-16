@@ -1,0 +1,42 @@
+Three changes to the existing app. Read the current code first and modify
+what's there — don't rebuild working features.
+
+1. CURVED ARROWS BEND BOTH WAYS
+Right now the curved "move" arrow only bows in one direction. Make the curve
+direction follow the user's drag: track the cursor's path during the drag,
+and bow the arrow toward the side the cursor deviates to relative to the
+straight line between start and end points. If the user drags in a nearly
+straight line, default to a gentle curve (keep the current default direction).
+Practically: sample the drag path, take the point of maximum perpendicular
+distance from the start-end line, and use its side and distance to set the
+control point of the curve. The curve should feel live — it updates while
+dragging, not just on release. Don't change how solid or dashed arrows work.
+
+2. PLAYER FUN FACTS (replaces "how this team played" in the managers section)
+In the managers section, remove the "how this team played" block. Fold that
+tactical information into the Core Ideas box for that manager's formation
+instead — merge it in naturally, don't just paste it at the bottom.
+In its place, add a player fun-facts panel:
+  - Clicking any player circle on the pitch selects that player and shows
+    2–4 short fun facts about the real player who held that role in this
+    manager's team (e.g. selecting the number 9 in a Ferguson 4-4-2 shows
+    facts about the actual striker from that side).
+  - When the user switches to a new formation/manager, selection resets to
+    the goalkeeper by default, so the panel is never empty.
+  - Visually indicate the selected player (ring or glow on the circle).
+  - Facts must be about real, verifiable players and careers — no invented
+    stats, transfers, or quotes. Keep each fact to 1–2 sentences.
+
+3. TEAM FACTS IN THE MANAGERS SECTION
+In the managers section, the "Did You Know" facts should be about that
+manager's specific TEAM — the era, the squad, famous matches, what that
+side achieved — not about the formation in the abstract.
+Formation-level facts stay ONLY in the basic formations tab, unchanged.
+
+DATA
+Extend the existing content data file: add per-player facts and team facts
+keyed by manager/team ID, keeping formation facts keyed by formation ID as
+they are now. All content stays out of the component code.
+
+After implementing, list the files you changed and flag anything you had to
+guess about.

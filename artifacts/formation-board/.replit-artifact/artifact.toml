@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Formation Board"
+description = "A playful football tactics board for exploring a wide library of formations and positioning draggable player markers on a full-pitch canvas."
+version = "1.0.0"
+id = "artifacts/formation-board"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20677
+
+[services.development]
+run = "pnpm --filter @workspace/formation-board run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/formation-board", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/formation-board/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20677"
+BASE_PATH = "/"

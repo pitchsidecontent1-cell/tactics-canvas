@@ -83,6 +83,10 @@ type Era = {
 
 type Manager = {
   name: string;
+  /** The name the dugout list sorts under. Stored rather than derived from
+   *  `name`, because taking the last word gets 'ten Hag' and 'van Gaal'
+   *  wrong, and Luis Enrique has no surname in the usual sense. */
+  sortName: string;
   /** Whether they are still coaching a team. Anyone out of the dugout is
    *  listed as retired, including those now in a front-office role. */
   status: 'current' | 'retired';
@@ -310,6 +314,7 @@ function lineLabel(row: number, totalRows: number): string {
 const MANAGERS: Manager[] = [
   {
     name: 'Alex Ferguson',
+    sortName: 'Ferguson',
     status: 'retired',
     eras: [
       {
@@ -400,6 +405,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Pep Guardiola',
+    sortName: 'Guardiola',
     status: 'current',
     eras: [
       {
@@ -490,6 +496,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'José Mourinho',
+    sortName: 'Mourinho',
     status: 'current',
     eras: [
       {
@@ -580,6 +587,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Carlo Ancelotti',
+    sortName: 'Ancelotti',
     status: 'current',
     eras: [
       {
@@ -670,6 +678,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Johan Cruyff',
+    sortName: 'Cruyff',
     status: 'retired',
     eras: [
       {
@@ -704,6 +713,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Arsène Wenger',
+    sortName: 'Wenger',
     status: 'retired',
     eras: [
       {
@@ -738,6 +748,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Luis Enrique',
+    sortName: 'Enrique',
     status: 'current',
     eras: [
       {
@@ -800,6 +811,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Jürgen Klopp',
+    sortName: 'Klopp',
     status: 'current',
     eras: [
       {
@@ -834,6 +846,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Zinédine Zidane',
+    sortName: 'Zidane',
     status: 'current',
     eras: [
       {
@@ -903,10 +916,10 @@ const MANAGER_SECTIONS = [
   { status: 'retired' as const, title: 'Retired managers' },
 ].map((section) => ({
   ...section,
-  // Alphabetical by the name as shown. localeCompare rather than a plain
-  // sort so the accents in José, Jürgen and Zinédine order correctly.
+  // Alphabetical by surname. localeCompare rather than a plain sort so
+  // accented names file where a reader expects instead of after Z.
   managers: MANAGERS.filter((manager) => manager.status === section.status).sort((a, b) =>
-    a.name.localeCompare(b.name),
+    a.sortName.localeCompare(b.sortName),
   ),
 }));
 

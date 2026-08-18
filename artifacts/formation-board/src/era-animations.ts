@@ -886,4 +886,513 @@ export const ERA_ANIMATIONS: Record<string, EraAnimations> = {
       },
     ],
   },
+  'arteta-arsenal-24': {
+    attack: [
+      {
+        intro: 'Build with a back three, then attack the space the winger has held open.',
+        opponents: [{ x: 34, y: 22 }, { x: 50, y: 20 }, { x: 66, y: 22 }, { x: 42, y: 40 }, { x: 58, y: 40 }],
+        steps: [
+          { duration: 1, note: 'The left-back steps inside into midfield, making a back three', players: { p2: { x: 38, y: 62 } }, ball: { x: 50, y: 74 } },
+          { duration: 1.1, note: 'That extra body in the centre drags an opponent out of position', ball: { x: 38, y: 60 }, opponents: [{ x: 34, y: 22 }, { x: 50, y: 20 }, { x: 66, y: 22 }, { x: 40, y: 48 }, { x: 58, y: 40 }] },
+          { duration: 1.1, note: 'The switch goes to the winger, who has not moved off the touchline', players: { p11: { x: 92, y: 42 } }, ball: { x: 90, y: 44 } },
+          { duration: 1.2, note: 'One-against-one, and he attacks the space inside the full-back', players: { p11: { x: 78, y: 24 } }, ball: { x: 79, y: 25 } },
+          { duration: 1, note: 'The striker attacks the near post, the far winger the back post', players: { p10: { x: 46, y: 12 }, p9: { x: 30, y: 16 } } },
+          { duration: 0.9, note: 'Cut back to the edge of the box instead of a hopeful cross', players: { p8: { x: 52, y: 22 } }, ball: { x: 50, y: 18 } },
+        ],
+      },
+      {
+        intro: 'The other route: a rehearsed corner, treated as a chance in itself.',
+        opponents: [{ x: 40, y: 12 }, { x: 50, y: 10 }, { x: 60, y: 12 }, { x: 44, y: 18 }, { x: 56, y: 18 }],
+        steps: [
+          { duration: 1, note: 'Everyone gathers on the edge of the six-yard box', players: { p3: { x: 46, y: 20 }, p4: { x: 54, y: 20 }, p10: { x: 50, y: 16 } }, ball: { x: 98, y: 4 } },
+          { duration: 1.1, note: 'A blocker holds off the marker so a runner can come free', players: { p8: { x: 42, y: 16 } } },
+          { duration: 1.1, note: 'The delivery is flat and fast towards the near post', ball: { x: 58, y: 8 } },
+          { duration: 1, note: 'The centre-back attacks it at full speed', players: { p4: { x: 57, y: 9 } } },
+          { duration: 0.9, note: 'Flicked on across the face of goal', players: { p3: { x: 46, y: 8 } }, ball: { x: 48, y: 5 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: press the pass back and win the ball high.',
+        opponents: [{ x: 50, y: 78 }, { x: 36, y: 66 }, { x: 64, y: 66 }, { x: 50, y: 56 }, { x: 50, y: 40 }],
+        steps: [
+          { duration: 1, note: 'The pass goes backwards — that is the trigger', ball: { x: 50, y: 74 } },
+          { duration: 1, note: 'The striker presses the ball and blocks the pass back inside', players: { p10: { x: 50, y: 62 } } },
+          { duration: 1.1, note: 'The wingers close the outside so the only ball is down the line', players: { p9: { x: 30, y: 58 }, p11: { x: 70, y: 58 } } },
+          { duration: 1.1, note: 'The midfield steps up together and the defence follows', players: { p6: { x: 40, y: 50 }, p7: { x: 50, y: 48 }, p8: { x: 60, y: 50 }, p3: { x: 44, y: 44 }, p4: { x: 56, y: 44 } } },
+          { duration: 0.9, note: 'The pass is forced, intercepted, and the attack starts high', ball: { x: 56, y: 50 } },
+        ],
+      },
+      {
+        intro: 'If it does not: they play through the press and the defence has to cover.',
+        opponents: [{ x: 50, y: 70 }, { x: 36, y: 60 }, { x: 64, y: 60 }, { x: 50, y: 50 }, { x: 50, y: 34 }],
+        steps: [
+          { duration: 1, note: 'The press is beaten with one pass through the middle', ball: { x: 50, y: 52 } },
+          { duration: 1.1, note: 'A runner goes beyond the last line', opponents: [{ x: 50, y: 62 }, { x: 36, y: 56 }, { x: 64, y: 56 }, { x: 50, y: 40 }, { x: 48, y: 22 }] },
+          { duration: 1.1, note: 'The centre-backs turn and race back rather than reaching in', players: { p3: { x: 46, y: 30 }, p4: { x: 54, y: 28 } } },
+          { duration: 1.1, note: 'One shepherds him wide, away from the middle', players: { p4: { x: 58, y: 22 } }, ball: { x: 52, y: 24 } },
+          { duration: 0.9, note: 'The angle is closed and the shot is blocked behind', players: { p3: { x: 55, y: 16 } }, ball: { x: 60, y: 14 } },
+        ],
+      },
+    ],
+  },
+  'emery-sevilla-16': {
+    attack: [
+      {
+        intro: 'The double pivot holds so everyone in front can go.',
+        opponents: [{ x: 36, y: 24 }, { x: 50, y: 22 }, { x: 64, y: 24 }, { x: 42, y: 42 }, { x: 58, y: 42 }],
+        steps: [
+          { duration: 1, note: 'One of the two holders drops in to collect from the defence', players: { p6: { x: 44, y: 64 } }, ball: { x: 44, y: 62 } },
+          { duration: 1.1, note: 'The full-backs push high, knowing two players are covering behind', players: { p2: { x: 12, y: 44 }, p5: { x: 88, y: 44 } } },
+          { duration: 1.1, note: 'The ball goes wide early to isolate the winger', players: { p10: { x: 84, y: 34 } }, ball: { x: 88, y: 42 } },
+          { duration: 1.2, note: 'Two players attack the same flank to make it two against one', players: { p5: { x: 92, y: 28 } }, ball: { x: 90, y: 30 } },
+          { duration: 1, note: 'The ten arrives late at the top of the box', players: { p9: { x: 52, y: 22 } } },
+          { duration: 0.9, note: 'Pulled back for the runner rather than crossed to the striker', ball: { x: 54, y: 20 } },
+        ],
+      },
+      {
+        intro: 'The other route: win it back high and go straight for goal.',
+        opponents: [{ x: 44, y: 46 }, { x: 56, y: 46 }, { x: 50, y: 60 }, { x: 36, y: 34 }, { x: 64, y: 34 }],
+        steps: [
+          { duration: 0.9, note: 'The press traps them near their own box', players: { p11: { x: 50, y: 52 } }, ball: { x: 50, y: 58 } },
+          { duration: 1, note: 'The ball is won by the nearest holder', players: { p7: { x: 52, y: 48 } }, ball: { x: 52, y: 50 } },
+          { duration: 1.1, note: 'First pass forward, no square balls', players: { p9: { x: 56, y: 28 } }, ball: { x: 56, y: 30 } },
+          { duration: 1.1, note: 'The striker peels off the last defender', players: { p11: { x: 44, y: 16 } }, opponents: [{ x: 44, y: 24 }, { x: 56, y: 24 }, { x: 50, y: 40 }, { x: 36, y: 30 }, { x: 64, y: 30 }] },
+          { duration: 0.9, note: 'Slid through the gap between the centre-backs', ball: { x: 46, y: 12 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: press in a burst and force the mistake.',
+        opponents: [{ x: 50, y: 76 }, { x: 34, y: 64 }, { x: 66, y: 64 }, { x: 50, y: 54 }, { x: 50, y: 38 }],
+        steps: [
+          { duration: 1, note: 'The team waits, compact, rather than pressing constantly', players: { p8: { x: 34, y: 52 }, p10: { x: 66, y: 52 } } },
+          { duration: 1, note: 'A heavy touch is the signal to go', ball: { x: 48, y: 70 } },
+          { duration: 1.1, note: 'Three players close the ball at once', players: { p11: { x: 48, y: 64 }, p9: { x: 44, y: 58 }, p7: { x: 54, y: 56 } } },
+          { duration: 1.1, note: 'The two holders cut every inside pass', players: { p6: { x: 42, y: 52 } } },
+          { duration: 0.9, note: 'The clearance is hurried and headed back into their half', ball: { x: 50, y: 44 } },
+        ],
+      },
+      {
+        intro: 'If it does not: the burst is beaten and the block has to re-form.',
+        opponents: [{ x: 50, y: 68 }, { x: 34, y: 58 }, { x: 66, y: 58 }, { x: 50, y: 46 }, { x: 50, y: 30 }],
+        steps: [
+          { duration: 1, note: 'One pass takes three players out of the game', ball: { x: 54, y: 46 } },
+          { duration: 1.1, note: 'Everyone sprints back to get behind the ball', players: { p11: { x: 50, y: 44 }, p9: { x: 50, y: 40 }, p8: { x: 34, y: 40 }, p10: { x: 66, y: 40 } } },
+          { duration: 1.1, note: 'The back four drops as one and stays narrow', players: { p2: { x: 30, y: 30 }, p3: { x: 43, y: 28 }, p4: { x: 57, y: 28 }, p5: { x: 70, y: 30 } } },
+          { duration: 1.1, note: 'The cross comes in with nobody free in the middle', ball: { x: 74, y: 18 } },
+          { duration: 0.9, note: 'Headed clear by the near centre-back', players: { p4: { x: 54, y: 20 } }, ball: { x: 46, y: 34 } },
+        ],
+      },
+    ],
+  },
+  'emery-villa-24': {
+    attack: [
+      {
+        intro: 'Win it high with the trap, then go straight at them.',
+        opponents: [{ x: 40, y: 52 }, { x: 60, y: 52 }, { x: 50, y: 62 }, { x: 34, y: 40 }, { x: 66, y: 40 }],
+        steps: [
+          { duration: 1, note: 'The line is pushed up near halfway, squeezing the pitch', players: { p2: { x: 20, y: 46 }, p3: { x: 42, y: 44 }, p4: { x: 58, y: 44 }, p5: { x: 80, y: 46 } } },
+          { duration: 1, note: 'They step out together and the runner is caught offside', ball: { x: 50, y: 50 }, opponents: [{ x: 40, y: 40 }, { x: 60, y: 40 }, { x: 50, y: 58 }, { x: 34, y: 36 }, { x: 66, y: 36 }] },
+          { duration: 1.1, note: 'From the free kick the ball goes forward immediately', players: { p8: { x: 54, y: 34 } }, ball: { x: 54, y: 32 } },
+          { duration: 1.1, note: 'The striker holds it up while the second one runs beyond', players: { p10: { x: 48, y: 24 }, p11: { x: 62, y: 16 } } },
+          { duration: 0.9, note: 'Released in behind before the defence can reset', ball: { x: 62, y: 14 } },
+        ],
+      },
+      {
+        intro: 'The other route: the winger goes outside and crosses early.',
+        opponents: [{ x: 36, y: 20 }, { x: 50, y: 18 }, { x: 64, y: 20 }, { x: 44, y: 38 }, { x: 58, y: 38 }],
+        steps: [
+          { duration: 1, note: 'The ball is worked wide to the right midfielder', players: { p9: { x: 84, y: 38 } }, ball: { x: 84, y: 40 } },
+          { duration: 1.1, note: 'The full-back overlaps outside him', players: { p5: { x: 92, y: 30 } }, ball: { x: 90, y: 32 } },
+          { duration: 1.1, note: 'Both strikers attack the box, near post and far', players: { p10: { x: 44, y: 12 }, p11: { x: 58, y: 12 } } },
+          { duration: 1, note: 'The cross is early and behind the defence', ball: { x: 52, y: 8 } },
+          { duration: 0.9, note: 'Met first at the near post', players: { p10: { x: 45, y: 8 } }, ball: { x: 46, y: 5 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: the trap springs and the run is cut off.',
+        opponents: [{ x: 50, y: 70 }, { x: 34, y: 60 }, { x: 66, y: 60 }, { x: 50, y: 50 }, { x: 50, y: 34 }],
+        steps: [
+          { duration: 1, note: 'The back four holds a line far higher than usual', players: { p2: { x: 22, y: 44 }, p3: { x: 42, y: 42 }, p4: { x: 58, y: 42 }, p5: { x: 78, y: 44 } } },
+          { duration: 1, note: 'Their forward drops off, looking for the pass in behind', opponents: [{ x: 50, y: 64 }, { x: 34, y: 56 }, { x: 66, y: 56 }, { x: 50, y: 46 }, { x: 50, y: 38 }] },
+          { duration: 1.1, note: 'As the pass is struck, the whole line steps forward together', players: { p2: { x: 22, y: 40 }, p3: { x: 42, y: 38 }, p4: { x: 58, y: 38 }, p5: { x: 78, y: 40 } }, ball: { x: 50, y: 40 } },
+          { duration: 1, note: 'The runner is left the wrong side of the line', opponents: [{ x: 50, y: 64 }, { x: 34, y: 56 }, { x: 66, y: 56 }, { x: 50, y: 46 }, { x: 50, y: 30 }] },
+          { duration: 0.9, note: 'Offside, and the whole team moves up again', ball: { x: 50, y: 44 } },
+        ],
+      },
+      {
+        intro: 'If it does not: one runner times it right and the space is enormous.',
+        opponents: [{ x: 50, y: 62 }, { x: 34, y: 54 }, { x: 66, y: 54 }, { x: 50, y: 44 }, { x: 50, y: 34 }],
+        steps: [
+          { duration: 1, note: 'This time the run is timed off the last shoulder', ball: { x: 50, y: 42 }, opponents: [{ x: 50, y: 62 }, { x: 34, y: 54 }, { x: 66, y: 54 }, { x: 50, y: 44 }, { x: 52, y: 30 }] },
+          { duration: 1.1, note: 'The pass goes through and the line is beaten', ball: { x: 54, y: 24 } },
+          { duration: 1.1, note: 'The centre-backs turn and chase with the whole pitch behind them', players: { p3: { x: 46, y: 26 }, p4: { x: 56, y: 22 } } },
+          { duration: 1.1, note: 'The keeper comes a long way out to shorten the angle', players: { p1: { x: 52, y: 18 } } },
+          { duration: 0.9, note: 'Smothered outside the box before the shot', ball: { x: 53, y: 17 }, opponents: [{ x: 50, y: 62 }, { x: 34, y: 54 }, { x: 66, y: 54 }, { x: 50, y: 44 }, { x: 54, y: 20 }] },
+        ],
+      },
+    ],
+  },
+  'xabi-leverkusen-24': {
+    attack: [
+      {
+        intro: 'Circulate patiently until someone steps out of shape.',
+        opponents: [{ x: 38, y: 26 }, { x: 50, y: 24 }, { x: 62, y: 26 }, { x: 44, y: 44 }, { x: 56, y: 44 }],
+        steps: [
+          { duration: 1.1, note: 'The three at the back pass across, in no hurry at all', players: { p2: { x: 32, y: 66 } }, ball: { x: 34, y: 66 } },
+          { duration: 1.1, note: 'A centre-back carries the ball forward himself', players: { p2: { x: 34, y: 52 } }, ball: { x: 34, y: 50 }, opponents: [{ x: 38, y: 26 }, { x: 50, y: 24 }, { x: 62, y: 26 }, { x: 40, y: 40 }, { x: 56, y: 44 }] },
+          { duration: 1.1, note: 'That drags a marker out and opens the pocket inside', players: { p9: { x: 44, y: 34 } }, ball: { x: 44, y: 32 } },
+          { duration: 1.1, note: 'The wing-backs are already high on both touchlines', players: { p5: { x: 8, y: 30 }, p8: { x: 92, y: 30 } } },
+          { duration: 1, note: 'Released down the left, where the wing-back is alone', ball: { x: 10, y: 26 } },
+          { duration: 0.9, note: 'Cut back to the ten arriving at the penalty spot', players: { p10: { x: 50, y: 18 } }, ball: { x: 48, y: 16 } },
+        ],
+      },
+      {
+        intro: 'The other route: the late goal that decided so many matches.',
+        opponents: [{ x: 40, y: 14 }, { x: 50, y: 12 }, { x: 60, y: 14 }, { x: 44, y: 24 }, { x: 56, y: 24 }],
+        steps: [
+          { duration: 1, note: 'Deep into stoppage time, the centre-backs join the attack', players: { p3: { x: 50, y: 30 }, p4: { x: 62, y: 32 } } },
+          { duration: 1.1, note: 'The ball is worked wide with everyone in the box', players: { p8: { x: 92, y: 24 } }, ball: { x: 90, y: 24 } },
+          { duration: 1.1, note: 'The cross is hung up towards the far post', ball: { x: 40, y: 10 } },
+          { duration: 1, note: 'It is nodded back across rather than at goal', players: { p3: { x: 48, y: 14 } }, ball: { x: 52, y: 12 } },
+          { duration: 0.9, note: 'Bundled in from close range', players: { p11: { x: 50, y: 8 } }, ball: { x: 50, y: 4 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: the back three squeezes and the ball is turned over.',
+        opponents: [{ x: 50, y: 74 }, { x: 36, y: 62 }, { x: 64, y: 62 }, { x: 50, y: 52 }, { x: 50, y: 36 }],
+        steps: [
+          { duration: 1, note: 'The midfield four sits flat and narrow', players: { p6: { x: 44, y: 50 }, p7: { x: 56, y: 50 } } },
+          { duration: 1.1, note: 'The two tens block the passes into midfield', players: { p9: { x: 44, y: 58 }, p10: { x: 56, y: 58 } } },
+          { duration: 1.1, note: 'Play is forced wide, which is where they want it', ball: { x: 78, y: 58 }, opponents: [{ x: 50, y: 74 }, { x: 36, y: 62 }, { x: 78, y: 56 }, { x: 50, y: 52 }, { x: 50, y: 36 }] },
+          { duration: 1.1, note: 'The wing-back and the outside centre-back trap him on the line', players: { p8: { x: 82, y: 52 }, p4: { x: 70, y: 44 } } },
+          { duration: 0.9, note: 'The ball is won and played straight inside', ball: { x: 62, y: 46 } },
+        ],
+      },
+      {
+        intro: 'If it does not: the switch beats the shift and the far side is open.',
+        opponents: [{ x: 50, y: 66 }, { x: 36, y: 56 }, { x: 72, y: 52 }, { x: 50, y: 46 }, { x: 50, y: 32 }],
+        steps: [
+          { duration: 1, note: 'The whole shape has shifted to one side of the pitch', players: { p5: { x: 40, y: 46 }, p6: { x: 52, y: 46 }, p7: { x: 64, y: 46 }, p8: { x: 76, y: 46 } } },
+          { duration: 1.1, note: 'A long diagonal finds the free man on the other flank', ball: { x: 14, y: 40 }, opponents: [{ x: 50, y: 66 }, { x: 14, y: 38 }, { x: 72, y: 52 }, { x: 50, y: 46 }, { x: 50, y: 32 }] },
+          { duration: 1.1, note: 'The wing-back cannot get back in time', players: { p5: { x: 30, y: 40 } } },
+          { duration: 1.1, note: 'The back three slides across and the middle one covers', players: { p2: { x: 30, y: 24 }, p3: { x: 44, y: 22 }, p4: { x: 58, y: 24 } }, ball: { x: 22, y: 24 } },
+          { duration: 0.9, note: 'The cross is cut out at the near post', players: { p2: { x: 36, y: 16 } }, ball: { x: 40, y: 16 } },
+        ],
+      },
+    ],
+  },
+  'amorim-sporting-24': {
+    attack: [
+      {
+        intro: 'The same movements every week, run without thinking.',
+        opponents: [{ x: 38, y: 24 }, { x: 50, y: 22 }, { x: 62, y: 24 }, { x: 44, y: 42 }, { x: 56, y: 42 }],
+        steps: [
+          { duration: 1, note: 'The back three splits wide and the keeper joins the build-up', players: { p2: { x: 24, y: 68 }, p4: { x: 76, y: 68 } }, ball: { x: 50, y: 78 } },
+          { duration: 1.1, note: 'Both wing-backs are already at the halfway line', players: { p5: { x: 8, y: 46 }, p8: { x: 92, y: 46 } } },
+          { duration: 1.1, note: 'The inside forwards tuck in narrow, leaving the flanks clear', players: { p9: { x: 38, y: 26 }, p11: { x: 62, y: 26 } } },
+          { duration: 1.1, note: 'The pass goes into the striker with his back to goal', players: { p10: { x: 50, y: 28 } }, ball: { x: 50, y: 30 } },
+          { duration: 1, note: 'He lays it off and spins in behind immediately', players: { p10: { x: 54, y: 14 } }, ball: { x: 40, y: 30 } },
+          { duration: 0.9, note: 'Threaded through for the run', ball: { x: 55, y: 12 } },
+        ],
+      },
+      {
+        intro: 'The other route: win it and go direct to the striker.',
+        opponents: [{ x: 44, y: 44 }, { x: 56, y: 44 }, { x: 50, y: 56 }, { x: 36, y: 32 }, { x: 64, y: 32 }],
+        steps: [
+          { duration: 1, note: 'The ball is won in midfield by the holder', players: { p6: { x: 50, y: 46 } }, ball: { x: 50, y: 48 } },
+          { duration: 1.1, note: 'The striker is already running before the pass is played', players: { p10: { x: 52, y: 26 } } },
+          { duration: 1.1, note: 'One pass over the top rather than a build-up', ball: { x: 54, y: 24 } },
+          { duration: 1.1, note: 'He drives at the last defender with support arriving wide', players: { p10: { x: 52, y: 14 }, p11: { x: 72, y: 16 } }, ball: { x: 53, y: 15 } },
+          { duration: 0.9, note: 'Finished across the keeper', ball: { x: 48, y: 4 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: the block stays narrow and the ball is forced wide.',
+        opponents: [{ x: 50, y: 74 }, { x: 36, y: 62 }, { x: 64, y: 62 }, { x: 50, y: 52 }, { x: 50, y: 36 }],
+        steps: [
+          { duration: 1, note: 'Everyone shuffles into a compact central block', players: { p9: { x: 42, y: 44 }, p11: { x: 58, y: 44 }, p6: { x: 44, y: 52 }, p7: { x: 56, y: 52 } } },
+          { duration: 1.1, note: 'The middle is shut, so the only pass is outside', ball: { x: 76, y: 60 } },
+          { duration: 1.1, note: 'The wing-back goes to meet him rather than dropping off', players: { p8: { x: 80, y: 54 } } },
+          { duration: 1.1, note: 'The back three shifts across to cover behind', players: { p2: { x: 38, y: 40 }, p3: { x: 52, y: 38 }, p4: { x: 66, y: 40 } } },
+          { duration: 0.9, note: 'The cross is blocked and the ball runs out for a throw', ball: { x: 88, y: 46 } },
+        ],
+      },
+      {
+        intro: 'If it does not: the wing-back is beaten and the back three is exposed.',
+        opponents: [{ x: 50, y: 66 }, { x: 36, y: 56 }, { x: 78, y: 52 }, { x: 50, y: 46 }, { x: 50, y: 30 }],
+        steps: [
+          { duration: 1, note: 'The winger goes past the wing-back on the outside', ball: { x: 84, y: 40 }, opponents: [{ x: 50, y: 66 }, { x: 36, y: 56 }, { x: 84, y: 40 }, { x: 50, y: 46 }, { x: 50, y: 30 }] },
+          { duration: 1.1, note: 'Only three defenders remain against the players in the box', players: { p8: { x: 84, y: 52 } } },
+          { duration: 1.1, note: 'The outside centre-back steps out to close the cross', players: { p4: { x: 72, y: 30 } } },
+          { duration: 1.1, note: 'The other two hold the middle rather than following the ball', players: { p2: { x: 40, y: 20 }, p3: { x: 52, y: 18 } }, ball: { x: 60, y: 20 } },
+          { duration: 0.9, note: 'The keeper claims it ahead of the runner', players: { p1: { x: 50, y: 12 } }, ball: { x: 50, y: 10 } },
+        ],
+      },
+    ],
+  },
+  'flick-bayern-20': {
+    attack: [
+      {
+        intro: 'Everything pushed forward, and the opponent pinned in.',
+        opponents: [{ x: 40, y: 16 }, { x: 50, y: 14 }, { x: 60, y: 16 }, { x: 44, y: 30 }, { x: 56, y: 30 }],
+        steps: [
+          { duration: 1, note: 'The defensive line sits on the halfway line, the keeper well outside his box', players: { p1: { x: 50, y: 62 }, p3: { x: 44, y: 46 }, p4: { x: 56, y: 46 } } },
+          { duration: 1.1, note: 'The left-back attacks like a winger down the outside', players: { p2: { x: 10, y: 26 } }, ball: { x: 12, y: 28 } },
+          { duration: 1.1, note: 'The wingers come inside to attack the box, not the touchline', players: { p8: { x: 38, y: 16 }, p10: { x: 62, y: 16 } } },
+          { duration: 1.1, note: 'The ten drifts into the space the centre-backs have left', players: { p9: { x: 52, y: 22 } } },
+          { duration: 1, note: 'Squared low across the six-yard box', ball: { x: 46, y: 8 } },
+          { duration: 0.9, note: 'Tapped in by the striker arriving at the near post', players: { p11: { x: 48, y: 7 } }, ball: { x: 48, y: 4 } },
+        ],
+      },
+      {
+        intro: 'The other route: win it back instantly and score before they breathe.',
+        opponents: [{ x: 44, y: 34 }, { x: 56, y: 34 }, { x: 50, y: 46 }, { x: 36, y: 24 }, { x: 64, y: 24 }],
+        steps: [
+          { duration: 0.9, note: 'Possession is lost near their box', ball: { x: 50, y: 36 } },
+          { duration: 1, note: 'Three players surround the ball within two seconds', players: { p9: { x: 48, y: 34 }, p6: { x: 54, y: 38 }, p8: { x: 42, y: 32 } } },
+          { duration: 1, note: 'It is won back immediately, ten yards from where it was lost', ball: { x: 48, y: 32 } },
+          { duration: 1.1, note: 'The defence has not had time to reset', opponents: [{ x: 44, y: 26 }, { x: 56, y: 26 }, { x: 50, y: 40 }, { x: 36, y: 22 }, { x: 64, y: 22 }] },
+          { duration: 0.9, note: 'Struck first time from the edge of the box', ball: { x: 50, y: 6 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: the press arrives before the pass can.',
+        opponents: [{ x: 50, y: 82 }, { x: 34, y: 72 }, { x: 66, y: 72 }, { x: 50, y: 62 }, { x: 50, y: 44 }],
+        steps: [
+          { duration: 1, note: 'The striker presses the goalkeeper alone', players: { p11: { x: 50, y: 76 } }, ball: { x: 50, y: 84 } },
+          { duration: 1, note: 'The wingers cut the passes to both full-backs', players: { p8: { x: 34, y: 68 }, p10: { x: 66, y: 68 } } },
+          { duration: 1.1, note: 'The midfield follows them up the pitch, keeping the lines short', players: { p6: { x: 44, y: 60 }, p7: { x: 56, y: 60 }, p9: { x: 50, y: 66 } } },
+          { duration: 1.1, note: 'The defence steps to halfway and the keeper sweeps behind', players: { p3: { x: 44, y: 44 }, p4: { x: 56, y: 44 }, p1: { x: 50, y: 58 } } },
+          { duration: 0.9, note: 'The goalkeeper is forced long and the header is won', ball: { x: 50, y: 48 } },
+        ],
+      },
+      {
+        intro: 'If it does not: one pass clears the press and the space behind is huge.',
+        opponents: [{ x: 50, y: 78 }, { x: 34, y: 68 }, { x: 66, y: 68 }, { x: 50, y: 58 }, { x: 50, y: 40 }],
+        steps: [
+          { duration: 1, note: 'The keeper finds a forward between the lines', ball: { x: 50, y: 56 } },
+          { duration: 1.1, note: 'He turns, and there is half a pitch of grass behind the defence', opponents: [{ x: 50, y: 78 }, { x: 34, y: 68 }, { x: 66, y: 68 }, { x: 50, y: 52 }, { x: 50, y: 30 }] },
+          { duration: 1.1, note: 'The keeper is already sprinting out of his area', players: { p1: { x: 50, y: 40 } } },
+          { duration: 1.1, note: 'He meets the ball outside the box, as a defender would', players: { p1: { x: 50, y: 34 } }, ball: { x: 50, y: 34 } },
+          { duration: 0.9, note: 'Cleared first time, and the line pushes straight back up', players: { p1: { x: 50, y: 58 } }, ball: { x: 30, y: 56 } },
+        ],
+      },
+    ],
+  },
+  'simeone-atleti-14': {
+    attack: [
+      {
+        intro: 'Concede the ball, win it back, and go at once.',
+        opponents: [{ x: 40, y: 44 }, { x: 60, y: 44 }, { x: 50, y: 56 }, { x: 34, y: 30 }, { x: 66, y: 30 }],
+        steps: [
+          { duration: 1, note: 'Two banks of four sit deep and let them come', players: { p6: { x: 30, y: 56 }, p7: { x: 44, y: 56 }, p8: { x: 56, y: 56 }, p9: { x: 70, y: 56 } } },
+          { duration: 1, note: 'The ball is won by a midfielder in his own half', ball: { x: 46, y: 58 } },
+          { duration: 1.1, note: 'The first pass is forward into the striker', players: { p10: { x: 48, y: 32 } }, ball: { x: 48, y: 34 } },
+          { duration: 1.1, note: 'He holds it up while the second striker runs beyond', players: { p11: { x: 62, y: 20 } } },
+          { duration: 1, note: 'The wide midfielder sprints fifty yards to support', players: { p9: { x: 78, y: 26 } } },
+          { duration: 0.9, note: 'Laid into the run and finished across goal', ball: { x: 60, y: 12 } },
+        ],
+      },
+      {
+        intro: 'The other route: a corner, worked exactly as rehearsed.',
+        opponents: [{ x: 42, y: 12 }, { x: 50, y: 10 }, { x: 58, y: 12 }, { x: 46, y: 18 }, { x: 54, y: 18 }],
+        steps: [
+          { duration: 1, note: 'The centre-backs come up for the set piece', players: { p3: { x: 46, y: 22 }, p4: { x: 54, y: 22 } }, ball: { x: 2, y: 4 } },
+          { duration: 1.1, note: 'They gather deliberately at the back post', players: { p3: { x: 62, y: 16 }, p4: { x: 66, y: 14 } } },
+          { duration: 1.1, note: 'The delivery is aimed beyond everyone', ball: { x: 66, y: 10 } },
+          { duration: 1, note: 'The captain attacks it with a running jump', players: { p4: { x: 64, y: 10 } } },
+          { duration: 0.9, note: 'Headed back across the keeper and in', ball: { x: 48, y: 4 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: two banks of four and no way through.',
+        opponents: [{ x: 50, y: 62 }, { x: 34, y: 52 }, { x: 66, y: 52 }, { x: 50, y: 42 }, { x: 50, y: 28 }],
+        steps: [
+          { duration: 1, note: 'The two lines sit narrow, barely twenty yards apart', players: { p6: { x: 32, y: 50 }, p7: { x: 44, y: 50 }, p8: { x: 56, y: 50 }, p9: { x: 68, y: 50 } } },
+          { duration: 1.1, note: 'The strikers screen the pass into midfield', players: { p10: { x: 44, y: 58 }, p11: { x: 56, y: 58 } } },
+          { duration: 1.1, note: 'Every pass sideways is allowed; every pass inside is not', ball: { x: 72, y: 50 } },
+          { duration: 1.1, note: 'The whole block slides across as one unit', players: { p6: { x: 44, y: 50 }, p7: { x: 56, y: 50 }, p8: { x: 68, y: 50 }, p9: { x: 80, y: 50 }, p5: { x: 78, y: 38 } } },
+          { duration: 0.9, note: 'The cross is headed away by a centre-back who never left the middle', ball: { x: 44, y: 40 } },
+        ],
+      },
+      {
+        intro: 'If it does not: someone slips inside and the block collapses onto him.',
+        opponents: [{ x: 50, y: 54 }, { x: 34, y: 46 }, { x: 66, y: 46 }, { x: 50, y: 38 }, { x: 50, y: 26 }],
+        steps: [
+          { duration: 1, note: 'A pass finally splits the two lines', ball: { x: 50, y: 44 }, opponents: [{ x: 50, y: 54 }, { x: 34, y: 46 }, { x: 66, y: 46 }, { x: 50, y: 42 }, { x: 50, y: 26 }] },
+          { duration: 1.1, note: 'Two midfielders turn and close him down together', players: { p7: { x: 48, y: 42 }, p8: { x: 54, y: 42 } } },
+          { duration: 1.1, note: 'The back four does not step: it drops and stays compact', players: { p2: { x: 30, y: 26 }, p3: { x: 44, y: 24 }, p4: { x: 56, y: 24 }, p5: { x: 70, y: 26 } } },
+          { duration: 1.1, note: 'The shot comes from distance, with bodies in the way', ball: { x: 50, y: 30 } },
+          { duration: 0.9, note: 'Blocked, and the ball is hacked clear without ceremony', ball: { x: 26, y: 48 } },
+        ],
+      },
+    ],
+  },
+  'kompany-bayern-25': {
+    attack: [
+      {
+        intro: 'Keep the ball high and let the front three interchange.',
+        opponents: [{ x: 38, y: 20 }, { x: 50, y: 18 }, { x: 62, y: 20 }, { x: 44, y: 36 }, { x: 56, y: 36 }],
+        steps: [
+          { duration: 1, note: 'Possession is used to pin them in their own half', players: { p3: { x: 44, y: 48 }, p4: { x: 56, y: 48 } }, ball: { x: 50, y: 50 } },
+          { duration: 1.1, note: 'The ten drops into the pocket and the winger goes past him', players: { p9: { x: 50, y: 30 }, p10: { x: 74, y: 22 } } },
+          { duration: 1.1, note: 'The pass is vertical the moment it is on', ball: { x: 50, y: 28 } },
+          { duration: 1.1, note: 'The striker pulls the centre-backs one way, the winger runs the other', players: { p11: { x: 40, y: 14 } }, opponents: [{ x: 40, y: 16 }, { x: 52, y: 14 }, { x: 62, y: 20 }, { x: 44, y: 30 }, { x: 56, y: 30 }] },
+          { duration: 1, note: 'Slipped between the full-back and the centre-back', ball: { x: 70, y: 14 } },
+          { duration: 0.9, note: 'Cut back for the striker at the penalty spot', players: { p11: { x: 50, y: 11 } }, ball: { x: 50, y: 10 } },
+        ],
+      },
+      {
+        intro: 'The other route: the striker holds it and everyone runs past him.',
+        opponents: [{ x: 40, y: 24 }, { x: 50, y: 22 }, { x: 60, y: 24 }, { x: 44, y: 40 }, { x: 56, y: 40 }],
+        steps: [
+          { duration: 1, note: 'The ball goes long into the striker with his back to goal', players: { p11: { x: 50, y: 30 } }, ball: { x: 50, y: 32 } },
+          { duration: 1.1, note: 'He shields it while the two wide players sprint beyond', players: { p8: { x: 30, y: 20 }, p10: { x: 70, y: 20 } } },
+          { duration: 1.1, note: 'Laid off to the ten arriving at pace', players: { p9: { x: 54, y: 32 } }, ball: { x: 54, y: 34 } },
+          { duration: 1.1, note: 'First time out to the right, into the space behind the full-back', ball: { x: 74, y: 18 } },
+          { duration: 0.9, note: 'Squared back for the striker, who never stopped running', players: { p11: { x: 50, y: 9 } }, ball: { x: 50, y: 8 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: press high and take the ball back at once.',
+        opponents: [{ x: 50, y: 80 }, { x: 34, y: 70 }, { x: 66, y: 70 }, { x: 50, y: 60 }, { x: 50, y: 44 }],
+        steps: [
+          { duration: 1, note: 'The striker curves his run to cut the pass across the back', players: { p11: { x: 46, y: 74 } }, ball: { x: 50, y: 82 } },
+          { duration: 1, note: 'The ten steps onto their holding midfielder', players: { p9: { x: 50, y: 64 } } },
+          { duration: 1.1, note: 'The wide players push on so nobody is free out wide', players: { p8: { x: 32, y: 66 }, p10: { x: 68, y: 66 } } },
+          { duration: 1.1, note: 'The defence stays high, keeping the team in one short block', players: { p3: { x: 44, y: 46 }, p4: { x: 56, y: 46 } } },
+          { duration: 0.9, note: 'The pass is cut out thirty yards from their goal', ball: { x: 40, y: 64 } },
+        ],
+      },
+      {
+        intro: 'If it does not: they break the line and the high line is punished.',
+        opponents: [{ x: 50, y: 74 }, { x: 34, y: 64 }, { x: 66, y: 64 }, { x: 50, y: 54 }, { x: 50, y: 40 }],
+        steps: [
+          { duration: 1, note: 'A first-time pass takes out the front two', ball: { x: 50, y: 56 } },
+          { duration: 1.1, note: 'Their forward runs into the space behind the defence', opponents: [{ x: 50, y: 74 }, { x: 34, y: 64 }, { x: 66, y: 64 }, { x: 50, y: 50 }, { x: 52, y: 28 }] },
+          { duration: 1.1, note: 'The full-back tucks in to become an extra centre-back', players: { p2: { x: 38, y: 30 } } },
+          { duration: 1.1, note: 'The centre-back forces him away from goal', players: { p4: { x: 58, y: 24 } }, ball: { x: 56, y: 24 } },
+          { duration: 0.9, note: 'The angle is gone and the keeper saves at his near post', players: { p1: { x: 55, y: 10 } }, ball: { x: 60, y: 10 } },
+        ],
+      },
+    ],
+  },
+  'tuchel-psg-20': {
+    attack: [
+      {
+        intro: 'Free the front three and let the midfield do the rest.',
+        opponents: [{ x: 38, y: 22 }, { x: 50, y: 20 }, { x: 62, y: 22 }, { x: 44, y: 40 }, { x: 56, y: 40 }],
+        steps: [
+          { duration: 1, note: 'The centre-back steps into midfield to add a passer', players: { p7: { x: 50, y: 56 } }, ball: { x: 50, y: 58 } },
+          { duration: 1.1, note: 'The front three stay high and do not come back to help', players: { p9: { x: 26, y: 22 }, p10: { x: 50, y: 18 }, p11: { x: 74, y: 22 } } },
+          { duration: 1.1, note: 'The pass finds the left forward between the lines', players: { p9: { x: 30, y: 28 } }, ball: { x: 30, y: 30 } },
+          { duration: 1.2, note: 'He drives inside, drawing two defenders towards him', players: { p9: { x: 42, y: 22 } }, ball: { x: 43, y: 23 }, opponents: [{ x: 40, y: 22 }, { x: 48, y: 22 }, { x: 62, y: 22 }, { x: 44, y: 34 }, { x: 56, y: 40 }] },
+          { duration: 1, note: 'The striker has already gone the other way', players: { p10: { x: 62, y: 12 } } },
+          { duration: 0.9, note: 'Threaded into the gap the two defenders left', ball: { x: 62, y: 10 } },
+        ],
+      },
+      {
+        intro: 'The other route: break at speed the instant the ball is won.',
+        opponents: [{ x: 44, y: 40 }, { x: 56, y: 40 }, { x: 50, y: 52 }, { x: 36, y: 28 }, { x: 64, y: 28 }],
+        steps: [
+          { duration: 0.9, note: 'The midfield wins it back deep', players: { p8: { x: 50, y: 52 } }, ball: { x: 50, y: 54 } },
+          { duration: 1, note: 'The forwards are already running, having stayed high', players: { p10: { x: 50, y: 24 }, p11: { x: 70, y: 26 } } },
+          { duration: 1.1, note: 'One pass upfield and the defence is in a foot race', ball: { x: 52, y: 26 } },
+          { duration: 1.1, note: 'The striker takes it in his stride and pulls wide', players: { p10: { x: 62, y: 14 } }, ball: { x: 62, y: 13 } },
+          { duration: 0.9, note: 'Rolled back to the far forward arriving unmarked', players: { p9: { x: 40, y: 10 } }, ball: { x: 42, y: 8 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: the midfield three covers for the forwards.',
+        opponents: [{ x: 50, y: 72 }, { x: 34, y: 62 }, { x: 66, y: 62 }, { x: 50, y: 52 }, { x: 50, y: 36 }],
+        steps: [
+          { duration: 1, note: 'The front three stay high rather than tracking back', players: { p9: { x: 30, y: 40 }, p10: { x: 50, y: 36 }, p11: { x: 70, y: 40 } } },
+          { duration: 1.1, note: 'That leaves three midfielders to cover the whole width', players: { p6: { x: 36, y: 52 }, p7: { x: 50, y: 54 }, p8: { x: 64, y: 52 } } },
+          { duration: 1.1, note: 'They shuffle across together rather than chasing the ball', players: { p6: { x: 46, y: 52 }, p7: { x: 60, y: 54 }, p8: { x: 74, y: 52 } }, ball: { x: 70, y: 56 } },
+          { duration: 1.1, note: 'The full-back holds his position instead of diving in', players: { p5: { x: 80, y: 44 } } },
+          { duration: 0.9, note: 'The ball is won and given straight to the forwards', ball: { x: 62, y: 44 } },
+        ],
+      },
+      {
+        intro: 'If it does not: the midfield is outnumbered and the back four is alone.',
+        opponents: [{ x: 50, y: 64 }, { x: 34, y: 54 }, { x: 66, y: 54 }, { x: 50, y: 44 }, { x: 50, y: 32 }],
+        steps: [
+          { duration: 1, note: 'They commit an extra man into midfield', ball: { x: 50, y: 46 }, opponents: [{ x: 50, y: 64 }, { x: 34, y: 54 }, { x: 66, y: 54 }, { x: 46, y: 44 }, { x: 56, y: 42 }] },
+          { duration: 1.1, note: 'Three against four, and the pass goes through', ball: { x: 56, y: 32 } },
+          { duration: 1.1, note: 'The back four has to defend the counter on its own', players: { p2: { x: 28, y: 28 }, p3: { x: 44, y: 26 }, p4: { x: 56, y: 26 }, p5: { x: 72, y: 28 } } },
+          { duration: 1.1, note: 'The nearest centre-back steps out and the others cover behind him', players: { p4: { x: 58, y: 20 }, p3: { x: 46, y: 22 } } },
+          { duration: 0.9, note: 'The tackle is made just outside the box', ball: { x: 58, y: 20 } },
+        ],
+      },
+    ],
+  },
+  'tuchel-chelsea-21': {
+    attack: [
+      {
+        intro: 'Patient in the middle, then one runner goes beyond.',
+        opponents: [{ x: 38, y: 24 }, { x: 50, y: 22 }, { x: 62, y: 24 }, { x: 44, y: 42 }, { x: 56, y: 42 }],
+        steps: [
+          { duration: 1.1, note: 'The back three and the two holders pass among themselves', players: { p6: { x: 44, y: 58 } }, ball: { x: 44, y: 60 } },
+          { duration: 1.1, note: 'The wing-backs stretch the pitch on both touchlines', players: { p5: { x: 8, y: 36 }, p8: { x: 92, y: 36 } } },
+          { duration: 1.1, note: 'The two forwards stay narrow, in the space between their lines', players: { p9: { x: 44, y: 30 }, p10: { x: 56, y: 30 } } },
+          { duration: 1.1, note: 'The pass goes into one of them, who turns immediately', ball: { x: 56, y: 30 } },
+          { duration: 1, note: 'The striker runs beyond the last defender the moment he turns', players: { p11: { x: 58, y: 14 } } },
+          { duration: 0.9, note: 'Released in behind and finished low', ball: { x: 56, y: 8 } },
+        ],
+      },
+      {
+        intro: 'The other route: the wing-back arrives from deep to cross.',
+        opponents: [{ x: 38, y: 18 }, { x: 50, y: 16 }, { x: 62, y: 18 }, { x: 44, y: 34 }, { x: 56, y: 34 }],
+        steps: [
+          { duration: 1, note: 'The ball is switched to the right wing-back', players: { p8: { x: 92, y: 34 } }, ball: { x: 90, y: 34 } },
+          { duration: 1.1, note: 'He carries it forward with nobody tracking him', players: { p8: { x: 88, y: 20 } }, ball: { x: 87, y: 21 } },
+          { duration: 1.1, note: 'The striker attacks the near post, a forward the penalty spot', players: { p11: { x: 44, y: 10 }, p10: { x: 52, y: 16 } } },
+          { duration: 1, note: 'The cross is driven low across the six-yard box', ball: { x: 50, y: 8 } },
+          { duration: 0.9, note: 'Turned in first time at the near post', ball: { x: 46, y: 4 } },
+        ],
+      },
+    ],
+    defense: [
+      {
+        intro: 'When it works: nothing goes through the middle at all.',
+        opponents: [{ x: 50, y: 74 }, { x: 36, y: 62 }, { x: 64, y: 62 }, { x: 50, y: 52 }, { x: 50, y: 36 }],
+        steps: [
+          { duration: 1, note: 'Three centre-backs and two holders fill the centre', players: { p6: { x: 44, y: 48 }, p7: { x: 56, y: 48 } } },
+          { duration: 1.1, note: 'The two forwards drop in to screen the passes', players: { p9: { x: 44, y: 56 }, p10: { x: 56, y: 56 } } },
+          { duration: 1.1, note: 'There is no pass inside, so it goes sideways again', ball: { x: 34, y: 60 } },
+          { duration: 1.1, note: 'The wing-back steps out to meet it and the block shifts across', players: { p5: { x: 26, y: 52 }, p2: { x: 36, y: 40 }, p3: { x: 50, y: 38 }, p4: { x: 62, y: 40 } } },
+          { duration: 0.9, note: 'Won cleanly, and nothing has come near the goal', ball: { x: 40, y: 46 } },
+        ],
+      },
+      {
+        intro: 'If it does not: a runner gets between the wing-back and the defence.',
+        opponents: [{ x: 50, y: 66 }, { x: 36, y: 56 }, { x: 64, y: 56 }, { x: 50, y: 46 }, { x: 50, y: 32 }],
+        steps: [
+          { duration: 1, note: 'A ball is clipped into the channel outside the back three', ball: { x: 74, y: 34 }, opponents: [{ x: 50, y: 66 }, { x: 36, y: 56 }, { x: 74, y: 32 }, { x: 50, y: 46 }, { x: 50, y: 32 }] },
+          { duration: 1.1, note: 'The wing-back is caught too high to recover', players: { p8: { x: 84, y: 44 } } },
+          { duration: 1.1, note: 'The outside centre-back goes with him instead of waiting', players: { p4: { x: 70, y: 26 } } },
+          { duration: 1.1, note: 'The other two shift across and cover the middle', players: { p2: { x: 38, y: 22 }, p3: { x: 52, y: 20 } }, ball: { x: 66, y: 22 } },
+          { duration: 0.9, note: 'Forced wide, and the cross is headed away', ball: { x: 46, y: 26 } },
+        ],
+      },
+    ],
+  },
 };

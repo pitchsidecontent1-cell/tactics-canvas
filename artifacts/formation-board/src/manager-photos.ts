@@ -79,6 +79,62 @@ export const MANAGER_PHOTOS: Record<string, ManagerPhoto> = {
     licenceUrl: 'https://creativecommons.org/licenses/by/2.0',
     source: 'https://commons.wikimedia.org/wiki/File:Zinedine_Zidane_2015_(cropped).jpg',
   },
+  "Mikel Arteta": {
+    file: "arteta.jpg",
+    author: "Prime Video AU &amp; NZ",
+    licence: "CC BY 3.0",
+    licenceUrl: "https://creativecommons.org/licenses/by/3.0",
+    source: "https://commons.wikimedia.org/wiki/File:Mikel_Arteta_2021_(cropped).png",
+  },
+  "Unai Emery": {
+    file: "emery.jpg",
+    author: "Aleksandr Osipov",
+    licence: "CC BY-SA 2.0",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+    source: "https://commons.wikimedia.org/wiki/File:Unai_Emery_-_Sevilla_(cropped).jpg",
+  },
+  "Xabi Alonso": {
+    file: "xabi-alonso.jpg",
+    author: "DONOSTIA KULTURA",
+    licence: "CC BY-SA 2.0",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0",
+    source: "https://commons.wikimedia.org/wiki/File:Los_Caminos_del_f%C3%BAtbol._Xabi_Alonso_(39666778464)_(cropped).jpg",
+  },
+  "Rúben Amorim": {
+    file: "amorim.jpg",
+    author: "Agência Lusa",
+    licence: "CC BY 3.0",
+    licenceUrl: "https://creativecommons.org/licenses/by/3.0",
+    source: "https://commons.wikimedia.org/wiki/File:RubenAmorim3.png",
+  },
+  "Vincent Kompany": {
+    file: "kompany.jpg",
+    author: "ManuluxWiki",
+    licence: "CC BY-SA 4.0",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Vincent_Kompany_Bayern_Munich.jpg",
+  },
+  "Thomas Tuchel": {
+    file: "tuchel.jpg",
+    author: "Bryan Berlin",
+    licence: "CC BY-SA 4.0",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:Thomas_Tuchel_England_v_Ghana_23_June_2026-081.jpg",
+  },
+  "Hansi Flick": {
+    file: "flick.jpg",
+    author: "Steffen Prößdorf",
+    licence: "CC BY-SA 4.0",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:2022_Hansi_Flick_(cropped).jpg",
+  },
+  "Diego Simeone": {
+    file: "simeone.jpg",
+    author: "Barcex",
+    licence: "CC BY-SA 4.0",
+    licenceUrl: "https://creativecommons.org/licenses/by-sa/4.0",
+    source: "https://commons.wikimedia.org/wiki/File:25th_Laureus_World_Sports_Awards_-_Red_Carpet_-_Diego_Simeone_-_240422_192621-2_(cropped).jpg",
+  },
 };
 
 export const managerPhotoUrl = (file: string) => `${import.meta.env.BASE_URL}managers/${file}`;

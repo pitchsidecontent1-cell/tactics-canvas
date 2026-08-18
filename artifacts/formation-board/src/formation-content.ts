@@ -1885,6 +1885,273 @@ export const ERA_CONTENT: Record<string, EraContent> = {
       ],
     },
   },
+  'arteta-arsenal-24': {
+    teamFacts: [
+      'This Arsenal side conceded 29 goals in the league, the fewest in the division, and took the title race to the final day before finishing two points behind Manchester City.',
+      'They scored 91 goals — the club’s highest league tally since the Invincibles season of 2003-04.',
+      'Set pieces became a signature: Arsenal scored more goals from dead balls than any other Premier League side that season, coached by a dedicated set-piece specialist.',
+    ],
+    playerFacts: {
+      Raya: [
+        'David Raya arrived on loan and took the gloves mid-season, going on to win the Golden Glove for the most clean sheets.',
+      ],
+      Saliba: [
+        'William Saliba played every minute of the league season, having spent three earlier years on loan away from the club.',
+      ],
+      Gabriel: [
+        'Gabriel Magalhães is a repeated set-piece threat, regularly among the highest-scoring defenders in the league.',
+      ],
+      Rice: [
+        'Declan Rice joined for a club record fee and was used both as the holding midfielder and further forward.',
+      ],
+      'Ødegaard': [
+        'Martin Ødegaard captains the side and, unusually for a number ten, starts much of the pressing from the front.',
+      ],
+      Saka: [
+        'Bukayo Saka holds the right touchline to stretch the pitch, then attacks the space inside the full-back.',
+      ],
+      Havertz: [
+        'Kai Havertz began the season in midfield and finished it leading the line, scoring regularly once moved forward.',
+      ],
+      Martinelli: [
+        'Gabriel Martinelli came through Arsenal’s system after arriving from Brazilian fourth-tier football.',
+      ],
+    },
+  },
+  'emery-sevilla-16': {
+    teamFacts: [
+      'This was Sevilla’s third Europa League title in a row, a run no other club has managed.',
+      'Emery won the competition four times in total, more than any other manager.',
+      'The side finished only seventh in La Liga that season, saving its best football entirely for Europe.',
+    ],
+    playerFacts: {
+      Banega: [
+        'Éver Banega was the side’s creative pivot, dictating tempo from deep before joining Inter that summer.',
+      ],
+      Krychowiak: [
+        'Grzegorz Krychowiak formed the defensive half of the double pivot and left for PSG after the final.',
+      ],
+      'N’Zonzi': [
+        'Steven N’Zonzi arrived from Stoke and became the screen in front of the back four.',
+      ],
+      Gameiro: [
+        'Kevin Gameiro scored in the final, capping the most prolific season of his Sevilla spell.',
+      ],
+      Rami: [
+        'Adil Rami anchored a back four that Emery rebuilt almost every summer as players were sold on.',
+      ],
+      Vitolo: [
+        'Vitolo attacked from the left in all three of Sevilla’s consecutive Europa League final wins.',
+      ],
+    },
+  },
+  'emery-villa-24': {
+    teamFacts: [
+      'Aston Villa finished fourth to reach the Champions League for the first time in over four decades, having been in a relegation fight when Emery arrived.',
+      'Villa’s defence pushed higher than any other side in the division and caught opponents offside far more often than anyone else.',
+      'The approach is deliberately high-risk: the same high line that wins the ball early leaves a large space behind the defence if the trap fails.',
+    ],
+    playerFacts: {
+      'Martínez': [
+        'Emiliano Martínez sweeps well outside his box to cover the space the high line leaves behind.',
+      ],
+      Watkins: [
+        'Ollie Watkins recorded the most assists of any forward in the league that season alongside his goals.',
+      ],
+      McGinn: [
+        'John McGinn captains the side and covers enormous distances from midfield.',
+      ],
+      'Pau Torres': [
+        'Pau Torres followed Emery from Villarreal, having played under him in Spain.',
+      ],
+      Konsa: [
+        'Ezri Konsa’s recovery pace is what makes the extreme high line survivable.',
+      ],
+    },
+  },
+  'xabi-leverkusen-24': {
+    teamFacts: [
+      'Leverkusen won the 2023-24 Bundesliga without losing a single match — the first unbeaten league season in German top-flight history.',
+      'The club had never won the Bundesliga before, having finished runners-up five times, a record that earned them the nickname Neverkusen.',
+      'The team scored repeatedly in the closing minutes, rescuing points so often that the late goal became the season’s defining feature.',
+    ],
+    playerFacts: {
+      Wirtz: [
+        'Florian Wirtz returned from a serious knee injury to become the creative centre of the unbeaten season.',
+      ],
+      Grimaldo: [
+        'Álex Grimaldo arrived on a free transfer and contributed goals and assists in numbers rarely seen from a wing-back.',
+      ],
+      Frimpong: [
+        'Jeremie Frimpong attacks from the right wing-back position almost as an extra forward.',
+      ],
+      Xhaka: [
+        'Granit Xhaka joined from Arsenal and was moved deeper, controlling tempo from in front of the back three.',
+      ],
+      Tah: [
+        'Jonathan Tah anchored the middle of a back three that conceded fewer goals than any other side in the league.',
+      ],
+      Boniface: [
+        'Victor Boniface led the line in his first season in Germany after arriving from the Belgian league.',
+      ],
+    },
+  },
+  'amorim-sporting-24': {
+    teamFacts: [
+      'Amorim won the Portuguese league with Sporting having ended a nineteen-year title drought in his first full season at the club.',
+      'The 3-4-3 is used throughout Sporting’s academy as well as the first team, so players arrive already knowing the movements.',
+      'Viktor Gyökeres scored more than forty goals across the season, having arrived from the English Championship.',
+    ],
+    playerFacts: {
+      'Gyökeres': [
+        'Viktor Gyökeres joined from Coventry City and became one of the most prolific strikers in Europe within a season.',
+      ],
+      Coates: [
+        'Sebastián Coates captains the side from the middle of the back three, years after a short spell at Liverpool.',
+      ],
+      Hjulmand: [
+        'Morten Hjulmand controls the midfield in front of the back three and captained Lecce before joining.',
+      ],
+      'Trincão': [
+        'Francisco Trincão returned to Portugal after spells at Barcelona and elsewhere to play as an inside forward.',
+      ],
+      'Nuno Santos': [
+        'Nuno Santos provides the entire width down the left as a wing-back.',
+      ],
+    },
+  },
+  'flick-bayern-20': {
+    teamFacts: [
+      'Bayern won every competition they entered in 2020, taking the treble with a perfect record in the Champions League — eleven wins from eleven.',
+      'They beat Barcelona 8-2 in the quarter-final, the heaviest defeat in Barcelona’s modern European history.',
+      'Flick was promoted from assistant coach mid-season, and the side lost only a handful of matches after he took charge.',
+    ],
+    playerFacts: {
+      Neuer: [
+        'Manuel Neuer sweeps so far from goal that he effectively acts as the last defender behind an extremely high line.',
+      ],
+      Lewandowski: [
+        'Robert Lewandowski scored 55 goals in all competitions that season, including in every Champions League round bar the final.',
+      ],
+      Davies: [
+        'Alphonso Davies converted from winger to left-back and became known for recovery runs at extraordinary speed.',
+      ],
+      Kimmich: [
+        'Joshua Kimmich moved from right-back into defensive midfield and controlled the team from there.',
+      ],
+      'Müller': [
+        'Thomas Müller plays a role he calls the Raumdeuter — the space interpreter — arriving in gaps rather than holding a position.',
+      ],
+      Coman: [
+        'Kingsley Coman scored the only goal of the 2020 Champions League final against Paris Saint-Germain, the club that developed him.',
+      ],
+    },
+  },
+  'simeone-atleti-14': {
+    teamFacts: [
+      'Atlético won La Liga in 2013-14, breaking a run of nine consecutive titles shared between Barcelona and Real Madrid.',
+      'They reached the Champions League final the same season and conceded an equaliser in the third minute of stoppage time before losing in extra time.',
+      'The title was sealed with a draw at Barcelona on the final day, in a season where Atlético conceded fewer league goals than anyone.',
+    ],
+    playerFacts: {
+      Courtois: [
+        'Thibaut Courtois spent three seasons on loan at Atlético from Chelsea, winning the league in the last of them.',
+      ],
+      'Godín': [
+        'Diego Godín scored the goal at Barcelona that clinched the title, and again in the Champions League final.',
+      ],
+      'Diego Costa': [
+        'Diego Costa scored 27 league goals that season and left for Chelsea the following summer.',
+      ],
+      Koke: [
+        'Koke came through the academy and has spent his entire career at the club, later becoming captain.',
+      ],
+      Gabi: [
+        'Gabi captained the side from central midfield and set the tone for the team’s defensive intensity.',
+      ],
+      Villa: [
+        'David Villa joined from Barcelona and formed a strike pair with Diego Costa in the title season.',
+      ],
+    },
+  },
+  'kompany-bayern-25': {
+    teamFacts: [
+      'Kompany won the Bundesliga in his first season at Bayern, reclaiming a title the club had lost the year before.',
+      'He arrived having been relegated from the Premier League with Burnley the previous season, an unusual route to the Bayern job.',
+      'As a player Kompany captained Manchester City through the start of their dominant era, under Guardiola among others.',
+    ],
+    playerFacts: {
+      Kane: [
+        'Harry Kane won the first major club trophy of his career in this season, having joined Bayern from Tottenham.',
+      ],
+      Musiala: [
+        'Jamal Musiala came through Chelsea’s academy before moving to Bayern as a teenager and choosing Germany over England.',
+      ],
+      Olise: [
+        'Michael Olise joined from Crystal Palace and was given freedom to drift inside from the right.',
+      ],
+      Kimmich: [
+        'Joshua Kimmich has played almost every position across defence and midfield during his Bayern career.',
+      ],
+      Davies: [
+        'Alphonso Davies remains one of the fastest players in the league, which is what allows the high line to work.',
+      ],
+    },
+  },
+  'tuchel-psg-20': {
+    teamFacts: [
+      'Tuchel took PSG to the club’s first Champions League final in 2020, losing 1-0 to Bayern Munich.',
+      'The same season PSG won every domestic competition available to them.',
+      'The knockout rounds were played in a single-venue tournament in Lisbon because of the pandemic, with matches decided over one leg rather than two.',
+    ],
+    playerFacts: {
+      Neymar: [
+        'Neymar was freed from defensive duties so he could stay high for counter-attacks, with the midfield covering behind him.',
+      ],
+      'Mbappé': [
+        'Kylian Mbappé had already won a World Cup before this run to the Champions League final, aged 21.',
+      ],
+      Marquinhos: [
+        'Marquinhos moved from centre-back into midfield in this side, giving the defence an extra passer in build-up.',
+      ],
+      'Thiago Silva': [
+        'Thiago Silva captained PSG in the 2020 final and joined Chelsea weeks later, winning the trophy the following season.',
+      ],
+      Navas: [
+        'Keylor Navas arrived having already won three consecutive Champions Leagues with Real Madrid.',
+      ],
+    },
+  },
+  'tuchel-chelsea-21': {
+    teamFacts: [
+      'Tuchel took over in January and won the Champions League in May, beating Manchester City in the final.',
+      'Chelsea conceded only two goals across the entire knockout stage of that campaign.',
+      'He faced Guardiola’s City three times in six weeks that spring and won all three, including the final.',
+    ],
+    playerFacts: {
+      Mendy: [
+        'Édouard Mendy set a record for clean sheets in a debut Champions League campaign.',
+      ],
+      'Thiago Silva': [
+        'Thiago Silva won the Champions League a year after losing the final with PSG, against the same opponent who beat him.',
+      ],
+      'Kanté': [
+        'N’Golo Kanté was named player of the match in the semi-final and the final, covering ground on both sides of the pitch.',
+      ],
+      Havertz: [
+        'Kai Havertz scored the only goal of the 2021 Champions League final.',
+      ],
+      James: [
+        'Reece James came through Chelsea’s academy and provided the width on the right as a wing-back.',
+      ],
+      'Rüdiger': [
+        'Antonio Rüdiger had been close to leaving before Tuchel arrived and became a fixture in the back three.',
+      ],
+      Jorginho: [
+        'Jorginho anchored the midfield and won the European Championship with Italy weeks after the final.',
+      ],
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -1958,4 +2225,20 @@ export const MANAGER_PLAYSTYLES: Record<string, string> = {
     'Klopp\u2019s gegenpressing treats the counter-press as the best playmaker: the instant the ball is lost, the nearest players swarm it in a five-second frenzy, because an opponent who has just won the ball is at their most disorganised. Played at full intensity \u2014 \u201cheavy metal football\u201d \u2014 it turns defence into attack thirty metres from goal. His Liverpool added a high defensive line behind the press, full-backs as the chief creators, and a front three who defended from the front, all fuelled by an emotional connection between team and crowd that he treated as a tactical weapon.',
   'Zin\u00e9dine Zidane':
     'Zidane\u2019s genius was balance: fitting Kroos, Modri\u0107 and Casemiro into a midfield that could control any game, then letting the BBC decide it. Tactically flexible \u2014 4-3-3 one season, a diamond the next \u2014 his Madrid conceded territory when needed, trusted individual brilliance in decisive moments, and managed the calendar masterfully, resting stars so they peaked in the Champions League spring. Critics called it lucky; three consecutive European Cups suggest it was something closer to mastery of the knockout format.',
+  'Mikel Arteta':
+    'Arteta learned under Guardiola and kept the framework: control the ball, control the space, leave nothing to chance. His Arsenal build with a back three formed by a full-back stepping inside, hold the width through two wingers who stay glued to the touchline, and attack the moment an opponent narrows to cover the middle. Out of possession the press is aggressive but selective, triggered by a backwards pass or a heavy touch. The distinguishing feature is preparation: set pieces are coached in fine detail by a dedicated specialist and became a decisive source of goals, and the defensive record that carried the 2023-24 title race was the best in the league.',
+  'Unai Emery':
+    'Emery is the most match-specific coach of his generation, famous for hours of video work and plans tailored to a single opponent. The constants are a double pivot protecting the back four, wide players who attack one-against-one, and pressing used in calculated bursts rather than continuously. At Sevilla that produced three Europa League titles in a row, a record still unmatched. At Aston Villa he added an extreme high line and a deliberately aggressive offside trap, squeezing the pitch and daring opponents to run in behind — a high-risk method that demands total co-ordination from the back four.',
+  'Xabi Alonso':
+    'Alonso plays the game the way he played in midfield: patient, positional, unhurried until the pass is on. His Leverkusen used a back three of centre-backs comfortable carrying the ball forward, wing-backs who covered the entire touchline, and a free role for Florian Wirtz between the lines. The team rarely forced play, preferring to circulate until an opponent stepped out of shape. It was also relentlessly persistent: a run of late goals turned draws into wins repeatedly on the way to the first unbeaten season in Bundesliga history.',
+  'Rúben Amorim':
+    'Amorim is unusually committed to a single shape. His 3-4-3 is played by the whole club, academy included, on the theory that certainty is worth more than surprise: everyone knows the movements without thinking. The back three defend a compact central area, the wing-backs supply every ounce of width, and the two inside forwards tuck close to a striker who attacks the space behind at the first opportunity. It asks a great deal of the wing-backs and can be stretched by teams that overload one flank, but it produced titles at Sporting with squads far cheaper than their rivals.',
+  'Hansi Flick':
+    'Flick took over a Bayern side mid-season and immediately pushed everything forward: the defensive line to halfway, the press onto the opposition goalkeeper, the full-backs almost into the front line. The result was the most extreme high-line football at the top of the European game, with Manuel Neuer sweeping far outside his box as the last defender. It produced a treble and a 8-2 win over Barcelona, and it is deliberately high-risk — the space behind is enormous, and the whole method depends on winning the ball back before anyone can use it.',
+  'Diego Simeone':
+    'Simeone built Atlético around the idea that possession is optional and organisation is not. Two banks of four sit narrow and deep, the distance between the lines is guarded jealously, and the team is content to let opponents keep the ball in front of them. Attacks come fast and direct once the ball is won, and set pieces are treated as a primary weapon rather than an afterthought. The football is often described as defensive, but the demand it makes is relentless: every player runs, every duel is contested, and the intensity is sustained for the full match.',
+  'Vincent Kompany':
+    'Kompany coaches from the perspective of the defender he was, but the football is front-footed: a high defensive line, quick vertical passing, and possession used to pin opponents back rather than to slow the game down. At Bayern he gave Jamal Musiala and Michael Olise freedom to drift and swap across the front while the structure behind them stayed disciplined, with Harry Kane as the reference point. The approach reclaimed the Bundesliga in his first season and asks the same question as every high line: whether the press can win the ball back before the space behind matters.',
+  'Thomas Tuchel':
+    'Tuchel is a problem-solver who reshapes his team around the opponent, and his sides are defined by structure rather than a single signature. At PSG he freed Neymar and Mbappé from defensive work and built a midfield that could cover for them, reaching a first Champions League final. At Chelsea he switched to a back three and two holding midfielders and conceded almost nothing, winning the Champions League four months after arriving mid-season. The common thread is control of the centre: whatever the shape, the middle of the pitch is crowded and the opposition is pushed towards the touchlines.',
 };

@@ -83,9 +83,10 @@ type Era = {
 
 type Manager = {
   name: string;
-  /** The name the dugout list sorts under. Stored rather than derived from
-   *  `name`, because taking the last word gets 'ten Hag' and 'van Gaal'
-   *  wrong, and Luis Enrique has no surname in the usual sense. */
+  /** The name the dugout list files under: the surname as it is commonly
+   *  spoken, particles included. So 'ten Hag' sorts under T and 'van Gaal'
+   *  under V, rather than under H and G as a last-word rule would give.
+   *  Luis Enrique, who has no surname in the usual sense, files under E. */
   sortName: string;
   /** Whether they are still coaching a team. Anyone out of the dugout is
    *  listed as retired, including those now in a front-office role. */
@@ -907,6 +908,342 @@ const MANAGERS: Manager[] = [
       },
     ],
   },
+  {
+    name: 'Mikel Arteta',
+    sortName: 'Arteta',
+    status: 'current',
+    eras: [
+      {
+        id: 'arteta-arsenal-24',
+        club: 'Arsenal',
+        years: '2023-24',
+        formation: '4-3-3',
+        shape: [4, 3, 3],
+        summary:
+          'A title race taken to the final day on the back of the meanest defence in the league and a heavily rehearsed attack.',
+        points: [
+          'The left-back steps into midfield in build-up, making a back three and a crowded centre',
+          'Saka and Martinelli hold the touchlines until the moment the pass is on',
+          'Set pieces treated as a weapon in their own right, with a specialist coach behind them',
+        ],
+        xi: [
+          'Raya',
+          'Zinchenko',
+          'Gabriel',
+          'Saliba',
+          'White',
+          'Rice',
+          'Jorginho',
+          'Ødegaard',
+          'Martinelli',
+          'Havertz',
+          'Saka',
+        ],
+        numbers: [22, 35, 6, 2, 4, 41, 20, 8, 11, 29, 7],
+      },
+    ],
+  },
+  {
+    name: 'Unai Emery',
+    sortName: 'Emery',
+    status: 'current',
+    eras: [
+      {
+        id: 'emery-sevilla-16',
+        club: 'Sevilla',
+        years: '2015-16',
+        formation: '4-2-3-1',
+        shape: [4, 2, 3, 1],
+        summary:
+          'The third of three straight Europa League titles, built on a double pivot, obsessive opponent-specific planning and relentless wide play.',
+        points: [
+          'Two holding midfielders screen the defence so the full-backs can go',
+          'The team presses in bursts, choosing its moments rather than pressing constantly',
+          'Every match plan is tailored to the specific opponent, down to individual habits',
+        ],
+        xi: [
+          'Sergio Rico',
+          'Escudero',
+          'Rami',
+          'Carriço',
+          'Mariano',
+          'Krychowiak',
+          'N’Zonzi',
+          'Vitolo',
+          'Banega',
+          'Konoplyanka',
+          'Gameiro',
+        ],
+        numbers: [25, 3, 5, 16, 23, 4, 15, 20, 10, 11, 7],
+      },
+      {
+        id: 'emery-villa-24',
+        club: 'Aston Villa',
+        years: '2023-24',
+        formation: '4-4-2',
+        shape: [4, 4, 2],
+        summary:
+          'Champions League qualification earned with an extreme high line, an aggressive offside trap and fast, direct transitions.',
+        points: [
+          'The defensive line pushes up near halfway and steps out together to catch runners offside',
+          'Once the ball is won, the first pass goes forward at once',
+          'Watkins leads the line alone in build-up and is joined the instant the team breaks',
+        ],
+        xi: [
+          'Martínez',
+          'Digne',
+          'Pau Torres',
+          'Konsa',
+          'Cash',
+          'Bailey',
+          'Kamara',
+          'McGinn',
+          'Tielemans',
+          'Watkins',
+          'Diaby',
+        ],
+        numbers: [1, 27, 14, 4, 2, 31, 44, 7, 8, 11, 19],
+      },
+    ],
+  },
+  {
+    name: 'Xabi Alonso',
+    sortName: 'Alonso',
+    status: 'current',
+    eras: [
+      {
+        id: 'xabi-leverkusen-24',
+        club: 'Bayer Leverkusen',
+        years: '2023-24',
+        formation: '3-4-2-1',
+        shape: [3, 4, 2, 1],
+        summary:
+          'An unbeaten Bundesliga season — the first in the league’s history — with a back three, flying wing-backs and a habit of scoring impossibly late.',
+        points: [
+          'Three centre-backs who all carry the ball forward rather than just clearing it',
+          'Grimaldo and Frimpong provide the entire width, pushing on almost as forwards',
+          'Wirtz roams between the lines with licence to appear anywhere across the front',
+        ],
+        xi: [
+          'Hrádecký',
+          'Hincapié',
+          'Tah',
+          'Tapsoba',
+          'Grimaldo',
+          'Xhaka',
+          'Palacios',
+          'Frimpong',
+          'Wirtz',
+          'Hofmann',
+          'Boniface',
+        ],
+        numbers: [1, 3, 4, 12, 20, 34, 25, 30, 10, 7, 17],
+      },
+    ],
+  },
+  {
+    name: 'Rúben Amorim',
+    sortName: 'Amorim',
+    status: 'current',
+    eras: [
+      {
+        id: 'amorim-sporting-24',
+        club: 'Sporting CP',
+        years: '2023-24',
+        formation: '3-4-3',
+        shape: [3, 4, 3],
+        summary:
+          'A league title won with an unusually rigid 3-4-3 that the whole club played, from the first team down through the academy.',
+        points: [
+          'The shape barely changes: the same three at the back and the same wing-backs, every week',
+          'Gyökeres leads the line alone and runs in behind the moment possession is won',
+          'The two wide forwards tuck inside, leaving the flanks entirely to the wing-backs',
+        ],
+        xi: [
+          'Adán',
+          'Matheus Reis',
+          'Coates',
+          'Diomande',
+          'Nuno Santos',
+          'Hjulmand',
+          'Morita',
+          'Catamo',
+          'Trincão',
+          'Gyökeres',
+          'Paulinho',
+        ],
+        numbers: [1, 14, 4, 25, 19, 42, 5, 11, 17, 9, 21],
+      },
+    ],
+  },
+  {
+    name: 'Hansi Flick',
+    sortName: 'Flick',
+    status: 'current',
+    eras: [
+      {
+        id: 'flick-bayern-20',
+        club: 'Bayern Munich',
+        years: '2019-20',
+        formation: '4-2-3-1',
+        shape: [4, 2, 3, 1],
+        summary:
+          'A treble won by a team that pressed higher and defended further from its own goal than almost any side before it.',
+        points: [
+          'An extremely high defensive line, with the goalkeeper acting as the last defender',
+          'The press starts from the striker and arrives in numbers within seconds',
+          'Davies and Kimmich turn defence into attack faster than opponents can reset',
+        ],
+        xi: [
+          'Neuer',
+          'Davies',
+          'Alaba',
+          'Boateng',
+          'Pavard',
+          'Kimmich',
+          'Goretzka',
+          'Gnabry',
+          'Müller',
+          'Coman',
+          'Lewandowski',
+        ],
+        numbers: [1, 19, 27, 17, 5, 32, 18, 22, 25, 29, 9],
+      },
+    ],
+  },
+  {
+    name: 'Diego Simeone',
+    sortName: 'Simeone',
+    status: 'current',
+    eras: [
+      {
+        id: 'simeone-atleti-14',
+        club: 'Atlético Madrid',
+        years: '2013-14',
+        formation: '4-4-2',
+        shape: [4, 4, 2],
+        summary:
+          'A La Liga title taken from Barcelona and Real Madrid with two banks of four, ferocious commitment and almost no possession.',
+        points: [
+          'Two lines of four sit narrow and deep, refusing to be pulled apart',
+          'The team concedes the ball happily and attacks the moment it wins it back',
+          'Set pieces and second balls are treated as a primary route to goal',
+        ],
+        xi: [
+          'Courtois',
+          'Filipe Luís',
+          'Godín',
+          'Miranda',
+          'Juanfran',
+          'Koke',
+          'Gabi',
+          'Tiago',
+          'Arda Turan',
+          'Diego Costa',
+          'Villa',
+        ],
+        numbers: [13, 3, 2, 23, 20, 6, 14, 5, 10, 19, 7],
+      },
+    ],
+  },
+  {
+    name: 'Vincent Kompany',
+    sortName: 'Kompany',
+    status: 'current',
+    eras: [
+      {
+        id: 'kompany-bayern-25',
+        club: 'Bayern Munich',
+        years: '2024-25',
+        formation: '4-2-3-1',
+        shape: [4, 2, 3, 1],
+        summary:
+          'The Bundesliga reclaimed in his first season, with a high line, quick vertical passing and Kane leading the attack.',
+        points: [
+          'Possession is used to pin opponents in, not to slow the game down',
+          'Musiala and Olise are given freedom to drift and swap all across the front',
+          'The defensive line stays high so the pitch stays short and compact',
+        ],
+        xi: [
+          'Neuer',
+          'Davies',
+          'Kim',
+          'Upamecano',
+          'Laimer',
+          'Kimmich',
+          'Pavlović',
+          'Gnabry',
+          'Musiala',
+          'Olise',
+          'Kane',
+        ],
+        numbers: [1, 19, 3, 2, 27, 6, 45, 7, 42, 17, 9],
+      },
+    ],
+  },
+  {
+    name: 'Thomas Tuchel',
+    sortName: 'Tuchel',
+    status: 'current',
+    eras: [
+      {
+        id: 'tuchel-psg-20',
+        club: 'Paris Saint-Germain',
+        years: '2019-20',
+        formation: '4-3-3',
+        shape: [4, 3, 3],
+        summary:
+          'A domestic clean sweep and the club’s first Champions League final, with the front three given freedom and the midfield built to protect them.',
+        points: [
+          'Marquinhos drops from defence into midfield to give the back line an extra passer',
+          'Neymar and Mbappé are freed from defensive duty and kept high for the counter',
+          'The midfield three do the running so the front three do not have to',
+        ],
+        xi: [
+          'Navas',
+          'Bernat',
+          'Kimpembe',
+          'Thiago Silva',
+          'Kehrer',
+          'Herrera',
+          'Marquinhos',
+          'Gueye',
+          'Neymar',
+          'Mbappé',
+          'Di María',
+        ],
+        numbers: [1, 14, 3, 2, 4, 21, 5, 27, 10, 7, 11],
+      },
+      {
+        id: 'tuchel-chelsea-21',
+        club: 'Chelsea',
+        years: '2020-21',
+        formation: '3-4-2-1',
+        shape: [3, 4, 2, 1],
+        summary:
+          'A Champions League won in four months from mid-season, on the back of a back three that barely conceded anything at all.',
+        points: [
+          'Three centre-backs and two holding midfielders make the centre almost impossible to play through',
+          'The wing-backs supply the width, so the two forwards can stay narrow and central',
+          'Attacks are patient until the moment a runner can go beyond the last defender',
+        ],
+        xi: [
+          'Mendy',
+          'Rüdiger',
+          'Thiago Silva',
+          'Azpilicueta',
+          'Chilwell',
+          'Kanté',
+          'Jorginho',
+          'James',
+          'Mount',
+          'Havertz',
+          'Werner',
+        ],
+        numbers: [16, 2, 6, 28, 21, 7, 5, 24, 19, 29, 11],
+      },
+    ],
+  },
 ];
 
 // The dugout list is split by whether the manager is still coaching, so the
@@ -1282,6 +1619,11 @@ const CLUB_KITS: Record<string, KitPattern> = {
   Arsenal: { kind: 'sleeves', colours: ['#ef0107', '#f4f4f4'] },
   Liverpool: { kind: 'solid', colours: ['#c8102e', '#00b2a9'] },
   'Paris Saint-Germain': { kind: 'band', colours: ['#0b2b57', '#da291c'] },
+  Sevilla: { kind: 'solid', colours: ['#f4f4f4', '#d10a11'] },
+  'Aston Villa': { kind: 'sleeves', colours: ['#670e36', '#95bfe5'] },
+  'Bayer Leverkusen': { kind: 'solid', colours: ['#e32219', '#1b1b1b'] },
+  'Sporting CP': { kind: 'stripes', colours: ['#008057', '#f4f4f4'] },
+  'Atlético Madrid': { kind: 'stripes', colours: ['#f4f4f4', '#cb3524'] },
 };
 
 const SHIRT_PATH =
@@ -2313,7 +2655,7 @@ function Home() {
                 <div className="eyebrow">The dugout</div>
                 <h2 className="panel-title">Steal a blueprint</h2>
                 <p className="panel-copy">
-                  Nine serial winners, each frozen at a defining moment of their career.
+                  Seventeen serial winners, each frozen at a defining moment of their career.
                 </p>
               </div>
               <div className="panel-tabs manager-tabs" role="tablist" aria-label="Dugout sections">

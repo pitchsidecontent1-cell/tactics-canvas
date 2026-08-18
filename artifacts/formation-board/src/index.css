@@ -807,6 +807,128 @@ input:focus-visible {
   line-height: 1.3;
 }
 
+/* The custom-shape builder, shown under the Custom entry in the library. */
+.custom-builder {
+  margin: 2px 0 8px;
+  padding: 11px 12px 12px;
+  border: 1px solid hsl(var(--primary) / 0.35);
+  border-radius: 10px;
+  background: hsl(var(--primary) / 0.07);
+}
+
+.custom-builder-intro {
+  margin: 0 0 10px;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.custom-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.custom-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.custom-line-label {
+  font-family: var(--app-font-mono);
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.custom-stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.custom-stepper button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 7px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+}
+
+.custom-stepper button:hover:not(:disabled) {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+/* Dimmed rather than hidden, so the limit is visible before it is hit. */
+.custom-stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.custom-line-count {
+  min-width: 20px;
+  font-family: var(--app-font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.custom-builder-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.custom-builder-actions button {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.custom-builder-actions button:hover:not(:disabled) {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+.custom-builder-actions button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.custom-builder-total {
+  margin: 9px 0 0;
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.custom-builder-total.is-complete {
+  color: hsl(var(--primary));
+  font-weight: 700;
+}
+
 .empty-search {
   padding: 28px 16px 34px;
   color: hsl(var(--muted-foreground));
@@ -847,20 +969,6 @@ input:focus-visible {
   margin-top: 9px;
   color: hsl(var(--muted-foreground));
   font-size: 0.83rem;
-}
-
-.pitch-count {
-  flex: 0 0 auto;
-  padding: 10px 13px;
-  border: 1px solid hsl(var(--foreground));
-  border-radius: 11px;
-  background: hsl(var(--foreground));
-  color: hsl(var(--background));
-  font-family: var(--app-font-mono);
-  font-size: 0.67rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .pitch-frame {
@@ -1150,6 +1258,156 @@ input:focus-visible {
 
 .collapsible-box[open] > summary .summary-hint {
   display: none;
+}
+
+/* The clip recorder, shown under the pitch on the custom board. */
+.clip-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.clip-frames {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.clip-frame {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.clip-frame-index {
+  flex: 0 0 auto;
+  width: 25px;
+  height: 25px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.clip-frame-index:hover:not(:disabled) {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+.clip-frame-note {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 9px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: inherit;
+  font-size: 0.76rem;
+}
+
+.clip-frame-note:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.6);
+  outline-offset: 1px;
+}
+
+.clip-frame-delete {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+}
+
+.clip-frame-delete:hover:not(:disabled) {
+  border-color: hsl(var(--border));
+  color: hsl(var(--primary));
+}
+
+.clip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.clip-speed {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.clip-speed-option {
+  padding: 5px 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 7px;
+  background: hsl(var(--background));
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.clip-speed-option.is-active {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+}
+
+.clip-clear {
+  border: none;
+  background: none;
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.clip-clear:hover:not(:disabled) {
+  color: hsl(var(--primary));
+}
+
+.clip-controls .action-button:disabled,
+.clip-frame-index:disabled,
+.clip-frame-delete:disabled,
+.clip-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Hand-placed opponents are draggable; the playback ones are not. The base
+   rule sets pointer-events: none so animated markers never swallow a click
+   meant for the pitch, so dragging has to switch it back on explicitly. */
+.opponent-marker.is-draggable {
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+}
+
+.opponent-marker.is-draggable:active {
+  cursor: grabbing;
 }
 
 .gloss-footer {
@@ -1688,10 +1946,6 @@ input:focus-visible {
 
   .pitch-header {
     align-items: flex-start;
-  }
-
-  .pitch-count {
-    font-size: 0.58rem;
   }
 
   .pitch-footer {

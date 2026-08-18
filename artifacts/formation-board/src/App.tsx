@@ -14,6 +14,7 @@ import {
   ChevronRight,
   CircleDot,
   Crosshair,
+  Download,
   Eraser,
   Goal,
   Grip,
@@ -24,6 +25,7 @@ import {
   MoveUpRight,
   Pencil,
   Play,
+  Plus,
   RotateCcw,
   Search,
   X,
@@ -209,6 +211,92 @@ const FORMATIONS: Formation[] = [
   { name: '4-2-1-3', subtitle: 'Three-lane attack', shape: [4, 2, 1, 3] },
   { name: '4-4-2 Diamond', subtitle: 'Narrow midfield', shape: [4, 4, 2] },
 ];
+
+// The user-built shape, listed above the presets. Only its `shape` changes as
+// the lines are edited; roles, shirt numbers, the thumbnail and the pitch are
+// all derived from it by the same code every preset formation uses, so a
+// custom shape behaves like any other once it is on the board.
+const CUSTOM_NAME = 'Custom';
+const CUSTOM_SUBTITLE = 'Build your own';
+const DEFAULT_CUSTOM_SHAPE = [4, 4, 2];
+// A team is a keeper plus ten outfield players, spread over at most five
+// lines. Five in one line is already extreme (a back five); more than that
+// stops resembling a formation.
+const MAX_OUTFIELD = 10;
+const MAX_LINES = 5;
+const MAX_PER_LINE = 5;
+
+/** One recorded moment of a user-made clip. Frames store a full snapshot of
+ *  the board rather than a diff from the previous one: capturing is then just
+ *  "remember where everything is", and deleting a frame in the middle cannot
+ *  leave the ones after it describing positions that no longer exist. */
+type ClipFrame = {
+  id: string;
+  note: string;
+  players: Record<string, Position>;
+  ball: Position | null;
+  opponents: Position[];
+};
+
+const CLIP_STORAGE_KEY = 'tactics-canvas:custom-clip';
+const CLIP_SPEEDS: { label: string; seconds: number }[] = [
+  { label: 'Slow', seconds: 1.7 },
+  { label: 'Normal', seconds: 1.1 },
+  { label: 'Fast', seconds: 0.7 },
+];
+const DEFAULT_CLIP_SPEED = 1.1;
+const MAX_CLIP_FRAMES = 12;
+
+/** Reads a saved clip back. Anything unrecognised is discarded rather than
+ *  trusted — the value is user-editable and survives across releases. */
+function loadStoredClip(): { frames: ClipFrame[]; speed: number } {
+  const empty = { frames: [], speed: DEFAULT_CLIP_SPEED };
+  try {
+    const raw = window.localStorage.getItem(CLIP_STORAGE_KEY);
+    if (!raw) return empty;
+    const parsed = JSON.parse(raw) as { frames?: unknown; speed?: unknown };
+    if (!Array.isArray(parsed.frames)) return empty;
+    const isPoint = (value: unknown): value is Position =>
+      typeof value === 'object' &&
+      value !== null &&
+      typeof (value as Position).x === 'number' &&
+      typeof (value as Position).y === 'number';
+    const frames = parsed.frames.flatMap((frame): ClipFrame[] => {
+      if (typeof frame !== 'object' || frame === null) return [];
+      const { id, note, players, ball, opponents } = frame as Partial<ClipFrame>;
+      if (typeof id !== 'string' || typeof players !== 'object' || players === null) return [];
+      const points = Object.entries(players).filter(([, value]) => isPoint(value));
+      return [
+        {
+          id,
+          note: typeof note === 'string' ? note : '',
+          players: Object.fromEntries(points) as Record<string, Position>,
+          ball: isPoint(ball) ? ball : null,
+          opponents: Array.isArray(opponents) ? opponents.filter(isPoint) : [],
+        },
+      ];
+    });
+    const speed = CLIP_SPEEDS.some((option) => option.seconds === parsed.speed)
+      ? (parsed.speed as number)
+      : DEFAULT_CLIP_SPEED;
+    return { frames: frames.slice(0, MAX_CLIP_FRAMES), speed };
+  } catch {
+    return empty;
+  }
+}
+
+/** Names the builder's rows. A shape is written back to front, so row 0 is the
+ *  defence and the last row is the attack; anything between is midfield. */
+function lineLabel(row: number, totalRows: number): string {
+  if (row === 0) return 'Defence';
+  if (row === totalRows - 1) return 'Attack';
+  const middleCount = totalRows - 2;
+  if (middleCount === 1) return 'Midfield';
+  const middleIndex = row - 1;
+  if (middleIndex === 0) return 'Deep midfield';
+  if (middleIndex === middleCount - 1) return 'Attacking midfield';
+  return 'Midfield';
+}
 
 const MANAGERS: Manager[] = [
   {
@@ -1345,7 +1433,10 @@ function PitchLines() {
 
 function Home() {
   const [panelTab, setPanelTab] = useState<'shapes' | 'managers'>('shapes');
-  const [formation, setFormation] = useState(FORMATIONS[1]);
+  const [formation, setFormation] = useState<Formation>(FORMATIONS[1]);
+  // Kept outside `formation` so an edited custom shape survives a trip through
+  // the presets and the manager tab.
+  const [customShape, setCustomShape] = useState<number[]>(DEFAULT_CUSTOM_SHAPE);
   const [activeEra, setActiveEra] = useState<Era | null>(null);
   const [players, setPlayers] = useState<Player[]>(() => formationPlayers(FORMATIONS[1]));
   const [selectedId, setSelectedId] = useState('p1');
@@ -1360,6 +1451,14 @@ function Home() {
   const [showNumbersNote, setShowNumbersNote] = useState(false);
   const [factIndex, setFactIndex] = useState(0);
   const [opponents, setOpponents] = useState<Position[]>([]);
+  // Opponents placed by hand while building a clip. Kept apart from
+  // `opponents`, which is playback-owned and gets cleared whenever a clip
+  // stops — this set has to outlive that.
+  const [clipOpponents, setClipOpponents] = useState<Position[]>([]);
+  const [clipFrames, setClipFrames] = useState<ClipFrame[]>(() => loadStoredClip().frames);
+  const [clipSpeed, setClipSpeed] = useState<number>(() => loadStoredClip().speed);
+  const clipCounter = useRef(0);
+  const [clipSaving, setClipSaving] = useState(false);
   const [animRunning, setAnimRunning] = useState(false);
   const [animCaption, setAnimCaption] = useState('');
   const [animLoading, setAnimLoading] = useState(false);
@@ -1374,6 +1473,9 @@ function Home() {
   // used to decide which way a curved arrow should bow.
   const draftSamplesRef = useRef<Position[]>([]);
 
+  const matchesQuery = (name: string, subtitle: string) =>
+    `${name} ${subtitle}`.toLowerCase().includes(query.toLowerCase().trim());
+
   const filteredFormations = useMemo(
     () =>
       FORMATIONS.filter((item) =>
@@ -1381,6 +1483,16 @@ function Home() {
       ),
     [query],
   );
+
+  const customFormation: Formation = {
+    name: CUSTOM_NAME,
+    subtitle: CUSTOM_SUBTITLE,
+    shape: customShape,
+  };
+  const isCustom = !activeEra && formation.name === CUSTOM_NAME;
+  const customOutfield = customShape.reduce((total, count) => total + count, 0);
+  const customIsFull = customOutfield >= MAX_OUTFIELD;
+  const showCustomItem = matchesQuery(CUSTOM_NAME, CUSTOM_SUBTITLE);
 
   const selectedPlayer = players.find((player) => player.id === selectedId);
   const contentKey = activeEra ? activeEra.formation : formation.name;
@@ -1494,6 +1606,19 @@ function Home() {
 
   useEffect(() => () => animTimersRef.current.forEach((timer) => clearTimeout(timer)), []);
 
+  // Keep a recorded clip across reloads. Storage can be full or blocked
+  // (private browsing), which must not take the board down with it.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        CLIP_STORAGE_KEY,
+        JSON.stringify({ frames: clipFrames, speed: clipSpeed }),
+      );
+    } catch {
+      // Saving is a convenience; the clip still works for this session.
+    }
+  }, [clipFrames, clipSpeed]);
+
   // Shapes tab: glide the current formation into its attacking or defending
   // shape and hold it there, so the change is easy to read.
   const showShapePhase = (phase: 'attack' | 'defend') => {
@@ -1561,7 +1686,192 @@ function Home() {
     setSelectedId('p1');
     clearArrows();
     setFactIndex(0);
-    setMessage(`${nextFormation.name} loaded. Drag to make it yours.`);
+    setMessage(
+      nextFormation.name === CUSTOM_NAME
+        ? 'Your own shape. Set the lines below, then drag anyone.'
+        : `${nextFormation.name} loaded. Drag to make it yours.`,
+    );
+  };
+
+  // Puts an edited line-up straight on the pitch, so the shape being built is
+  // always the shape on screen. Arrows are left alone — they follow their
+  // player, so a line change carries them along rather than stranding them.
+  const applyCustomShape = (nextShape: number[]) => {
+    stopTactic(false);
+    setCustomShape(nextShape);
+    setFormation({ name: CUSTOM_NAME, subtitle: CUSTOM_SUBTITLE, shape: nextShape });
+    setActiveEra(null);
+    setPlayers(makePlayers(nextShape, false));
+    setSelectedId('p1');
+    setFactIndex(0);
+    const placed = nextShape.reduce((total, count) => total + count, 0);
+    setMessage(
+      placed === MAX_OUTFIELD
+        ? `Your ${nextShape.join('-')} is a full eleven.`
+        : `${nextShape.join('-')} — ${MAX_OUTFIELD - placed} more outfield to place.`,
+    );
+  };
+
+  const changeLine = (index: number, delta: number) => {
+    const next = customShape.map((count, i) => (i === index ? count + delta : count));
+    if (next[index] < 1 || next[index] > MAX_PER_LINE) return;
+    if (next.reduce((total, count) => total + count, 0) > MAX_OUTFIELD) return;
+    applyCustomShape(next);
+  };
+
+  // A new line is added at the front, which is how shapes are usually
+  // extended: 4-4-2 becomes 4-4-2-1, not 1-4-4-2.
+  const addLine = () => {
+    if (customShape.length >= MAX_LINES || customOutfield >= MAX_OUTFIELD) return;
+    applyCustomShape([...customShape, 1]);
+  };
+
+  const removeLine = () => {
+    if (customShape.length <= 2) return;
+    applyCustomShape(customShape.slice(0, -1));
+  };
+
+  // --- Recording a clip on the custom board -------------------------------
+  // Playback reuses the same runner the manager clips use; the only new part
+  // is capturing frames, which is just snapshotting wherever the pieces are.
+
+  const captureFrame = () => {
+    if (animRunning || clipFrames.length >= MAX_CLIP_FRAMES) return;
+    clipCounter.current += 1;
+    const frame: ClipFrame = {
+      id: `f${clipCounter.current}-${Date.now()}`,
+      note: '',
+      players: Object.fromEntries(players.map((p) => [p.id, { x: p.x, y: p.y }])),
+      ball: ball ? { ...ball } : null,
+      opponents: clipOpponents.map((opponent) => ({ ...opponent })),
+    };
+    setClipFrames((current) => [...current, frame]);
+    setMessage(
+      clipFrames.length === 0
+        ? 'Frame 1 captured. Move the pieces, then capture again.'
+        : `Frame ${clipFrames.length + 1} captured.`,
+    );
+  };
+
+  const setFrameNote = (id: string, note: string) => {
+    setClipFrames((current) =>
+      current.map((frame) => (frame.id === id ? { ...frame, note } : frame)),
+    );
+  };
+
+  const deleteFrame = (id: string) => {
+    setClipFrames((current) => current.filter((frame) => frame.id !== id));
+  };
+
+  const clearClip = () => {
+    stopTactic(false);
+    setClipFrames([]);
+    setMessage('Clip cleared. Capture a frame to start a new one.');
+  };
+
+  // Puts the board back into a captured frame so it can be adjusted and
+  // re-captured, rather than rebuilt from scratch.
+  const jumpToFrame = (frame: ClipFrame) => {
+    stopTactic(false);
+    setPlayers((current) =>
+      current.map((p) => (frame.players[p.id] ? { ...p, ...frame.players[p.id] } : p)),
+    );
+    setBall(frame.ball);
+    setClipOpponents(frame.opponents.map((opponent) => ({ ...opponent })));
+  };
+
+  const addOpponent = () => {
+    if (animRunning) return;
+    // Fanned across the pitch so a second opponent never lands exactly on the
+    // first one, where it would look like a single marker.
+    setClipOpponents((current) => [
+      ...current,
+      { x: 30 + ((current.length * 13) % 45), y: 34 + ((current.length * 7) % 22) },
+    ]);
+  };
+
+  const playCustomClip = () => {
+    if (clipFrames.length < 2 || animRunning) return;
+    stopTactic(false);
+    clearArrows();
+    setAnimRunning(true);
+    pitchRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    let elapsed = 700; // let the scroll settle before the first move
+    clipFrames.forEach((frame, index) => {
+      animTimersRef.current.push(
+        window.setTimeout(() => {
+          setAnimStepDuration(clipSpeed);
+          setAnimCaption(frame.note.trim() || `Frame ${index + 1}`);
+          setPlayers((current) =>
+            current.map((p) => (frame.players[p.id] ? { ...p, ...frame.players[p.id] } : p)),
+          );
+          setBall(frame.ball);
+          setOpponents(frame.opponents);
+        }, elapsed),
+      );
+      elapsed += clipSpeed * 1000 + 250;
+    });
+    animTimersRef.current.push(
+      window.setTimeout(() => {
+        // Left on the closing frame rather than reset, so the board is ready
+        // to carry on from where the clip ended.
+        setAnimRunning(false);
+        setAnimCaption('');
+        setOpponents([]);
+        setMessage('That was your clip. Move the pieces and capture to add to it.');
+      }, elapsed + 600),
+    );
+  };
+
+  // Renders the clip to an animated GIF. The encoder is a sizeable chunk of
+  // code that most visitors never need, so it is fetched on first use.
+  const downloadClip = async () => {
+    if (clipFrames.length < 2 || clipSaving) return;
+    setClipSaving(true);
+    setMessage('Building your GIF…');
+    let url: string | undefined;
+    try {
+      const { renderClipGif } = await import('./clip-gif');
+      // Read the live theme rather than hard-coding colours, so the export
+      // matches whatever the board actually looks like.
+      const styles = getComputedStyle(document.documentElement);
+      const hsl = (token: string) =>
+        `hsl(${styles.getPropertyValue(token).trim().replace(/\s+/g, ', ')})`;
+      const blob = await renderClipGif({
+        frames: clipFrames.map((frame) => ({
+          players: frame.players,
+          ball: frame.ball,
+          opponents: frame.opponents,
+          note: frame.note.trim(),
+        })),
+        roster: players.map((player) => ({
+          id: player.id,
+          number: shirtNumber(player),
+          label: player.name ?? player.role,
+        })),
+        speed: clipSpeed,
+        palette: {
+          pitch: '#2f8f56',
+          line: 'rgba(255, 248, 221, 0.92)',
+          player: hsl('--primary'),
+          playerText: hsl('--primary-foreground'),
+          opponent: 'hsl(220, 12%, 26%)',
+        },
+      });
+      url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `tactics-clip-${customShape.join('-')}.gif`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setMessage(`Saved a ${Math.round(blob.size / 1024)} KB GIF to your downloads.`);
+    } catch {
+      setMessage('Could not build the GIF. Try again, or shorten the clip.');
+    } finally {
+      if (url) URL.revokeObjectURL(url);
+      setClipSaving(false);
+    }
   };
 
   const selectEra = (era: Era, managerName: string) => {
@@ -1650,6 +1960,13 @@ function Home() {
       setBall({ x, y });
       return;
     }
+    if (drag.id.startsWith('opp-')) {
+      const index = Number(drag.id.slice(4));
+      setClipOpponents((current) =>
+        current.map((opponent, i) => (i === index ? { x, y } : opponent)),
+      );
+      return;
+    }
     setPlayers((current) =>
       current.map((player) => (player.id === drag.id ? { ...player, x, y } : player)),
     );
@@ -1704,7 +2021,18 @@ function Home() {
 
   const boardLabel = activeEra
     ? `${activeEra.club} ${activeEra.years} / ${activeEra.formation}`
-    : formation.name;
+    : isCustom
+      ? `${CUSTOM_NAME} ${customShape.join('-')}`
+      : formation.name;
+
+  // A custom shape has no write-up, but the in/out-of-possession slide is
+  // driven purely by each player's role, so it works on any eleven.
+  const showShapePhases = !activeEra && (Boolean(content) || (isCustom && customIsFull));
+
+  // While a clip plays, the markers come from the frame being shown; the rest
+  // of the time they are the ones placed by hand for the clip being built.
+  const visibleOpponents = animRunning ? opponents : clipOpponents;
+  const opponentsDraggable = isCustom && !animRunning;
 
   return (
     <main className="board-shell">
@@ -1794,6 +2122,87 @@ function Home() {
                 </label>
               </div>
               <div className="formation-list">
+                {showCustomItem && (
+                  <>
+                    <button
+                      className={`formation-item ${isCustom ? 'is-active' : ''}`}
+                      data-testid="button-formation-custom"
+                      type="button"
+                      onClick={() => selectFormation(customFormation)}
+                    >
+                      <FormationThumb shape={customShape} />
+                      <span>
+                        <span className="formation-item-name">{CUSTOM_NAME}</span>
+                        <span className="formation-item-meta">{CUSTOM_SUBTITLE}</span>
+                      </span>
+                      {isCustom ? <Crosshair size={15} /> : <Pencil size={14} />}
+                    </button>
+                    {isCustom && (
+                      <div className="custom-builder" data-testid="panel-custom-builder">
+                        <p className="custom-builder-intro">
+                          Choose how many players stand in each line. The board updates as you go,
+                          and you can still drag anyone afterwards.
+                        </p>
+                        <ul className="custom-lines">
+                          {customShape.map((count, index) => (
+                            <li className="custom-line" key={index}>
+                              <span className="custom-line-label">
+                                {lineLabel(index, customShape.length)}
+                              </span>
+                              <span className="custom-stepper">
+                                <button
+                                  aria-label={`One fewer in ${lineLabel(index, customShape.length)}`}
+                                  data-testid={`button-line-down-${index}`}
+                                  disabled={count <= 1}
+                                  onClick={() => changeLine(index, -1)}
+                                  type="button"
+                                >
+                                  <Minus size={13} />
+                                </button>
+                                <span className="custom-line-count">{count}</span>
+                                <button
+                                  aria-label={`One more in ${lineLabel(index, customShape.length)}`}
+                                  data-testid={`button-line-up-${index}`}
+                                  disabled={count >= MAX_PER_LINE || customIsFull}
+                                  onClick={() => changeLine(index, 1)}
+                                  type="button"
+                                >
+                                  <Plus size={13} />
+                                </button>
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="custom-builder-actions">
+                          <button
+                            data-testid="button-add-line"
+                            disabled={customShape.length >= MAX_LINES || customIsFull}
+                            onClick={addLine}
+                            type="button"
+                          >
+                            Add a line
+                          </button>
+                          <button
+                            data-testid="button-remove-line"
+                            disabled={customShape.length <= 2}
+                            onClick={removeLine}
+                            type="button"
+                          >
+                            Remove last
+                          </button>
+                        </div>
+                        <p
+                          className={`custom-builder-total ${customIsFull ? 'is-complete' : ''}`}
+                          data-testid="text-custom-total"
+                        >
+                          {customIsFull
+                            ? `${customShape.join('-')} — a full eleven`
+                            : `${customOutfield} of ${MAX_OUTFIELD} outfield placed`}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
                 {filteredFormations.length ? (
                   filteredFormations.map((item) => (
                     <button
@@ -1819,10 +2228,14 @@ function Home() {
                     </button>
                   ))
                 ) : (
-                  <div className="empty-search" data-testid="empty-formation-search">
-                    <strong>No shape found</strong>
-                    Try a number like 3-5-2 or clear the search.
-                  </div>
+                  // Suppressed when the search matched Custom, since the list
+                  // is not actually empty in that case.
+                  !showCustomItem && (
+                    <div className="empty-search" data-testid="empty-formation-search">
+                      <strong>No shape found</strong>
+                      Try a number like 3-5-2 or clear the search.
+                    </div>
+                  )
                 )}
               </div>
             </>
@@ -1876,9 +2289,6 @@ function Home() {
                   ? `${activeEra.summary}`
                   : 'A clean starting point for messy thinking. Pull any player into space and see the shape change.'}
               </p>
-            </div>
-            <div className="pitch-count" data-testid="text-player-count">
-              {players.length} / 11 players
             </div>
           </div>
 
@@ -2062,10 +2472,16 @@ function Home() {
                     />
                   )}
                   <span className="player-number">{shirtNumber(player)}</span>
-                  {player.name && (
+                  {/* Shapes mode labels each circle with its position initials
+                      (GK, LCB, CM…), because the number on the circle is a role
+                      number that several players can share. A name the user has
+                      typed wins, being more specific than the default. */}
+                  {(player.name || !activeEra) && (
                     <span className="player-label">
-                      {player.name}
-                      {eraJersey(player) !== undefined ? ` (${eraJersey(player)})` : ''}
+                      {player.name ?? player.role}
+                      {player.name && eraJersey(player) !== undefined
+                        ? ` (${eraJersey(player)})`
+                        : ''}
                     </span>
                   )}
                 </button>
@@ -2085,12 +2501,22 @@ function Home() {
                   }}
                 />
               )}
-              {opponents.map((opponent, index) => (
+              {visibleOpponents.map((opponent, index) => (
                 <div
                   key={`opp-${index}`}
-                  className="opponent-marker"
+                  className={`opponent-marker ${opponentsDraggable ? 'is-draggable' : ''}`}
                   style={{ left: `${opponent.x}%`, top: `${opponent.y}%` }}
-                  aria-hidden="true"
+                  {...(opponentsDraggable
+                    ? {
+                        role: 'img',
+                        'aria-label': `Opponent ${index + 1}`,
+                        onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          dragRef.current = { id: `opp-${index}` };
+                        },
+                      }
+                    : { 'aria-hidden': true as const })}
                 />
               ))}
               {animCaption && (
@@ -2231,13 +2657,12 @@ function Home() {
             </div>
           )}
           {content && (
-            // Manager eras lead with the story and the clips, so Core Ideas
-            // starts closed there; keyed so switching era re-applies it.
+            // Core Ideas starts closed so the pitch and the write-up lead;
+            // keyed so switching formation or era re-collapses it.
             <details
               className="tip-box collapsible-box"
               data-testid="panel-core-ideas"
               key={activeEra ? activeEra.id : formation.name}
-              open={!activeEra}
             >
               <summary>
                 Core Ideas
@@ -2302,7 +2727,7 @@ function Home() {
               <GlossFooter terms={coreGlossTerms} />
             </details>
           )}
-          {!activeEra && content && (
+          {showShapePhases && (
             <div className="tip-box" data-testid="panel-shape-phases">
               <strong>See the shape move</strong>
               <p className="fact-text">
@@ -2332,6 +2757,147 @@ function Home() {
               <p className="anim-disclaimer">
                 A simplified textbook shape — real teams shift by opponent, scoreline and moment.
               </p>
+            </div>
+          )}
+          {isCustom && (
+            <div className="tip-box" data-testid="panel-clip-recorder">
+              <strong>Make your own clip</strong>
+              <p className="fact-text">
+                Move the players and the ball where you want them, then capture a frame. Do that a
+                few times and press play — the board slides between your frames in order.
+              </p>
+              <div className="clip-controls">
+                <button
+                  className="action-button primary-action"
+                  data-testid="button-capture-frame"
+                  disabled={animRunning || clipFrames.length >= MAX_CLIP_FRAMES}
+                  onClick={captureFrame}
+                  type="button"
+                >
+                  <CircleDot size={14} />
+                  Capture frame
+                </button>
+                <button
+                  className="action-button"
+                  data-testid="button-play-clip"
+                  disabled={clipFrames.length < 2 || animRunning}
+                  onClick={playCustomClip}
+                  type="button"
+                >
+                  <Play size={14} />
+                  Play
+                </button>
+                <button
+                  className="action-button"
+                  data-testid="button-download-clip"
+                  disabled={clipFrames.length < 2 || animRunning || clipSaving}
+                  onClick={downloadClip}
+                  type="button"
+                >
+                  <Download size={14} />
+                  {clipSaving ? 'Building…' : 'Download GIF'}
+                </button>
+                <button
+                  className="action-button"
+                  data-testid="button-add-opponent"
+                  disabled={animRunning}
+                  onClick={addOpponent}
+                  type="button"
+                >
+                  <Shield size={14} />
+                  Add opponent
+                </button>
+                {clipOpponents.length > 0 && (
+                  <button
+                    className="action-button"
+                    data-testid="button-clear-opponents"
+                    disabled={animRunning}
+                    onClick={() => setClipOpponents([])}
+                    type="button"
+                  >
+                    <Eraser size={14} />
+                    Clear opponents
+                  </button>
+                )}
+              </div>
+              {clipFrames.length ? (
+                <>
+                  <ol className="clip-frames" data-testid="list-clip-frames">
+                    {clipFrames.map((frame, index) => (
+                      <li className="clip-frame" key={frame.id}>
+                        <button
+                          className="clip-frame-index"
+                          data-testid={`button-jump-frame-${index}`}
+                          disabled={animRunning}
+                          onClick={() => jumpToFrame(frame)}
+                          title="Put the board back to this frame"
+                          type="button"
+                        >
+                          {index + 1}
+                        </button>
+                        <input
+                          aria-label={`Caption for frame ${index + 1}`}
+                          className="clip-frame-note"
+                          data-testid={`input-frame-note-${index}`}
+                          maxLength={70}
+                          onChange={(event) => setFrameNote(frame.id, event.target.value)}
+                          placeholder="Say what happens here…"
+                          value={frame.note}
+                        />
+                        <button
+                          aria-label={`Delete frame ${index + 1}`}
+                          className="clip-frame-delete"
+                          data-testid={`button-delete-frame-${index}`}
+                          disabled={animRunning}
+                          onClick={() => deleteFrame(frame.id)}
+                          type="button"
+                        >
+                          <X size={13} />
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="clip-footer">
+                    <span className="clip-speed" role="group" aria-label="Playback speed">
+                      {CLIP_SPEEDS.map((option) => (
+                        <button
+                          className={`clip-speed-option ${clipSpeed === option.seconds ? 'is-active' : ''}`}
+                          data-testid={`button-speed-${option.label.toLowerCase()}`}
+                          key={option.label}
+                          onClick={() => setClipSpeed(option.seconds)}
+                          type="button"
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </span>
+                    <button
+                      className="clip-clear"
+                      data-testid="button-clear-clip"
+                      disabled={animRunning}
+                      onClick={clearClip}
+                      type="button"
+                    >
+                      Clear clip
+                    </button>
+                  </div>
+                  {clipFrames.length < 2 && (
+                    <p className="anim-disclaimer">
+                      One more frame and you can play it back.
+                    </p>
+                  )}
+                  {clipFrames.length >= MAX_CLIP_FRAMES && (
+                    <p className="anim-disclaimer">
+                      That is {MAX_CLIP_FRAMES} frames — the most a clip holds. Delete one to add
+                      another.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="anim-disclaimer" data-testid="text-clip-empty">
+                  No frames yet. Arrange the board, then capture your first one.
+                </p>
+              )}
             </div>
           )}
           {activeEra && activeManager && MANAGER_PLAYSTYLES[activeManager.name] && (

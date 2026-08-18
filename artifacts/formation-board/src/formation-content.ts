@@ -6,9 +6,11 @@ export type KeyRole = {
   job: string;
 };
 
+// Written for readers who are new to tactics: short bullets, everyday words,
+// and the reason behind each idea rather than the jargon name for it.
 export type CoreIdeas = {
-  inPossession: string;
-  outOfPossession: string;
+  inPossession: string[];
+  outOfPossession: string[];
   principles: string[];
   keyRoles: [KeyRole, KeyRole];
   strength: string;
@@ -23,20 +25,26 @@ export type FormationContent = {
 export const FORMATION_CONTENT: Record<string, FormationContent> = {
   '4-4-2': {
     coreIdeas: {
-      inPossession: '2-4-4 with full-backs pushing on and wingers hugging the touchline',
-      outOfPossession: 'Two flat banks of four, strikers screening the pivot',
+      inPossession: [
+        'The two wide midfielders stay near the touchlines to stretch the pitch',
+        'Both full-backs push up, so it becomes almost four attackers across the front',
+      ],
+      outOfPossession: [
+        'Two straight lines of four players, one behind the other',
+        'The two strikers stand in front of the opposition’s deepest midfielder',
+      ],
       principles: [
-        'Width comes from the wingers; full-backs overlap only when cover exists',
-        'One central midfielder holds while the other joins attacks',
-        'The strike pair works as a unit: one drops, one runs beyond',
-        'Crosses and second balls are the primary chance creation routes',
+        'Width comes from the wingers, so the full-backs only join when someone covers behind',
+        'Of the two central midfielders, one stays home while the other gets forward',
+        'The two strikers work as a pair: one comes short, one runs in behind',
+        'Most chances come from crosses and from winning the loose ball after them',
       ],
       keyRoles: [
-        { role: 'Strike partnership', job: 'Combine, occupy both centre-backs, and press the first pass together' },
-        { role: 'Holding midfielder', job: 'Screen the back four and recycle possession — only two protect the middle' },
+        { role: 'The strike pair', job: 'Play off each other, keep both centre-backs busy, and start the pressing together' },
+        { role: 'The holding midfielder', job: 'Sit in front of the defence and keep the ball moving — only two players protect the middle' },
       ],
-      strength: 'Compact, easy to organise, and dangerous from wide areas',
-      vulnerability: 'A midfield three can overload the two central midfielders',
+      strength: 'Simple to organise, hard to pull apart, and dangerous from wide areas',
+      vulnerability: 'A team playing three central midfielders can outnumber the two in here',
     },
     funFacts: [
       'The 4-4-2 grew out of English football in the 1960s, with Alf Ramsey\u2019s England popularising a four-man midfield on the way to the 1966 World Cup.',
@@ -46,20 +54,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-3-3': {
     coreIdeas: {
-      inPossession: '2-3-5 with full-backs or the eight-space midfielders providing the extra line',
-      outOfPossession: '4-1-4-1 or 4-5-1 as the wingers drop onto the full-backs',
+      inPossession: [
+        'The two wingers stay high and wide, pinning the opposition full-backs back',
+        'The full-backs and midfielders push up to add an extra line of attackers',
+      ],
+      outOfPossession: [
+        'The wingers drop back alongside the midfield to make a bank of four or five',
+        'The front players press first, before the ball reaches midfield',
+      ],
       principles: [
-        'Width is fixed by the wingers so the full-backs can pick their moments',
-        'The single pivot screens the back line and sets the tempo',
-        'Two number eights break lines with runs into the half-spaces',
-        'The front three press the opposition build-up as the first defensive wave',
+        'The wingers hold the width, which frees the full-backs to pick their moments',
+        'One deep midfielder shields the defence and sets the passing tempo',
+        'The two midfielders ahead of him run forward into the gaps either side of the centre',
+        'Pressing starts with the front three, as the first line of defence',
       ],
       keyRoles: [
-        { role: 'Single pivot', job: 'Protect the space in front of the defence and dictate the rhythm of build-up' },
-        { role: 'Wingers', job: 'Stay high and wide to isolate full-backs one-v-one' },
+        { role: 'The deep midfielder', job: 'Protect the space in front of the defence and start most attacks with his passing' },
+        { role: 'The wingers', job: 'Stay high and wide so they get one-against-one chances against the full-backs' },
       ],
-      strength: 'Natural triangles everywhere make it the classic possession shape',
-      vulnerability: 'The lone pivot can be swamped if the eights push too high',
+      strength: 'Players are always spread into passing triangles, so there is usually an easy option',
+      vulnerability: 'If the two forward midfielders push on too far, the deep one is left alone',
     },
     funFacts: [
       'The 4-3-3 became famous through Rinus Michels\u2019 Ajax and the Dutch national team of the early 1970s, the sides that gave the world Total Football.',
@@ -69,20 +83,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-2-3-1': {
     coreIdeas: {
-      inPossession: 'Double pivot splits, the ten floats between the lines, wingers cut inside',
-      outOfPossession: 'Compact 4-4-1-1 with the ten pressing the deepest midfielder',
+      inPossession: [
+        'The two deep midfielders split apart to help the defenders start attacks',
+        'The wingers cut inside while the full-backs overlap around them',
+      ],
+      outOfPossession: [
+        'A compact block, with the creative midfielder marking the opponent’s deepest passer',
+        'The wingers drop back to help the full-backs',
+      ],
       principles: [
-        'Width is created by wingers who attack inside channels while full-backs overlap',
-        'Two holders share screening duties so one can always step out',
-        'The number ten links midfield to attack and finds pockets between lines',
-        'The lone striker pins both centre-backs to keep space open for the ten',
+        'Width comes from the full-backs, because the wingers attack the inside channels',
+        'Two deep midfielders share the defending, so one can always step forward',
+        'The creative midfielder connects midfield to attack by finding gaps between the lines',
+        'The lone striker occupies both centre-backs to keep space free behind them',
       ],
       keyRoles: [
-        { role: 'Number ten', job: 'Live between the lines, receive on the half-turn, and feed the front three' },
-        { role: 'Double pivot', job: 'One destroys, one distributes — together they free the four attackers' },
+        { role: 'The number ten', job: 'Find pockets of space between their midfield and defence, and turn to face goal' },
+        { role: 'The two deep midfielders', job: 'One breaks up play, the other passes — together they free up the four attackers' },
       ],
-      strength: 'Balances attacking numbers with two dedicated midfield protectors',
-      vulnerability: 'If the ten is marked out of the game, attack and midfield disconnect',
+      strength: 'Plenty of attackers, but still two dedicated protectors in front of the defence',
+      vulnerability: 'If the creative midfielder is marked out, attack and midfield lose their link',
     },
     funFacts: [
       'The 4-2-3-1 spread through Spanish and French football in the 1990s and became Europe\u2019s default shape by the 2010 World Cup, which Spain won using it.',
@@ -92,20 +112,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-1-4-1': {
     coreIdeas: {
-      inPossession: 'The pivot drops between or ahead of the centre-backs while the eights push up',
-      outOfPossession: 'Two tight banks with the pivot patrolling the gap between them',
+      inPossession: [
+        'The single deep midfielder drops between or in front of the centre-backs to help build',
+        'The two central midfielders push forward to support the striker',
+      ],
+      outOfPossession: [
+        'Two tight lines of four and five, with one player patrolling the gap between them',
+        'The striker presses alone and forces play towards the touchline',
+      ],
       principles: [
-        'Width comes from the wide midfielders staying disciplined on the touchline',
-        'The lone pivot screens the back four and is the out-ball under pressure',
-        'The two central midfielders arrive late in the box rather than starting high',
-        'The striker presses alone, steering play toward the touchlines',
+        'The wide midfielders stay disciplined near the touchline to keep the shape',
+        'The single deep midfielder shields the defence and is the safe pass under pressure',
+        'The two central midfielders arrive in the box late rather than starting high up',
+        'The lone striker steers the opposition sideways instead of chasing everywhere',
       ],
       keyRoles: [
-        { role: 'Anchor', job: 'Hold the space in front of the defence and start every attack' },
-        { role: 'Box-to-box midfielders', job: 'Cover ground in both directions and crash the box late' },
+        { role: 'The anchor', job: 'Hold the space in front of the defence and begin nearly every attack' },
+        { role: 'The two central midfielders', job: 'Cover ground box to box and get into the penalty area late' },
       ],
-      strength: 'Extremely hard to play through centrally',
-      vulnerability: 'The lone striker can be isolated for long spells',
+      strength: 'Extremely difficult to play through down the middle',
+      vulnerability: 'The lone striker can be left isolated with no one near him',
     },
     funFacts: [
       'The 4-1-4-1 rose to prominence as a pressing shape in the 2000s, prized for the clean five-man second line it creates without the ball.',
@@ -115,20 +141,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-4-1-1': {
     coreIdeas: {
-      inPossession: 'The second striker drops into pockets while wide midfielders push high',
-      outOfPossession: 'A 4-4-2 look, with the withdrawn forward cutting passing lanes to the pivot',
+      inPossession: [
+        'The second striker drops into the space behind the front man to link play',
+        'The wide midfielders push high to support the attack',
+      ],
+      outOfPossession: [
+        'It looks like two banks of four, with an extra forward just in front',
+        'That withdrawn forward blocks passes into the opponent’s deepest midfielder',
+      ],
       principles: [
-        'Width is supplied by the two wide midfielders, not the full-backs',
-        'The second striker is the free man — finding him between the lines is the plan',
-        'Central midfielders stay disciplined; runs beyond come from wide players',
-        'Quick combinations between the front two spring the attack',
+        'Width comes from the two wide midfielders, not from the full-backs',
+        'The second striker is the free man — finding him is the whole plan',
+        'The central midfielders stay disciplined; the forward runs come from wide',
+        'Quick one-twos between the two forwards spring the attack',
       ],
       keyRoles: [
-        { role: 'Withdrawn forward', job: 'Drift between the lines, link play, and arrive unmarked in the box' },
-        { role: 'Wide midfielders', job: 'Provide both width in attack and cover for the full-backs' },
+        { role: 'The withdrawn forward', job: 'Drift into gaps, link the play, and arrive unmarked in the box' },
+        { role: 'The wide midfielders', job: 'Provide the width going forward and cover the full-backs behind' },
       ],
-      strength: 'The free role between the lines is very hard to mark with a back four',
-      vulnerability: 'Only one true striker, so the box can be under-populated',
+      strength: 'A player floating between the lines is very awkward for a back four to pick up',
+      vulnerability: 'With only one true striker, there can be too few bodies in the box',
     },
     funFacts: [
       'The 4-4-1-1 is the classic vehicle for a deep-lying forward, a role Italian football romanticised as the fantasista playing "between the lines".',
@@ -138,20 +170,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-5-1': {
     coreIdeas: {
-      inPossession: 'Wide midfielders become wingers and the shape morphs toward a 4-3-3',
-      outOfPossession: 'A five-man midfield wall in front of a flat back four',
+      inPossession: [
+        'The wide midfielders push up and it starts to look like a front three',
+        'The striker holds the ball up so the rest of the team can move up the pitch',
+      ],
+      outOfPossession: [
+        'A wall of five midfielders in front of a flat back four',
+        'The whole block slides side to side together',
+      ],
       principles: [
-        'Width comes from the wide midfielders sprinting forward in transition',
+        'Width comes from the wide midfielders sprinting forward when possession is won',
         'Three central midfielders win the numbers game in the middle',
-        'The striker holds the ball up alone to let the team climb the pitch',
-        'Compactness first: the block shifts side to side as one unit',
+        'The striker holds the ball alone to buy time for support to arrive',
+        'Staying compact matters more than pressing high',
       ],
       keyRoles: [
-        { role: 'Target striker', job: 'Occupy defenders alone, hold up long balls, and buy time for runners' },
-        { role: 'Central midfield trio', job: 'Outnumber opposing midfields and shield the defence' },
+        { role: 'The target striker', job: 'Occupy the defenders alone, hold up long balls, and wait for runners' },
+        { role: 'The central three', job: 'Outnumber the opposition midfield and shield the back four' },
       ],
-      strength: 'Owns central midfield and is very hard to break down',
-      vulnerability: 'Can become passive and camp too deep with only one outlet',
+      strength: 'Controls the centre of the pitch and is very hard to break down',
+      vulnerability: 'Can drop too deep and leave the striker with no support at all',
     },
     funFacts: [
       'The 4-5-1 became a staple of European away performances in the 2000s, when packing midfield was the accepted way to survive on the road.',
@@ -161,20 +199,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-2-2-2': {
     coreIdeas: {
-      inPossession: 'A box midfield: two holders behind two free-roaming creators',
-      outOfPossession: 'Narrow 4-4-2 that concedes the flanks to protect the middle',
+      inPossession: [
+        'Four midfielders form a box: two sitting, two attacking',
+        'The two attacking midfielders play in the gaps between the centre and the wings',
+      ],
+      outOfPossession: [
+        'A narrow shape that gives up the flanks to protect the middle',
+        'The two strikers stay central, ready for the counter',
+      ],
       principles: [
-        'Width comes almost entirely from the full-backs bombing forward',
-        'The two attacking midfielders live in the half-spaces, never wide',
-        'Vertical passing through the box of four midfielders breaks lines quickly',
-        'The strike pair stays central to finish the moves the box creates',
+        'Almost all the width comes from the full-backs running forward',
+        'The two attacking midfielders stay inside, never out by the touchline',
+        'Forward passes through the box of four midfielders break lines quickly',
+        'The two strikers stay central to finish the chances that creates',
       ],
       keyRoles: [
-        { role: 'Attacking mid pair', job: 'Roam the half-spaces, combine through the centre, and slide passes to the strikers' },
-        { role: 'Full-backs', job: 'Supply every inch of width — the shape fails if they cannot get forward' },
+        { role: 'The attacking midfield pair', job: 'Roam the inside channels, combine through the middle, and slide passes to the strikers' },
+        { role: 'The full-backs', job: 'Supply every bit of width — the shape fails if they cannot get forward' },
       ],
-      strength: 'Overloads the centre and creates fast vertical combinations',
-      vulnerability: 'Huge spaces behind the full-backs on the counter',
+      strength: 'Floods the centre and creates quick, direct combinations',
+      vulnerability: 'Leaves huge space behind the full-backs when possession is lost',
     },
     funFacts: [
       'The 4-2-2-2 with its "magic square" midfield is a Brazilian and South American classic, associated with Tel\u00ea Santana\u2019s beloved 1982 Brazil side.',
@@ -184,20 +228,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-3-1-2': {
     coreIdeas: {
-      inPossession: 'Narrow diamond-like attack with the ten feeding a strike pair',
-      outOfPossession: 'The ten drops onto the opposition pivot to form a tight 4-4-2 diamond block',
+      inPossession: [
+        'A narrow attack, with a creative midfielder feeding two strikers',
+        'The full-backs provide all the width by overlapping high',
+      ],
+      outOfPossession: [
+        'The creator drops onto the opponent’s deepest midfielder',
+        'It becomes a tight, narrow block through the middle',
+      ],
       principles: [
-        'All width comes from the full-backs; the midfield stays narrow by design',
-        'The number ten operates in the pocket behind two strikers',
-        'The midfield three rotates to cover the flanks when full-backs push on',
-        'Central overloads and quick one-twos are the route to goal',
+        'All the width comes from the full-backs; the midfield stays deliberately narrow',
+        'The creative midfielder plays in the space just behind the two strikers',
+        'The midfield three shuffle across to cover the flanks when full-backs go forward',
+        'Goals come from central overloads and quick one-twos',
       ],
       keyRoles: [
-        { role: 'Number ten', job: 'Play the final pass between two strikers making opposite movements' },
-        { role: 'Full-backs', job: 'Deliver the width the narrow midfield deliberately gives up' },
+        { role: 'The number ten', job: 'Play the final pass to two strikers making opposite runs' },
+        { role: 'The full-backs', job: 'Deliver the width that the narrow midfield deliberately gives up' },
       ],
-      strength: 'Outnumbers almost any midfield centrally',
-      vulnerability: 'Exposed in wide areas if the full-backs are pinned back',
+      strength: 'Outnumbers almost any midfield in the middle of the pitch',
+      vulnerability: 'Very exposed out wide if the full-backs are pinned back',
     },
     funFacts: [
       'The 4-3-1-2 is a staple of Italian football, where narrow midfields and playmakers in the hole have a long tradition.',
@@ -207,20 +257,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-3-2-1': {
     coreIdeas: {
-      inPossession: 'Two trequartistas float behind a lone striker in a narrow "tree" shape',
-      outOfPossession: 'The two tens tuck in to clog the centre in a compact 4-5-1',
+      inPossession: [
+        'Two creative players float behind a lone striker, in a narrow, tapering shape',
+        'The full-backs and midfielders step wide when width is needed',
+      ],
+      outOfPossession: [
+        'The two creators tuck inside to clog the middle',
+        'It becomes a compact block with five across midfield',
+      ],
       principles: [
-        'Width comes only from full-backs and midfield shuttlers stepping wide',
-        'The two attacking mids overload the space in front of the opposition pivot',
-        'The striker pins the centre-backs so the tens receive facing goal',
-        'Patient central combinations rather than crosses create the chances',
+        'Width comes only from the full-backs and from midfielders stepping out',
+        'The two attacking midfielders crowd the space in front of the opposition’s deep midfielder',
+        'The striker keeps the centre-backs busy so those two can receive facing goal',
+        'Chances come from patient passing through the middle, not from crosses',
       ],
       keyRoles: [
-        { role: 'Twin playmakers', job: 'Share the creative burden and interchange so neither can be man-marked' },
-        { role: 'Lone striker', job: 'Occupy the whole back line and finish moves built through the middle' },
+        { role: 'The two creators', job: 'Share the creative work and swap positions so neither can be man-marked' },
+        { role: 'The lone striker', job: 'Occupy the whole back line and finish the moves built through the middle' },
       ],
-      strength: 'Almost impossible to defend the two floating creators with a standard back four',
-      vulnerability: 'Very narrow — teams that switch play quickly can pull it apart',
+      strength: 'Two free creators are very hard for a standard back four to track',
+      vulnerability: 'Very narrow, so a team that switches play quickly can stretch it apart',
     },
     funFacts: [
       'The 4-3-2-1 is nicknamed the "Christmas tree" for its tapering rows of four, three, two and one.',
@@ -230,20 +286,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-3-3 Attack': {
     coreIdeas: {
-      inPossession: 'An aggressive 2-3-5 with both eights and both wingers in the final third',
-      outOfPossession: 'Immediate counter-press; the shape gambles on winning the ball high',
+      inPossession: [
+        'An all-out attacking shape, with both midfielders and both wingers high up',
+        'The full-backs step into midfield rather than staying home',
+      ],
+      outOfPossession: [
+        'The ball is hunted immediately, high up the pitch',
+        'The shape gambles on winning it back before the opponent can counter',
+      ],
       principles: [
-        'Wingers stay pinned to the last line to threaten in behind constantly',
-        'Both eights attack the box while the pivot holds the centre alone',
-        'Full-backs step into midfield or underlap rather than staying home',
-        'Losing the ball triggers a five-second swarm to win it back',
+        'The wingers stay on the last defender to constantly threaten in behind',
+        'Both central midfielders attack the box while one player holds the centre alone',
+        'The full-backs step inside or run beyond, instead of sitting back',
+        'Losing the ball triggers an immediate swarm to win it straight back',
       ],
       keyRoles: [
-        { role: 'Advanced eights', job: 'Arrive in the box as extra attackers, effectively creating a front five' },
-        { role: 'Lone pivot', job: 'Sweep up counters alone — the most exposed job on the pitch' },
+        { role: 'The advanced midfielders', job: 'Arrive in the box as extra attackers, effectively making a front five' },
+        { role: 'The lone holder', job: 'Deal with counter-attacks by himself — the most exposed job on the pitch' },
       ],
-      strength: 'Overwhelms deep blocks with sheer numbers in the final third',
-      vulnerability: 'One missed press leaves the pivot and centre-backs on an island',
+      strength: 'Overwhelms deep defences with sheer numbers in the final third',
+      vulnerability: 'One failed press leaves the holder and centre-backs badly outnumbered',
     },
     funFacts: [
       'The attacking 4-3-3 with high eights is the signature of Jürgen Klopp\u2019s Liverpool and Pep Guardiola\u2019s Manchester City, the sides that defined the Premier League\u2019s late-2010s duopoly.',
@@ -253,20 +315,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '3-4-3': {
     coreIdeas: {
-      inPossession: 'Three builders at the back, wing-backs as the width, a fluid front three',
-      outOfPossession: '5-4-1 as the wing-backs drop to make a back five',
+      inPossession: [
+        'Three defenders build from the back while the wing-backs provide the width',
+        'A fluid front three interchange positions ahead of them',
+      ],
+      outOfPossession: [
+        'The wing-backs drop back to make a back five',
+        'The front players screen the middle in a compact block',
+      ],
       principles: [
-        'All width comes from the two wing-backs, who must cover the full touchline',
-        'The back three splits wide to bait and then bypass the first press',
-        'The two central midfielders screen and switch play from side to side',
-        'The wide forwards play inside, between full-back and centre-back',
+        'All the width comes from the two wing-backs, who cover the whole touchline',
+        'The back three spread wide to invite pressure, then pass around it',
+        'The two central midfielders shield the defence and switch play side to side',
+        'The wide forwards play inside, between the full-back and centre-back',
       ],
       keyRoles: [
-        { role: 'Wing-backs', job: 'Own an entire flank each, defending like full-backs and attacking like wingers' },
-        { role: 'Central striker', job: 'Link the two inside forwards and pin the middle centre-back' },
+        { role: 'The wing-backs', job: 'Own an entire flank each — defend like full-backs, attack like wingers' },
+        { role: 'The central striker', job: 'Link the two inside forwards and occupy the middle centre-back' },
       ],
-      strength: 'Extra man in build-up plus genuine width high up the pitch',
-      vulnerability: 'Wing-backs caught upfield leave a slow back three exposed wide',
+      strength: 'An extra man in build-up, plus real width high up the pitch',
+      vulnerability: 'If the wing-backs are caught forward, the back three is exposed out wide',
     },
     funFacts: [
       'The 3-4-3 has deep Dutch roots — Johan Cruyff used a diamond-midfield version at Barcelona to free an extra attacker.',
@@ -276,20 +344,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '3-4-1-2': {
     coreIdeas: {
-      inPossession: 'A ten knits play between wing-back width and a central strike pair',
-      outOfPossession: '5-3-2 with the ten dropping onto the opposition pivot',
+      inPossession: [
+        'A creator links the wing-backs’ width to two central strikers',
+        'The wide centre-backs step out with the ball to start attacks',
+      ],
+      outOfPossession: [
+        'It becomes a back five with three in midfield',
+        'The creator drops onto the opponent’s deepest midfielder',
+      ],
       principles: [
-        'Wing-backs supply all the width so the front three can stay central',
-        'The number ten finds pockets behind the strikers\u2019 pinning runs',
+        'The wing-backs supply all the width so the front three can stay central',
+        'The creator finds space behind the strikers while they occupy the defenders',
         'The two central midfielders stay home to protect the back three',
-        'Diagonal balls from the wide centre-backs find wing-backs in stride',
+        'Long diagonal passes from the wide centre-backs find the wing-backs running',
       ],
       keyRoles: [
-        { role: 'Number ten', job: 'Operate in the pocket between the lines and feed two strikers' },
-        { role: 'Outside centre-backs', job: 'Step out with the ball and defend the channels behind the wing-backs' },
+        { role: 'The number ten', job: 'Operate between the lines and feed two strikers' },
+        { role: 'The outside centre-backs', job: 'Step forward with the ball and defend the space behind the wing-backs' },
       ],
-      strength: 'Strike pair plus a ten gives constant central threat',
-      vulnerability: 'Only two central midfielders behind an aggressive front three',
+      strength: 'Two strikers plus a creator gives a constant threat through the middle',
+      vulnerability: 'Only two central midfielders sit behind a very attacking front three',
     },
     funFacts: [
       'The 3-4-1-2 flourished in Serie A in the late 1990s and 2000s, when back-three systems remained mainstream in Italy long after they faded elsewhere.',
@@ -299,20 +373,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '3-4-2-1': {
     coreIdeas: {
-      inPossession: 'Two free eights/tens float behind a lone striker, wing-backs stay wide',
-      outOfPossession: 'A 5-4-1 block with the two tens tucking in beside the pivots',
+      inPossession: [
+        'Two free attackers float behind a lone striker',
+        'The wing-backs stay wide to stretch the pitch',
+      ],
+      outOfPossession: [
+        'A back five with four in front, and the two creators tucking inside',
+        'Very few gaps are left through the middle',
+      ],
       principles: [
-        'Width from wing-backs; the two attacking mids live in the half-spaces',
-        'The striker pins the central defender so the tens receive facing goal',
-        'The back three plus double pivot form a secure five-man rest defence',
-        'Third-man combinations through the half-spaces unlock deep blocks',
+        'Width comes from the wing-backs; the two attackers live in the inside channels',
+        'The striker occupies the central defender so those two can receive facing goal',
+        'The back three and two midfielders form a secure base against counter-attacks',
+        'Passing combinations through the inside channels unlock deep defences',
       ],
       keyRoles: [
-        { role: 'Twin number tens', job: 'Interchange across both half-spaces to overload either flank' },
-        { role: 'Double pivot', job: 'Recycle possession and snuff out counters before they start' },
+        { role: 'The two free attackers', job: 'Swap sides constantly to overload whichever flank the ball is on' },
+        { role: 'The midfield pair', job: 'Keep possession ticking and snuff out counter-attacks before they start' },
       ],
-      strength: 'Half-space overloads with a very secure base behind them',
-      vulnerability: 'Lone striker can be starved if the tens are tracked',
+      strength: 'Overloads the inside channels while staying very secure at the back',
+      vulnerability: 'The lone striker can be starved if the two creators are tracked',
     },
     funFacts: [
       'The 3-4-2-1 became one of Europe\u2019s most fashionable shapes in the late 2010s, blending the security of a back five with two free creators.',
@@ -322,20 +402,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '3-5-2': {
     coreIdeas: {
-      inPossession: 'A midfield five dominates the centre while wing-backs stretch the pitch',
-      outOfPossession: '5-3-2 with the wing-backs completing a back five',
+      inPossession: [
+        'Five midfielders dominate the centre while the wing-backs stretch the pitch',
+        'The spare centre-back steps forward with the ball',
+      ],
+      outOfPossession: [
+        'The wing-backs drop in to complete a back five',
+        'Three midfielders screen in front of them',
+      ],
       principles: [
-        'Width comes exclusively from the wing-backs on both flanks',
-        'Three central midfielders control tempo and win second balls',
-        'The strike pair splits the centre-backs and attacks crosses together',
-        'The spare centre-back steps into midfield with the ball',
+        'Width comes only from the wing-backs, on both sides',
+        'Three central midfielders control the tempo and win the loose balls',
+        'The two strikers split the centre-backs and attack crosses together',
+        'The spare centre-back can step into midfield when his team has the ball',
       ],
       keyRoles: [
-        { role: 'Wing-backs', job: 'Sprint the full length of the flank all game — the engine of the system' },
-        { role: 'Central midfield trio', job: 'Outnumber opponents in the middle and feed the wing-backs\u2019 runs' },
+        { role: 'The wing-backs', job: 'Run the full length of the flank all game — the engine of the system' },
+        { role: 'The midfield three', job: 'Outnumber the opposition in the middle and feed the wing-backs’ runs' },
       ],
-      strength: 'Numerical superiority in central midfield and at the back',
-      vulnerability: 'Slow wing-backs turn it into a passive 5-3-2 with no width',
+      strength: 'Extra men both in central midfield and at the back',
+      vulnerability: 'If the wing-backs tire or lack pace, the team has no width at all',
     },
     funFacts: [
       'Carlos Bilardo\u2019s Argentina popularised the 3-5-2 at the 1986 World Cup, building the midfield five around Diego Maradona.',
@@ -345,20 +431,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '3-1-4-2': {
     coreIdeas: {
-      inPossession: 'The anchor links a back three to an aggressive line of four behind two strikers',
-      outOfPossession: 'The midfield four drops beside the anchor to form a 5-3-2 or flat block',
+      inPossession: [
+        'One deep midfielder links a back three to an aggressive line of four',
+        'Two strikers stay high, with midfielders running past them',
+      ],
+      outOfPossession: [
+        'The midfield four drops in alongside the deep midfielder',
+        'The whole team presses high to pin opponents in their own half',
+      ],
       principles: [
-        'Width from the wide midfielders pushing on like advanced wing-backs',
-        'The single pivot connects defence to attack and covers both half-spaces',
-        'The interior midfielders make runs beyond the strikers',
-        'High pressing from the front six pins opponents in their own half',
+        'Width comes from the wide midfielders pushing on like extra wing-backs',
+        'The single deep midfielder connects defence to attack and covers both sides',
+        'The inside midfielders run beyond the strikers, not just up to them',
+        'Pressing from the front six keeps the game in the opponent’s half',
       ],
       keyRoles: [
-        { role: 'Anchor', job: 'Alone at the base — screens, circulates, and reads every counter' },
-        { role: 'Interior midfielders', job: 'Arrive beyond the strike pair to turn a front two into a front four' },
+        { role: 'The anchor', job: 'Alone at the base — shield, pass, and read every counter-attack' },
+        { role: 'The inside midfielders', job: 'Run past the two strikers to turn a front two into a front four' },
       ],
-      strength: 'Ferocious pressing structure with runners from everywhere',
-      vulnerability: 'Enormous physical demands; gaps appear as legs tire',
+      strength: 'A ferocious pressing shape with runners arriving from everywhere',
+      vulnerability: 'Physically brutal to play — gaps appear as legs tire',
     },
     funFacts: [
       'The 3-1-4-2 is closely associated with Marcelo Bielsa, whose sides at Athletic Bilbao and Leeds pressed man-for-man from this aggressive base.',
@@ -368,20 +460,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '5-3-2': {
     coreIdeas: {
-      inPossession: 'Wing-backs release while a back three plus midfield trio keep a safe base',
-      outOfPossession: 'A disciplined five-man defensive line with three screeners in front',
+      inPossession: [
+        'The wing-backs push forward while a back three and midfield trio stay safe',
+        'Attacks often come from long passes and the strikers running the channels',
+      ],
+      outOfPossession: [
+        'A disciplined line of five defenders with three midfielders in front',
+        'The team sits deep and gives up space out wide',
+      ],
       principles: [
-        'Width comes from the wing-backs choosing their moments to push on',
-        'The back five defends the width of the box; wide areas are conceded early',
-        'The midfield three blocks central passing lanes before defending flanks',
-        'Long diagonals and the strike pair\u2019s channel runs spring counters',
+        'Width comes from the wing-backs picking their moments to go',
+        'The back five defends the width of the penalty box; wide areas are conceded early',
+        'The midfield three block the middle before worrying about the flanks',
+        'Counter-attacks start with long diagonals and the strikers running in behind',
       ],
       keyRoles: [
-        { role: 'Middle centre-back', job: 'Organise the line, sweep behind, and start attacks with line-breaking passes' },
-        { role: 'Strike pair', job: 'Stay connected on counters — one holds the ball, one runs the channel' },
+        { role: 'The middle centre-back', job: 'Organise the line, cover behind it, and start attacks with forward passes' },
+        { role: 'The strike pair', job: 'Stay connected on the counter — one holds the ball, one runs beyond' },
       ],
-      strength: 'Extremely solid central defensive block',
-      vulnerability: 'Sits deep by nature and can struggle to get out',
+      strength: 'Extremely solid through the middle',
+      vulnerability: 'Naturally sits deep and can struggle to get out of its own half',
     },
     funFacts: [
       'The 5-3-2 with a sweeper carried West Germany to the 1990 World Cup, with Franz Beckenbauer coaching the shape he had once defined as a player.',
@@ -391,20 +489,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '5-4-1': {
     coreIdeas: {
-      inPossession: 'Direct balls to the lone striker with wing-backs joining when safe',
-      outOfPossession: 'Two deep banks of five and four — the classic low block',
+      inPossession: [
+        'Direct passes to the lone striker, with wing-backs joining only when safe',
+        'Set pieces and long throws become genuine scoring chances',
+      ],
+      outOfPossession: [
+        'Two deep lines of five and four — the classic defensive wall',
+        'Nine players sit behind the ball',
+      ],
       principles: [
-        'Deny space in behind first; the line only steps up on clear triggers',
+        'Deny space behind first; the defence only steps up on clear signals',
         'Wide midfielders double up with wing-backs against dangerous wingers',
         'The striker defends the front zone alone and starts every counter',
-        'Set pieces and long throws are treated as first-class scoring routes',
+        'Set pieces are treated as a main route to goal, not an afterthought',
       ],
       keyRoles: [
-        { role: 'Lone striker', job: 'Chase alone, hold the ball under pressure, and win the free-kicks that matter' },
-        { role: 'Wide midfielders', job: 'Sprint 80 metres both ways to link the block to the counter' },
+        { role: 'The lone striker', job: 'Chase alone, hold the ball under pressure, and win the free kicks that matter' },
+        { role: 'The wide midfielders', job: 'Sprint the length of the pitch both ways to link defence and counter' },
       ],
-      strength: 'Nine players behind the ball make clear chances rare',
-      vulnerability: 'Almost no presence in attack; one goal down can mean chasing shadows',
+      strength: 'With nine behind the ball, clear chances are rare',
+      vulnerability: 'Almost no attacking presence — going a goal down means chasing the game',
     },
     funFacts: [
       'The 5-4-1 low block is the great equaliser of knockout football, the default shape for underdogs protecting a result.',
@@ -414,19 +518,25 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '5-2-3': {
     coreIdeas: {
-      inPossession: 'A front three stays high while wing-backs turn the five into a three',
-      outOfPossession: '5-2-3 press or a 5-4-1 as the wide forwards drop onto wing-backs',
+      inPossession: [
+        'A front three stays high while the wing-backs push on',
+        'Fast counter-attacks release the front three the moment the ball is won',
+      ],
+      outOfPossession: [
+        'The front three press while a back five stays as insurance',
+        'The wide forwards drop back when the team needs a deeper block',
+      ],
       principles: [
-        'The front three press high while the back five keeps insurance behind',
-        'Width in attack comes from wing-backs underlapping the wide forwards',
-        'The two pivots must cover the whole central corridor between the lines',
-        'Fast counters release the front three the instant the ball is won',
+        'The front three press high while the back five stays safe behind',
+        'Attacking width comes from wing-backs running inside the wide forwards',
+        'Only two midfielders cover the whole central area, so positioning must be perfect',
+        'The front three break at speed the instant possession is won',
       ],
       keyRoles: [
-        { role: 'Wide forwards', job: 'Counter-attack from high positions and trap the opposition build-up' },
-        { role: 'Double pivot', job: 'Hold the huge middle zone alone — positioning must be perfect' },
+        { role: 'The wide forwards', job: 'Counter-attack from high positions and trap the opponent’s build-up' },
+        { role: 'The midfield pair', job: 'Hold the huge space in the middle between defence and attack' },
       ],
-      strength: 'Combines a back-five safety net with a genuine front-three counter threat',
+      strength: 'Combines a back-five safety net with a genuine three-man counter threat',
       vulnerability: 'Only two midfielders — teams that play through the middle find gaps',
     },
     funFacts: [
@@ -437,20 +547,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '5-3-1-1': {
     coreIdeas: {
-      inPossession: 'The ten links a lone striker to a midfield three breaking forward',
-      outOfPossession: 'A 5-3-2-style block with the ten screening the opposition pivot',
+      inPossession: [
+        'A creator links the lone striker to a midfield three breaking forward',
+        'The wing-backs join only when the counter is clearly on',
+      ],
+      outOfPossession: [
+        'A back five and midfield three form the block',
+        'The two forwards stay high, ready for the counter',
+      ],
       principles: [
-        'The back five and midfield three form the block; the front two stay for counters',
-        'The number ten is the out-ball — every clearance looks for his feet',
-        'Wing-backs join attacks only when the counter is clearly on',
-        'The striker runs channels to drag defenders from the ten\u2019s pocket',
+        'The back five and midfield three do the defending; the front two stay up',
+        'The creator is the escape route — every clearance looks for his feet',
+        'The wing-backs only commit forward when the counter is clearly on',
+        'The striker runs the channels to drag defenders away from the creator',
       ],
       keyRoles: [
-        { role: 'Number ten', job: 'Turn survival into counters by carrying or releasing the first pass' },
-        { role: 'Middle centre-back', job: 'Command the deepest line and keep the block connected' },
+        { role: 'The creator', job: 'Turn defending into attacking by carrying the ball or playing the first pass' },
+        { role: 'The middle centre-back', job: 'Command the deepest line and keep the whole block connected' },
       ],
-      strength: 'Deep-block security with a genuine creative outlet on the counter',
-      vulnerability: 'The front two can be starved for entire halves',
+      strength: 'Very solid, but still keeps a creative outlet for the counter',
+      vulnerability: 'The front two can go long spells without touching the ball',
     },
     funFacts: [
       'The 5-3-1-1 is a favourite tournament shape for underdogs who still want a playmaker on the pitch rather than a pure front two.',
@@ -460,20 +576,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-2-4': {
     coreIdeas: {
-      inPossession: 'Four permanent attackers stretched across the last line',
-      outOfPossession: 'Wingers drop reluctantly into a 4-4-2; the middle stays light',
+      inPossession: [
+        'Four permanent attackers stretched right across the front',
+        'The ball goes forward early — this shape is built for the final third',
+      ],
+      outOfPossession: [
+        'The wingers reluctantly drop back to make a bank of four',
+        'The middle of the pitch stays badly outnumbered',
+      ],
       principles: [
         'Two wingers and two strikers pin the entire opposition back four',
-        'The two central midfielders must dominate their duels — there is no help',
-        'Get the ball forward early; the shape is built for the final third',
-        'Full-backs stay honest to avoid total exposure on the counter',
+        'The two central midfielders must win their duels — there is no help coming',
+        'Get the ball forward early rather than building patiently',
+        'The full-backs stay honest to avoid total exposure on the counter',
       ],
       keyRoles: [
-        { role: 'Wingers', job: 'Beat their man one-v-one and deliver — the whole shape feeds them' },
-        { role: 'Central midfield pair', job: 'Cover the biggest midfield workload in football, two against three or more' },
+        { role: 'The wingers', job: 'Beat their man one-against-one and deliver — the whole shape feeds them' },
+        { role: 'The midfield pair', job: 'Cover the biggest workload in football: two against three or more' },
       ],
       strength: 'Overwhelming attacking presence in the final third',
-      vulnerability: 'A two-man midfield is a permanent numerical crisis',
+      vulnerability: 'A two-man midfield is permanently outnumbered',
     },
     funFacts: [
       'The 4-2-4 was developed in Brazil and Hungary in the 1950s and swept the world after Brazil won the 1958 World Cup with it.',
@@ -483,19 +605,25 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-1-2-1-2': {
     coreIdeas: {
-      inPossession: 'A full midfield diamond: anchor, two shuttlers, and a ten behind two strikers',
-      outOfPossession: 'The diamond shifts as a unit to clog the middle; flanks are conceded',
+      inPossession: [
+        'A diamond in midfield: one deep, two either side, one attacking',
+        'The full-backs supply all the width by overlapping',
+      ],
+      outOfPossession: [
+        'The diamond shifts across as a unit to block the middle',
+        'The flanks are deliberately given up',
+      ],
       principles: [
-        'All width comes from the full-backs — the diamond never leaves the centre',
-        'The anchor covers behind while the shuttlers press the wide zones',
-        'The ten plays the final pass between two strikers on opposite movements',
-        'Overloading the centre creates four-v-three against any midfield trio',
+        'All the width comes from the full-backs — the diamond never leaves the centre',
+        'The deep midfielder covers behind while the two beside him press wide',
+        'The attacking midfielder plays the final pass between two strikers',
+        'Crowding the middle creates four-against-three against most midfields',
       ],
       keyRoles: [
-        { role: 'Tip of the diamond', job: 'Create everything from the pocket behind the strikers' },
-        { role: 'Base of the diamond', job: 'Protect the back four alone and switch play to the free full-back' },
+        { role: 'The tip of the diamond', job: 'Create everything from the space just behind the strikers' },
+        { role: 'The base of the diamond', job: 'Protect the back four alone and switch play to whichever full-back is free' },
       ],
-      strength: 'Total central control with a strike pair to finish it',
+      strength: 'Total control of central midfield, with two strikers to finish',
       vulnerability: 'The flanks belong to the opposition full-backs all game',
     },
     funFacts: [
@@ -506,20 +634,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-2-1-3': {
     coreIdeas: {
-      inPossession: 'A ten connects the double pivot to a fixed front three',
-      outOfPossession: '4-4-1-1 as the wingers drop and the ten shadows the pivot',
+      inPossession: [
+        'A creator connects two deep midfielders to a fixed front three',
+        'The wingers stay high and wide to isolate defenders',
+      ],
+      outOfPossession: [
+        'The wingers drop back and the creator shadows the opponent’s deep midfielder',
+        'It becomes a compact block with two banks of four',
+      ],
       principles: [
-        'The wingers stay high and wide to isolate defenders one-v-one',
-        'The ten floats behind the striker as the free man between the lines',
-        'The double pivot gives cover so both full-backs can overlap',
-        'Quick vertical passes through the ten release the front three early',
+        'The wingers stay high and wide to get one-against-one chances',
+        'The creator floats behind the striker as the free man',
+        'Two deep midfielders give cover so both full-backs can overlap',
+        'Quick forward passes through the creator release the front three early',
       ],
       keyRoles: [
-        { role: 'Number ten', job: 'Receive between the lines and slide passes into three runners' },
-        { role: 'Centre-forward', job: 'Pin the back line so the ten and wingers attack space, not bodies' },
+        { role: 'The number ten', job: 'Receive between the lines and slide passes into three runners' },
+        { role: 'The centre-forward', job: 'Occupy the back line so the others attack space instead of bodies' },
       ],
-      strength: 'A stable base with four players permanently dedicated to attack',
-      vulnerability: 'The ten and pivot pair can be bypassed by teams that play around the block',
+      strength: 'A stable base with four players permanently committed to attacking',
+      vulnerability: 'Can be bypassed by teams that pass around the block rather than through it',
     },
     funFacts: [
       'The 4-2-1-3 is best understood as a 4-2-3-1 with the wide men pushed all the way up into a true front three.',
@@ -529,20 +663,26 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
   },
   '4-4-2 Diamond': {
     coreIdeas: {
-      inPossession: 'A narrow diamond feeds two strikers; full-backs supply the width',
-      outOfPossession: 'The diamond compresses the centre and shepherds play wide',
+      inPossession: [
+        'A narrow diamond in midfield feeds two strikers',
+        'The full-backs provide all the width',
+      ],
+      outOfPossession: [
+        'The diamond squeezes the middle and forces play out wide',
+        'Wide areas are deliberately left open',
+      ],
       principles: [
-        'The base screens, the wide shuttlers press, the tip creates',
-        'Full-backs must attack in pairs of moments — one goes, one holds',
-        'The strike pair makes opposite movements: one to feet, one in behind',
-        'Winning the central overload matters more than defending the flanks',
+        'The deepest player shields, the two beside him press, the top one creates',
+        'The full-backs must attack in turns — one goes, one stays',
+        'The two strikers make opposite runs: one to the ball, one in behind',
+        'Winning the middle matters more than protecting the flanks',
       ],
       keyRoles: [
-        { role: 'Tip of the diamond', job: 'The chief creator, playing between the lines with both strikers as targets' },
-        { role: 'Strike partnership', job: 'Stretch the defence vertically so the diamond has room to combine' },
+        { role: 'The tip of the diamond', job: 'The main creator, playing between the lines with two strikers to aim at' },
+        { role: 'The strike partnership', job: 'Stretch the defence so the diamond has room to play' },
       ],
-      strength: 'Central overloads plus a genuine front two',
-      vulnerability: 'Wide areas are permanently under-defended',
+      strength: 'Extra men in central midfield, plus a genuine front two',
+      vulnerability: 'The wide areas are permanently under-defended',
     },
     funFacts: [
       'The diamond 4-4-2 has been a recurring answer to fitting two strikers and a playmaker into one team without sacrificing midfield numbers.',

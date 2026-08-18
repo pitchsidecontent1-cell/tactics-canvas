@@ -664,7 +664,7 @@ input:focus-visible {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
   padding: 11px 10px;
   border: 1px solid transparent;
@@ -673,6 +673,17 @@ input:focus-visible {
   color: hsl(var(--foreground));
   text-align: left;
   cursor: pointer;
+}
+
+/* The unclassed span wraps the name and subtitle; it takes the free space so
+   the trailing status icon stays pinned to the right edge. */
+.formation-item > span:not(.club-swatch) {
+  flex: 1;
+  min-width: 0;
+}
+
+.formation-item > svg:last-child {
+  flex: 0 0 auto;
 }
 
 .formation-item:hover {
@@ -685,15 +696,104 @@ input:focus-visible {
   background: hsl(var(--primary) / 0.12);
 }
 
+.formation-thumb {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 32px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.formation-thumb-pitch {
+  fill: #2f8f56;
+  stroke: rgba(255, 248, 221, 0.55);
+  stroke-width: 2;
+}
+
+.formation-thumb-line {
+  stroke: rgba(255, 248, 221, 0.45);
+  stroke-width: 2;
+}
+
+.formation-thumb-dot {
+  fill: hsl(var(--primary));
+  stroke: rgba(255, 248, 221, 0.9);
+  stroke-width: 2;
+}
+
+.formation-thumb-dot.is-keeper {
+  fill: hsl(var(--accent));
+}
+
+.club-kit {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+}
+
+.club-kit-outline {
+  fill: none;
+  stroke: hsl(var(--foreground) / 0.55);
+  stroke-width: 1.1;
+}
+
+.manager-photo {
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+  background: hsl(var(--muted));
+}
+
+.manager-photo.is-small {
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid hsl(var(--primary) / 0.55);
+}
+
+.manager-photo.is-large {
+  width: 72px;
+  height: 72px;
+  border: 2px solid hsl(var(--primary));
+  box-shadow: 3px 3px 0 hsl(var(--primary) / 0.3);
+}
+
+.playstyle-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.playstyle-head strong {
+  margin-bottom: 0;
+}
+
+.photo-credit {
+  margin: 9px 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.62rem;
+  line-height: 1.4;
+}
+
+.photo-credit a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .formation-item-name {
+  display: block;
   font-size: 0.84rem;
   font-weight: 800;
 }
 
 .formation-item-meta {
+  display: block;
+  margin-top: 2px;
   color: hsl(var(--muted-foreground));
   font-family: var(--app-font-mono);
   font-size: 0.62rem;
+  line-height: 1.3;
 }
 
 .empty-search {
@@ -800,13 +900,13 @@ input:focus-visible {
 .player-marker {
   position: absolute;
   z-index: 2;
-  width: clamp(36px, 4.8vw, 48px);
-  height: clamp(36px, 4.8vw, 48px);
+  width: clamp(28px, 3.6vw, 38px);
+  height: clamp(28px, 3.6vw, 38px);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  border: 3px solid rgba(255, 248, 221, 0.96);
+  border: 2.5px solid rgba(255, 248, 221, 0.96);
   border-radius: 50%;
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
@@ -830,7 +930,7 @@ input:focus-visible {
 
 .player-number {
   font-family: var(--app-font-mono);
-  font-size: clamp(0.85rem, 1.6vw, 1.05rem);
+  font-size: clamp(0.72rem, 1.3vw, 0.9rem);
   font-weight: 700;
   line-height: 1;
 }
@@ -838,7 +938,7 @@ input:focus-visible {
 .player-role {
   margin-top: 2px;
   font-family: var(--app-font-mono);
-  font-size: clamp(0.48rem, 0.95vw, 0.6rem);
+  font-size: clamp(0.42rem, 0.8vw, 0.52rem);
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1;
@@ -848,7 +948,7 @@ input:focus-visible {
 .player-label {
   position: absolute;
   top: calc(100% + 5px);
-  max-width: 112px;
+  max-width: 150px;
   overflow: hidden;
   color: #fff8dd;
   font-family: var(--app-font-mono);
@@ -951,8 +1051,8 @@ input:focus-visible {
 .opponent-marker {
   position: absolute;
   z-index: 1;
-  width: clamp(28px, 3.6vw, 38px);
-  height: clamp(28px, 3.6vw, 38px);
+  width: clamp(24px, 3vw, 32px);
+  height: clamp(24px, 3vw, 32px);
   border: 2.5px solid rgba(255, 248, 221, 0.65);
   border-radius: 50%;
   background: hsl(220 12% 26% / 0.92);
@@ -1127,8 +1227,8 @@ input:focus-visible {
 .manager-name {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 4px 5px;
+  gap: 7px;
+  padding: 11px 4px 6px;
   color: hsl(var(--primary));
   font-family: var(--app-font-mono);
   font-size: 0.63rem;

@@ -39,6 +39,7 @@ import {
   GLOSSARY,
   MANAGER_PLAYSTYLES,
 } from './formation-content';
+import { MANAGER_PHOTOS, managerPhotoUrl } from './manager-photos';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -86,7 +87,12 @@ type ArrowStyle = 'solid' | 'dashed' | 'curved';
 
 type Arrow = {
   id: string;
-  playerId: string;
+  // Arrows drawn from a player circle anchor to that player and travel with
+  // him when he is dragged. Arrows drawn from open grass carry their own
+  // fixed start point instead.
+  playerId?: string;
+  startX?: number;
+  startY?: number;
   endX: number;
   endY: number;
   style: ArrowStyle;
@@ -96,6 +102,17 @@ type Arrow = {
   // Undefined (or tiny) means "near-straight drag" — use the default bow.
   bend?: number;
 };
+
+// Where an arrow begins: the anchored player's current spot, or its own fixed
+// start point for arrows drawn from open grass.
+function arrowStart(arrow: Arrow, players: Player[]): Position | null {
+  if (arrow.playerId !== undefined) {
+    const anchor = players.find((player) => player.id === arrow.playerId);
+    return anchor ? { x: anchor.x, y: anchor.y } : null;
+  }
+  if (arrow.startX === undefined || arrow.startY === undefined) return null;
+  return { x: arrow.startX, y: arrow.startY };
+}
 
 // Drag-path bends smaller than this (viewBox units) are treated as a
 // straight-line drag, keeping the historical default curve direction.
@@ -1752,6 +1769,58 @@ function GlossFooter({ terms }: { terms: string[] }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Shape phases for the Shapes tab: how a formation stretches when it has the
+// ball and compresses when it does not. Expressed per role as a vertical shift
+// (dy, negative is up the pitch) and a lateral shift (spread, positive moves
+// away from the centre), so it works for every formation without hand-placing
+// coordinates. These are simplified textbook shapes, not a real team's shape.
+// ---------------------------------------------------------------------------
+
+type PhaseMove = { dy: number; spread: number };
+
+const PHASE_MOVES: Record<string, { attack: PhaseMove; defend: PhaseMove }> = {
+  GK: { attack: { dy: -5, spread: 0 }, defend: { dy: 1, spread: 0 } },
+  LCB: { attack: { dy: -7, spread: 4 }, defend: { dy: 5, spread: -2 } },
+  CB: { attack: { dy: -7, spread: 0 }, defend: { dy: 5, spread: 0 } },
+  RCB: { attack: { dy: -7, spread: 4 }, defend: { dy: 5, spread: -2 } },
+  DEF: { attack: { dy: -7, spread: 3 }, defend: { dy: 5, spread: -2 } },
+  LB: { attack: { dy: -22, spread: 5 }, defend: { dy: 7, spread: -4 } },
+  RB: { attack: { dy: -22, spread: 5 }, defend: { dy: 7, spread: -4 } },
+  LWB: { attack: { dy: -24, spread: 5 }, defend: { dy: 9, spread: -5 } },
+  RWB: { attack: { dy: -24, spread: 5 }, defend: { dy: 9, spread: -5 } },
+  DM: { attack: { dy: -6, spread: 0 }, defend: { dy: 5, spread: 0 } },
+  LCM: { attack: { dy: -11, spread: 0 }, defend: { dy: 9, spread: -3 } },
+  CM: { attack: { dy: -11, spread: 0 }, defend: { dy: 9, spread: 0 } },
+  RCM: { attack: { dy: -11, spread: 0 }, defend: { dy: 9, spread: -3 } },
+  MID: { attack: { dy: -11, spread: 0 }, defend: { dy: 9, spread: -3 } },
+  AM: { attack: { dy: -8, spread: 0 }, defend: { dy: 15, spread: 0 } },
+  SS: { attack: { dy: -8, spread: 0 }, defend: { dy: 14, spread: 0 } },
+  LM: { attack: { dy: -10, spread: 6 }, defend: { dy: 14, spread: -9 } },
+  RM: { attack: { dy: -10, spread: 6 }, defend: { dy: 14, spread: -9 } },
+  LW: { attack: { dy: -7, spread: 6 }, defend: { dy: 16, spread: -10 } },
+  RW: { attack: { dy: -7, spread: 6 }, defend: { dy: 16, spread: -10 } },
+  ST: { attack: { dy: -6, spread: 0 }, defend: { dy: 13, spread: -2 } },
+  CF: { attack: { dy: -6, spread: 0 }, defend: { dy: 13, spread: -2 } },
+  FWD: { attack: { dy: -6, spread: 0 }, defend: { dy: 13, spread: -2 } },
+};
+
+const clampPitch = (value: number) => Math.max(6, Math.min(94, value));
+
+function phasePlayers(players: Player[], phase: 'attack' | 'defend'): Player[] {
+  return players.map((player) => {
+    const move = (PHASE_MOVES[player.role] ?? PHASE_MOVES.MID)[phase];
+    // Central players have no lateral shift; wide ones move out or tuck in
+    // relative to whichever touchline they start nearest.
+    const side = player.x === 50 ? 0 : player.x < 50 ? -1 : 1;
+    return {
+      ...player,
+      x: clampPitch(player.x + move.spread * side),
+      y: clampPitch(player.y + move.dy),
+    };
+  });
+}
+
 // Preferred traditional shirt numbers per role, first available wins
 const ROLE_NUMBER_PREFS: Record<string, number[]> = {
   GK: [1],
@@ -1896,6 +1965,120 @@ function eraPlayers(era: Era): Player[] {
   return makePlayers(era.shape, false, era.xi);
 }
 
+// Club colours, used only as small accent swatches beside each era so the
+// library reads at a glance. Keyed by club name as it appears in MANAGERS.
+// Club kits, drawn as simple original shirt marks. Real club crests are
+// copyrighted artwork and registered trade marks, so they are deliberately not
+// reproduced here; a plain shirt in the club's kit colours identifies the side
+// without using anyone's badge.
+type KitPattern = {
+  kind: 'solid' | 'stripes' | 'sleeves' | 'band';
+  colours: [string, string];
+};
+
+const CLUB_KITS: Record<string, KitPattern> = {
+  'Manchester United': { kind: 'solid', colours: ['#da291c', '#1b1b1b'] },
+  Barcelona: { kind: 'stripes', colours: ['#a50044', '#004d98'] },
+  'Bayern Munich': { kind: 'solid', colours: ['#dc052d', '#0066b2'] },
+  'Manchester City': { kind: 'solid', colours: ['#6cabdd', '#1c2c5b'] },
+  'FC Porto': { kind: 'stripes', colours: ['#f4f4f4', '#00428c'] },
+  Chelsea: { kind: 'solid', colours: ['#034694', '#f4f4f4'] },
+  'Inter Milan': { kind: 'stripes', colours: ['#1b1b1b', '#0b3fa8'] },
+  'AC Milan': { kind: 'stripes', colours: ['#1b1b1b', '#fb090b'] },
+  'Real Madrid': { kind: 'solid', colours: ['#f4f4f4', '#00529f'] },
+  Arsenal: { kind: 'sleeves', colours: ['#ef0107', '#f4f4f4'] },
+  Liverpool: { kind: 'solid', colours: ['#c8102e', '#00b2a9'] },
+  'Paris Saint-Germain': { kind: 'band', colours: ['#0b2b57', '#da291c'] },
+};
+
+const SHIRT_PATH =
+  'M4.5 5.2 L9.2 2.8 Q12 5.4 14.8 2.8 L19.5 5.2 L21.8 9.4 L18.2 10.9 L18.2 21.2 L5.8 21.2 L5.8 10.9 L2.2 9.4 Z';
+
+// Free-licensed portraits require visible credit, so the photo and its
+// attribution line always render together.
+function ManagerPhoto({ manager, size }: { manager: string; size: 'small' | 'large' }) {
+  const photo = MANAGER_PHOTOS[manager];
+  if (!photo) return null;
+  return (
+    <img
+      className={`manager-photo is-${size}`}
+      src={managerPhotoUrl(photo.file)}
+      alt={manager}
+      loading="lazy"
+      width={size === 'large' ? 72 : 30}
+      height={size === 'large' ? 72 : 30}
+    />
+  );
+}
+
+function ManagerPhotoCredit({ manager }: { manager: string }) {
+  const photo = MANAGER_PHOTOS[manager];
+  if (!photo) return null;
+  return (
+    <p className="photo-credit">
+      Photo:{' '}
+      <a href={photo.source} target="_blank" rel="noreferrer noopener">
+        Wikimedia Commons
+      </a>{' '}
+      — {photo.author},{' '}
+      <a href={photo.licenceUrl} target="_blank" rel="noreferrer noopener">
+        {photo.licence}
+      </a>
+    </p>
+  );
+}
+
+function ClubSwatch({ club }: { club: string }) {
+  const kit: KitPattern = CLUB_KITS[club] ?? { kind: 'solid', colours: ['#9a9a9a', '#d4d4d4'] };
+  const clipId = `kit-${club.replace(/[^a-z]/gi, '')}`;
+  const [base, accent] = kit.colours;
+  return (
+    <svg className="club-kit" viewBox="0 0 24 24" role="img" aria-label={`${club} kit colours`}>
+      <defs>
+        <clipPath id={clipId}>
+          <path d={SHIRT_PATH} />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${clipId})`}>
+        <rect x="0" y="0" width="24" height="24" fill={base} />
+        {kit.kind === 'stripes' &&
+          [3, 9, 15, 21].map((x) => (
+            <rect key={x} x={x} y="0" width="3" height="24" fill={accent} />
+          ))}
+        {kit.kind === 'sleeves' && (
+          <>
+            <rect x="0" y="0" width="5.5" height="24" fill={accent} />
+            <rect x="18.5" y="0" width="5.5" height="24" fill={accent} />
+          </>
+        )}
+        {kit.kind === 'band' && <rect x="9.5" y="0" width="5" height="24" fill={accent} />}
+      </g>
+      <path d={SHIRT_PATH} className="club-kit-outline" />
+    </svg>
+  );
+}
+
+// A miniature of the shape, built from the same layout code as the real board
+// so the thumbnail always matches what loading it will draw.
+function FormationThumb({ shape, isDiamond = false }: { shape: number[]; isDiamond?: boolean }) {
+  const dots = makePlayers(shape, isDiamond);
+  return (
+    <svg className="formation-thumb" viewBox="0 0 100 122" aria-hidden="true">
+      <rect className="formation-thumb-pitch" x="1" y="1" width="98" height="120" rx="6" />
+      <line className="formation-thumb-line" x1="1" y1="61" x2="99" y2="61" />
+      {dots.map((dot) => (
+        <circle
+          key={dot.id}
+          className={`formation-thumb-dot ${dot.role === 'GK' ? 'is-keeper' : ''}`}
+          cx={dot.x}
+          cy={dot.y * PITCH_Y_SCALE}
+          r="7"
+        />
+      ))}
+    </svg>
+  );
+}
+
 // Arrows anchor to their player, so a dragged circle carries its arrows along.
 // Rendered in a layer above the pitch lines but below the player circles.
 function ArrowLayer({
@@ -1922,8 +2105,9 @@ function ArrowLayer({
         </marker>
       </defs>
       {arrows.map((arrow) => {
-        const start = players.find((player) => player.id === arrow.playerId);
+        const start = arrowStart(arrow, players);
         if (!start) return null;
+        const anchor = players.find((player) => player.id === arrow.playerId);
         // Pitch coordinates are percentages; the viewBox matches the pitch
         // aspect ratio, so y scales by PITCH_Y_SCALE.
         const sx = start.x;
@@ -1958,7 +2142,7 @@ function ArrowLayer({
               role="button"
               tabIndex={0}
               aria-pressed={isSelected}
-              aria-label={`${arrow.style} arrow from ${roleName(start.role)}${isSelected ? ', selected' : ''}. Press Delete to remove.`}
+              aria-label={`${arrow.style} arrow from ${anchor ? roleName(anchor.role) : 'open space'}${isSelected ? ', selected' : ''}. Press Delete to remove.`}
               onPointerDown={(event) => {
                 event.stopPropagation();
                 onSelect(arrow.id);
@@ -2120,14 +2304,45 @@ function Home() {
   };
 
   useEffect(() => () => animTimersRef.current.forEach((timer) => clearTimeout(timer)), []);
+
+  // Shapes tab: glide the current formation into its attacking or defending
+  // shape and hold it there, so the change is easy to read.
+  const showShapePhase = (phase: 'attack' | 'defend') => {
+    stopTactic(false);
+    const base = activeEra ? eraPlayers(activeEra) : formationPlayers(formation);
+    // Bring the board into view first, then start the slide once the scroll
+    // has settled, so the movement is not missed on smaller screens.
+    pitchRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setAnimStepDuration(2.2);
+    setAnimRunning(true);
+    setAnimCaption(
+      phase === 'attack'
+        ? 'In possession — the shape stretches: full-backs up, wingers wide'
+        : 'Out of possession — the shape shrinks: everyone drops and narrows',
+    );
+    animTimersRef.current.push(
+      window.setTimeout(() => setPlayers(phasePlayers(base, phase)), 420),
+    );
+    animTimersRef.current.push(
+      window.setTimeout(() => {
+        setAnimRunning(false);
+        setAnimCaption('');
+        setMessage(
+          phase === 'attack'
+            ? 'Attacking shape. Reset shape puts them back.'
+            : 'Defending shape. Reset shape puts them back.',
+        );
+      }, 3000),
+    );
+  };
   // The Did You Know box talks about the team when an era is active, and
   // about the formation itself only in the Shapes tab.
   const didYouKnowFacts = activeEra ? eraContent?.teamFacts ?? [] : content?.funFacts ?? [];
   // Jargon found in each panel's copy, defined in that panel's footer.
   const coreGlossTerms = content
     ? findGlossTerms([
-        content.coreIdeas.inPossession,
-        content.coreIdeas.outOfPossession,
+        ...content.coreIdeas.inPossession,
+        ...content.coreIdeas.outOfPossession,
         ...content.coreIdeas.principles,
         ...(activeEra?.points ?? []),
         ...content.coreIdeas.keyRoles.flatMap((keyRole) => [keyRole.role, keyRole.job]),
@@ -2212,7 +2427,7 @@ function Home() {
     if (!point) return;
     if (arrowDraft) {
       let bend = arrowDraft.bend;
-      const start = players.find((player) => player.id === arrowDraft.playerId);
+      const start = arrowStart(arrowDraft, players);
       if (start) {
         if (draftSamplesRef.current.length < 400) {
           draftSamplesRef.current.push({ x: point.x, y: point.y * PITCH_Y_SCALE });
@@ -2253,7 +2468,7 @@ function Home() {
 
   const commitArrowDraft = () => {
     if (!arrowDraft) return;
-    const start = players.find((player) => player.id === arrowDraft.playerId);
+    const start = arrowStart(arrowDraft, players);
     if (start) {
       const length = Math.hypot(arrowDraft.endX - start.x, arrowDraft.endY - start.y);
       if (length > 4) {
@@ -2399,6 +2614,10 @@ function Home() {
                       type="button"
                       onClick={() => selectFormation(item)}
                     >
+                      <FormationThumb
+                        shape={item.shape}
+                        isDiamond={item.name.toLowerCase().includes('diamond')}
+                      />
                       <span>
                         <span className="formation-item-name">{item.name}</span>
                         <span className="formation-item-meta">{item.subtitle}</span>
@@ -2429,6 +2648,7 @@ function Home() {
                 {MANAGERS.map((manager) => (
                   <div className="manager-group" key={manager.name}>
                     <div className="manager-name">
+                      <ManagerPhoto manager={manager.name} size="small" />
                       <Trophy size={13} aria-hidden="true" />
                       {manager.name}
                     </div>
@@ -2440,6 +2660,7 @@ function Home() {
                         type="button"
                         onClick={() => selectEra(era, manager.name)}
                       >
+                        <ClubSwatch club={era.club} />
                         <span>
                           <span className="formation-item-name">
                             {era.club} <span className="era-years">{era.years}</span>
@@ -2484,7 +2705,7 @@ function Home() {
                 setMessage(
                   arrowMode
                     ? 'Arrow mode off. Drag circles to move players.'
-                    : 'Arrow mode on. Drag from a player circle to draw an arrow.',
+                    : 'Arrow mode on. Drag from a player, or from anywhere on the grass.',
                 );
               }}
             >
@@ -2567,6 +2788,26 @@ function Home() {
               className={`pitch ${animRunning ? 'is-animating' : ''}`}
               style={{ '--anim-dur': `${animStepDuration}s` } as CSSProperties}
               data-testid="pitch-board"
+              onPointerDown={(event) => {
+                // Arrow mode: pressing open grass starts an arrow from that
+                // spot, so runs and passes can be drawn anywhere, not just
+                // from a player circle.
+                if (!arrowMode || animRunning) return;
+                const point = pitchPoint(event);
+                if (!point) return;
+                event.preventDefault();
+                setSelectedArrowId(null);
+                arrowCounter.current += 1;
+                draftSamplesRef.current = [];
+                setArrowDraft({
+                  id: `a${arrowCounter.current}`,
+                  startX: point.x,
+                  startY: point.y,
+                  endX: point.x,
+                  endY: point.y,
+                  style: arrowStyle,
+                });
+              }}
               onPointerMove={updatePosition}
               onPointerUp={() => {
                 dragRef.current = null;
@@ -2745,11 +2986,19 @@ function Home() {
               <strong>Core Ideas</strong>
               <div className="core-row">
                 <span className="core-label">In possession</span>
-                {glossify(content.coreIdeas.inPossession)}
+                <ul className="tactics-list">
+                  {content.coreIdeas.inPossession.map((line) => (
+                    <li key={line}>{glossify(line)}</li>
+                  ))}
+                </ul>
               </div>
               <div className="core-row">
                 <span className="core-label">Out of possession</span>
-                {glossify(content.coreIdeas.outOfPossession)}
+                <ul className="tactics-list">
+                  {content.coreIdeas.outOfPossession.map((line) => (
+                    <li key={line}>{glossify(line)}</li>
+                  ))}
+                </ul>
               </div>
               <div className="core-row">
                 <span className="core-label">Key principles</span>
@@ -2781,18 +3030,57 @@ function Home() {
               </div>
               <div className="core-row">
                 <span className="core-label">Main strength</span>
-                {glossify(content.coreIdeas.strength)}
+                <ul className="tactics-list">
+                  <li>{glossify(content.coreIdeas.strength)}</li>
+                </ul>
               </div>
               <div className="core-row">
                 <span className="core-label">Main vulnerability</span>
-                {glossify(content.coreIdeas.vulnerability)}
+                <ul className="tactics-list">
+                  <li>{glossify(content.coreIdeas.vulnerability)}</li>
+                </ul>
               </div>
               <GlossFooter terms={coreGlossTerms} />
             </div>
           )}
+          {!activeEra && content && (
+            <div className="tip-box" data-testid="panel-shape-phases">
+              <strong>See the shape move</strong>
+              <p className="fact-text">
+                Watch the same eleven players slide between the shape they take when they have the
+                ball and the one they take when they do not.
+              </p>
+              <div className="tactic-buttons">
+                <button
+                  className="action-button primary-action"
+                  data-testid="button-shape-attack"
+                  type="button"
+                  onClick={() => showShapePhase('attack')}
+                >
+                  <Play size={14} />
+                  In possession
+                </button>
+                <button
+                  className="action-button"
+                  data-testid="button-shape-defend"
+                  type="button"
+                  onClick={() => showShapePhase('defend')}
+                >
+                  <Play size={14} />
+                  Out of possession
+                </button>
+              </div>
+              <p className="anim-disclaimer">
+                A simplified textbook shape — real teams shift by opponent, scoreline and moment.
+              </p>
+            </div>
+          )}
           {activeEra && activeManager && MANAGER_PLAYSTYLES[activeManager.name] && (
             <div className="tip-box" data-testid="panel-playstyle">
-              <strong>How {activeManager.name} plays</strong>
+              <div className="playstyle-head">
+                <ManagerPhoto manager={activeManager.name} size="large" />
+                <strong>How {activeManager.name} plays</strong>
+              </div>
               <p className="fact-text">{glossify(MANAGER_PLAYSTYLES[activeManager.name])}</p>
               {ERA_ANIMATIONS[activeEra.id] && (
                 <>
@@ -2823,6 +3111,7 @@ function Home() {
                 </>
               )}
               <GlossFooter terms={playstyleGlossTerms} />
+              <ManagerPhotoCredit manager={activeManager.name} />
             </div>
           )}
           {didYouKnowFacts.length > 0 && (

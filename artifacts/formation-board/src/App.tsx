@@ -40,6 +40,7 @@ import {
   MANAGER_PLAYSTYLES,
 } from './formation-content';
 import { MANAGER_PHOTOS, managerPhotoUrl } from './manager-photos';
+import { PLAYER_PHOTOS, playerPhotoUrl, type PlayerPhoto } from './player-photos';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -1737,18 +1738,59 @@ function findGlossTerms(texts: string[]): string[] {
   return found;
 }
 
-// Renders text with an asterisk after each glossary term.
+// Positions and ideas worth emphasising so a bullet can be skimmed. Glossary
+// terms are matched first and win, so a word is never both starred and merely
+// bolded. Deliberately short — bolding everything emphasises nothing.
+const KEY_TERM_SOURCES = [
+  'full-backs?',
+  'centre-backs?',
+  'wing-backs?',
+  'wingers?',
+  'goalkeepers?',
+  'strikers?',
+  'centre-forwards?',
+  'midfielders?',
+  'defenders?',
+  'width',
+  'press(?:ing|es)?',
+  'counter-attacks?',
+  'crosses',
+  'cut-?backs?',
+  'overlaps?',
+  'offside trap',
+  'high line',
+  'the box',
+  'touchlines?',
+  'compact',
+  'narrow',
+];
+
+// Glossary patterns come first so they take priority at the same position.
+const EMPHASIS_REGEX = new RegExp(
+  [...GLOSS_PATTERNS.map(([source]) => source), ...KEY_TERM_SOURCES]
+    .map((source) => `(?:\\b(?:${source})\\b)`)
+    .join('|'),
+  'gi',
+);
+
+// Renders text with glossary terms starred and other key words bolded.
 function glossify(text: string): ReactNode {
   const parts: ReactNode[] = [];
   let last = 0;
-  for (const match of text.matchAll(GLOSS_REGEX)) {
+  for (const match of text.matchAll(EMPHASIS_REGEX)) {
     const index = match.index ?? 0;
-    if (!glossKeyFor(match[0])) continue;
+    const glossKey = glossKeyFor(match[0]);
     parts.push(text.slice(last, index));
     parts.push(
-      <span key={`${index}-${match[0]}`} className="gloss-term">
-        {match[0]}*
-      </span>,
+      glossKey && GLOSSARY[glossKey] ? (
+        <span key={`${index}-${match[0]}`} className="gloss-term">
+          {match[0]}*
+        </span>
+      ) : (
+        <strong key={`${index}-${match[0]}`} className="key-term">
+          {match[0]}
+        </strong>
+      ),
     );
     last = index + match[0].length;
   }
@@ -2238,6 +2280,27 @@ function Home() {
     activeEra && selectedPlayer ? activeEra.xi[Number(selectedPlayer.id.slice(1)) - 1] : undefined;
   const selectedPlayerFacts =
     eraContent && selectedXiName ? eraContent.playerFacts[selectedXiName] : undefined;
+  // Portraits only exist for the historical XIs, so a plain formation (or a
+  // player we have no free-licensed photo of) keeps the shield placeholder.
+  const selectedPlayerPhoto = selectedXiName ? PLAYER_PHOTOS[selectedXiName] : undefined;
+  // Portrait for any slot on the board, looked up by slot index like the
+  // jersey number so renaming a circle cannot break it.
+  const photoFor = (player: Player) => {
+    if (!activeEra) return undefined;
+    const xiName = activeEra.xi[Number(player.id.slice(1)) - 1];
+    return xiName ? PLAYER_PHOTOS[xiName] : undefined;
+  };
+  // Every photo on show needs its credit, so collect the ones currently on the
+  // pitch for the credits list under the board.
+  const visiblePhotoCredits = activeEra
+    ? players
+        .map((player) => {
+          const xiName = activeEra.xi[Number(player.id.slice(1)) - 1];
+          const photo = xiName ? PLAYER_PHOTOS[xiName] : undefined;
+          return photo ? { name: xiName, photo } : null;
+        })
+        .filter((entry): entry is { name: string; photo: PlayerPhoto } => entry !== null)
+    : [];
   // Real jersey number for a slot in the active era, looked up by slot index
   // (like the XI name) so renaming a circle doesn't break it.
   const eraJersey = (player: Player) =>
@@ -2695,7 +2758,7 @@ function Home() {
 
           <div className="pitch-toolbar" role="toolbar" aria-label="Arrow tools">
             <button
-              className={`tool-button ${arrowMode ? 'is-active' : ''}`}
+              className={`tool-button arrow-toggle ${arrowMode ? 'is-active' : ''}`}
               data-testid="button-arrow-mode"
               type="button"
               aria-pressed={arrowMode}
@@ -2712,7 +2775,8 @@ function Home() {
               <MoveUpRight size={14} />
               {arrowMode ? 'Drawing arrows' : 'Draw arrows'}
             </button>
-            <div className="tool-group" role="group" aria-label="Arrow style">
+            {arrowMode && (
+            <div className="tool-group is-revealed" role="group" aria-label="Arrow style">
               <button
                 className={`tool-button ${arrowStyle === 'solid' ? 'is-active' : ''}`}
                 data-testid="button-arrow-solid"
@@ -2747,6 +2811,7 @@ function Home() {
                 Move
               </button>
             </div>
+            )}
             <button
               className={`tool-button ${ball ? 'is-active' : ''}`}
               data-testid="button-toggle-ball"
@@ -2855,6 +2920,17 @@ function Home() {
                   onClick={() => setSelectedId(player.id)}
                   aria-label={`${shirtNumber(player)} ${player.name ?? roleName(player.role)}, ${roleName(player.role)}`}
                 >
+                  {photoFor(player) && (
+                    <img
+                      className="player-photo"
+                      src={playerPhotoUrl(photoFor(player)!.file)}
+                      alt=""
+                      loading="lazy"
+                      width={26}
+                      height={26}
+                      draggable={false}
+                    />
+                  )}
                   <span className="player-number">{shirtNumber(player)}</span>
                   {player.name && (
                     <span className="player-label">
@@ -2915,15 +2991,46 @@ function Home() {
               </button>
             </div>
           </div>
+          {visiblePhotoCredits.length > 0 && (
+            <details className="pitch-credits" data-testid="details-photo-credits">
+              <summary>Photo credits ({visiblePhotoCredits.length})</summary>
+              <ul>
+                {visiblePhotoCredits.map(({ name, photo }) => (
+                  <li key={name}>
+                    {name} —{' '}
+                    <a href={photo.source} target="_blank" rel="noreferrer noopener">
+                      Wikimedia Commons
+                    </a>
+                    , {photo.author},{' '}
+                    <a href={photo.licenceUrl} target="_blank" rel="noreferrer noopener">
+                      {photo.licence}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           <div className="reset-message" data-testid="status-board-message" aria-live="polite">
             {message}
           </div>
         </section>
 
         <aside className="panel inspector" aria-label="Selected player details">
-          <div className="inspector-swatch" aria-hidden="true">
-            {selectedPlayer ? <Shield size={23} /> : <Users size={23} />}
-          </div>
+          {selectedPlayerPhoto ? (
+            <img
+              className="inspector-portrait"
+              data-testid="img-player-portrait"
+              src={playerPhotoUrl(selectedPlayerPhoto.file)}
+              alt={selectedXiName ?? 'Selected player'}
+              loading="lazy"
+              width={64}
+              height={64}
+            />
+          ) : (
+            <div className="inspector-swatch" aria-hidden="true">
+              {selectedPlayer ? <Shield size={23} /> : <Users size={23} />}
+            </div>
+          )}
           <div>
             <div className="eyebrow">Selected piece</div>
             <div className="inspector-name-field">
@@ -2941,6 +3048,18 @@ function Home() {
               />
             </div>
             <div className="inspector-role">{selectedPlayer ? roleName(selectedPlayer.role) : 'Board is empty'}</div>
+            {selectedPlayerPhoto && (
+              <p className="photo-credit">
+                Photo:{' '}
+                <a href={selectedPlayerPhoto.source} target="_blank" rel="noreferrer noopener">
+                  Wikimedia Commons
+                </a>{' '}
+                — {selectedPlayerPhoto.author},{' '}
+                <a href={selectedPlayerPhoto.licenceUrl} target="_blank" rel="noreferrer noopener">
+                  {selectedPlayerPhoto.licence}
+                </a>
+              </p>
+            )}
           </div>
           <div>
             <div className="inspector-stat">
@@ -2982,8 +3101,8 @@ function Home() {
             </div>
           )}
           {content && (
-            <div className="tip-box" data-testid="panel-core-ideas">
-              <strong>Core Ideas</strong>
+            <details className="tip-box collapsible-box" data-testid="panel-core-ideas" open>
+              <summary>Core Ideas</summary>
               <div className="core-row">
                 <span className="core-label">In possession</span>
                 <ul className="tactics-list">
@@ -3041,7 +3160,7 @@ function Home() {
                 </ul>
               </div>
               <GlossFooter terms={coreGlossTerms} />
-            </div>
+            </details>
           )}
           {!activeEra && content && (
             <div className="tip-box" data-testid="panel-shape-phases">

@@ -758,6 +758,17 @@ input:focus-visible {
   box-shadow: 3px 3px 0 hsl(var(--primary) / 0.3);
 }
 
+.inspector-portrait {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 15px;
+  border: 2px solid hsl(var(--accent));
+  border-radius: 15px 15px 15px 5px;
+  object-fit: cover;
+  object-position: center top;
+  background: hsl(var(--muted));
+}
+
 .playstyle-head {
   display: flex;
   align-items: center;
@@ -945,6 +956,27 @@ input:focus-visible {
   text-transform: uppercase;
 }
 
+/* Portrait sits in a small square just above the circle. Pointer events are
+   left on so pressing the photo still drags or selects the player. */
+.player-photo {
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  width: clamp(20px, 2.6vw, 26px);
+  height: clamp(20px, 2.6vw, 26px);
+  border: 1.5px solid rgba(255, 248, 221, 0.92);
+  border-radius: 5px;
+  background: hsl(var(--muted));
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+  object-fit: cover;
+  object-position: center top;
+  transform: translateX(-50%);
+}
+
+.player-marker.is-selected .player-photo {
+  border-color: hsl(var(--foreground));
+}
+
 .player-label {
   position: absolute;
   top: calc(100% + 5px);
@@ -1063,6 +1095,47 @@ input:focus-visible {
 
 .gloss-term {
   font-weight: 700;
+}
+
+.key-term {
+  display: inline;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+}
+
+/* Collapsible panel that keeps the tip-box look; the summary doubles as the
+   heading, so it is styled like the <strong> it replaced. */
+.collapsible-box > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+  font-family: var(--app-font-serif);
+  font-size: 1.08rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.collapsible-box > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron that rotates when the panel opens. */
+.collapsible-box > summary::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid hsl(var(--primary));
+  border-bottom: 2px solid hsl(var(--primary));
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.collapsible-box[open] > summary::before {
+  transform: rotate(45deg);
 }
 
 .gloss-footer {
@@ -1242,15 +1315,22 @@ input:focus-visible {
   font-weight: 600;
 }
 
+/* Tailwind's preflight strips list markers, so put them back explicitly —
+   these panels are read as point form. */
 .tactics-list {
   display: grid;
   gap: 7px;
   margin: 0;
-  padding-left: 16px;
+  padding-left: 17px;
+  list-style: disc outside;
 }
 
 .tactics-list li {
-  line-height: 1.4;
+  line-height: 1.45;
+}
+
+.tactics-list li::marker {
+  color: hsl(var(--primary));
 }
 
 .inspector-name-field {
@@ -1336,7 +1416,9 @@ input:focus-visible {
   line-height: 1.5;
 }
 
-.tip-box strong {
+/* Direct child only: this styles the panel heading, and must not catch the
+   inline <strong> used to emphasise key words inside the bullets. */
+.tip-box > strong {
   display: block;
   margin-bottom: 5px;
   font-family: var(--app-font-serif);
@@ -1353,23 +1435,53 @@ input:focus-visible {
 
 .tool-group {
   display: inline-flex;
-  gap: 4px;
-  padding: 3px;
+  gap: 3px;
+  padding: 2px;
   border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+}
+
+/* The arrow toggle gates the style options, so it is deliberately the biggest
+   control in the toolbar — easy to spot, hard to walk past. */
+.tool-button.arrow-toggle {
+  min-height: 40px;
+  padding: 0 18px;
+  border-width: 2px;
+  border-color: hsl(var(--primary));
   border-radius: 11px;
+  color: hsl(var(--primary));
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+.tool-button.arrow-toggle.is-active {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 3px 3px 0 hsl(var(--primary) / 0.3);
+}
+
+/* Style options only exist once drawing is switched on. */
+.tool-group.is-revealed {
+  animation: tool-reveal 0.18s ease-out;
+}
+
+@keyframes tool-reveal {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: none; }
 }
 
 .tool-button {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 0 12px;
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 9px;
   border: 1px solid hsl(var(--border));
-  border-radius: 9px;
+  border-radius: 8px;
   background: hsl(var(--card));
   color: hsl(var(--foreground));
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -1476,6 +1588,33 @@ input:focus-visible {
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.05em;
+}
+
+.pitch-credits {
+  margin-top: 12px;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+
+.pitch-credits summary {
+  cursor: pointer;
+  font-family: var(--app-font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pitch-credits ul {
+  display: grid;
+  gap: 2px;
+  margin: 7px 0 0;
+  padding-left: 15px;
+}
+
+.pitch-credits a {
+  color: inherit;
+  text-decoration: underline;
 }
 
 .reset-message {

@@ -1138,6 +1138,20 @@ input:focus-visible {
   transform: rotate(45deg);
 }
 
+/* Nudge shown only while the panel is closed. */
+.summary-hint {
+  color: hsl(var(--primary));
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.collapsible-box[open] > summary .summary-hint {
+  display: none;
+}
+
 .gloss-footer {
   margin-top: 11px;
   padding-top: 8px;

@@ -903,7 +903,11 @@ const MANAGER_SECTIONS = [
   { status: 'retired' as const, title: 'Retired managers' },
 ].map((section) => ({
   ...section,
-  managers: MANAGERS.filter((manager) => manager.status === section.status),
+  // Alphabetical by the name as shown. localeCompare rather than a plain
+  // sort so the accents in José, Jürgen and Zinédine order correctly.
+  managers: MANAGERS.filter((manager) => manager.status === section.status).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  ),
 }));
 
 // Tactic animations live in ./era-animations and are pulled in with a dynamic

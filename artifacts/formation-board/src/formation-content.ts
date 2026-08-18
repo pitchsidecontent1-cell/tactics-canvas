@@ -690,6 +690,180 @@ export const FORMATION_CONTENT: Record<string, FormationContent> = {
       'Unlike the flat 4-4-2\u2019s wing play, the diamond deliberately abandons the flanks — Milan\u2019s only width came from Cafu and Serginho charging forward from full-back.',
     ],
   },
+  '3-4-3 Diamond': {
+    coreIdeas: {
+      inPossession: [
+        'The four midfielders sit in a diamond: one behind, two either side, one ahead',
+        'With no natural wingers in midfield, the wide forwards hold the touchlines instead',
+      ],
+      outOfPossession: [
+        'The diamond tilts towards the ball, so the near side is always crowded',
+        'The three at the back stay narrow and let the front three lead the press',
+      ],
+      principles: [
+        'The player at the bottom of the diamond screens the back three and never joins the attack',
+        'The two on the sides shuttle: one presses, the other covers the space behind',
+        'The player at the top plays between the lines, close enough to support the striker',
+        'Because the middle is stacked, switches of play out to the wide forwards are the release',
+      ],
+      keyRoles: [
+        { role: 'The point of the diamond', job: 'Find the pocket between the opponent’s midfield and defence, and turn forward whenever nobody follows' },
+        { role: 'The base of the diamond', job: 'Screen the back three alone — every counter-attack comes through this space' },
+      ],
+      strength: 'Overloads the centre completely, so a team that plays through the middle is smothered',
+      vulnerability: 'The flanks are left to two players, so quick switches can find space out wide',
+    },
+    funFacts: [
+      'A diamond and a flat four use the same number of midfielders, but the diamond covers about twice the vertical distance and half the width — which is why teams using it defend the middle well and the touchlines badly.',
+      'The shape asks the wide forwards to defend far more than usual: with nobody outside them in midfield, they drop to help the wing-backs, and the 3-4-3 quietly becomes a 5-4-1.',
+      'Diamonds fell out of fashion as pressing grew: the base of the diamond is isolated against teams that attack in wide areas, which is where most modern build-up starts.',
+    ],
+  },
+  '3-2-4-1': {
+    coreIdeas: {
+      inPossession: [
+        'Two midfielders sit just in front of the three defenders to give safe passing angles',
+        'Four attackers spread across the pitch ahead of them, with a lone striker highest',
+      ],
+      outOfPossession: [
+        'The front players press in a line, trying to force play towards a touchline',
+        'If the press is beaten the shape drops into a back five with four in front',
+      ],
+      principles: [
+        'The two in front of the defence form a square with two centre-backs — always an easy pass available',
+        'Keeping five players across the attacking line stretches the opponent’s defence flat',
+        'The wide attackers stay high and wide until the ball arrives, then attack the space inside',
+        'Because so many players are forward, losing the ball must be met by an immediate counter-press',
+      ],
+      keyRoles: [
+        { role: 'The two holding midfielders', job: 'Sit between the lines to receive under pressure, and cover the counter-attack the instant possession is lost' },
+        { role: 'The wide attackers', job: 'Hold the touchline to stretch the defence, then attack the gap between full-back and centre-back' },
+      ],
+      strength: 'Creates passing triangles everywhere, so a well-drilled side can play out of almost any press',
+      vulnerability: 'Only three defenders stay back, so one turnover can leave them exposed to runners',
+    },
+    funFacts: [
+      'This is less a starting line-up than a shape teams move into with the ball: many sides begin in a 4-3-3 and become a 3-2-4-1 when a full-back steps inside into midfield.',
+      'Pep Guardiola’s Manchester City used it through the 2022-23 treble season, with a centre-back stepping into midfield in possession and dropping back out of it.',
+      'The idea behind it is older than it looks: putting two players in front of the defence to make a square with the centre-backs was a staple of Dutch coaching long before it had a number.',
+    ],
+  },
+  '4-1-3-2': {
+    coreIdeas: {
+      inPossession: [
+        'One midfielder holds while the three ahead push up to support the two strikers',
+        'The full-backs supply the width, since the wide midfielders tuck in towards goal',
+      ],
+      outOfPossession: [
+        'The holding midfielder screens the space in front of the back four',
+        'The three ahead press the ball while the strikers block passes back inside',
+      ],
+      principles: [
+        'The single holder decides how brave everyone else can be — if they hold, the other three attack',
+        'The two strikers split the centre-backs so the midfield runners have somewhere to run',
+        'Width has to come from the full-backs, so they push high while the holder covers behind',
+        'The player in the middle of the three is the link: always available between the lines',
+      ],
+      keyRoles: [
+        { role: 'The anchor', job: 'Screen the back four alone, break up attacks early, and start again with a simple pass' },
+        { role: 'The central attacking midfielder', job: 'Sit between the opposition midfield and defence, and get on the ball facing forward' },
+      ],
+      strength: 'Gets numbers around the strikers quickly while still leaving a player protecting the defence',
+      vulnerability: 'One holding midfielder against two can be overrun, leaving the back four exposed',
+    },
+    funFacts: [
+      'The role at the base of this shape is often called the anchor, and Claude Makélélé defined it so completely at Real Madrid and Chelsea that it became known simply as the Makélélé role.',
+      'Coaches often reach for this shape when they have two strikers worth building around but only one midfielder they trust to defend alone.',
+      'It is one number away from a 4-4-2 and one away from a 4-3-3, which is why teams slide between all three during a match without anyone changing position much.',
+    ],
+  },
+  '5-2-1-2': {
+    coreIdeas: {
+      inPossession: [
+        'The wing-backs push high up the touchlines, turning the five at the back into a three',
+        'One creative player sits behind two strikers, in the space defenders hate to follow into',
+      ],
+      outOfPossession: [
+        'The wing-backs drop in to make a flat five across the back',
+        'The two in midfield stay narrow, protecting the middle and inviting play wide',
+      ],
+      principles: [
+        'The wing-backs are the whole attack down the sides — nobody else is out there',
+        'Three centre-backs mean one can step out to follow a striker without breaking the line',
+        'The two central midfielders must cover the whole width when the wing-backs are forward',
+        'With two strikers pinned high, counter-attacks start with one long, direct pass',
+      ],
+      keyRoles: [
+        { role: 'The wing-backs', job: 'Provide all the width going forward and all the cover coming back — the hardest running job on the pitch' },
+        { role: 'The number ten', job: 'Find the gap between midfield and defence, and link the two strikers to the rest of the team' },
+      ],
+      strength: 'Very hard to break down centrally, and dangerous on the counter with two strikers already high',
+      vulnerability: 'Tired wing-backs leave the whole flank empty, and only two players cover the middle',
+    },
+    funFacts: [
+      'A back five is usually a back three in disguise: as soon as the team has the ball, the wing-backs push up and only three defenders remain.',
+      'Because the wing-backs cover the entire touchline in both directions, sides using this shape often record the highest distances of any outfield players in a league.',
+      'Italian football has returned to a back three repeatedly for eighty years, from the catenaccio of the 1960s to the wing-back sides of the 2010s.',
+    ],
+  },
+  '3-3-3-1': {
+    coreIdeas: {
+      inPossession: [
+        'The pitch is split into even thirds, with three players across each line',
+        'Nobody stands in the same lane as a team-mate, so passing angles are always open',
+      ],
+      outOfPossession: [
+        'The lines step forward together to squeeze the opponent into a smaller space',
+        'The nearest three press the ball while the lines behind slide across to cover',
+      ],
+      principles: [
+        'Even spacing is the whole idea: three across each line means no part of the pitch is empty',
+        'Because everyone has a near team-mate, the ball can be moved out of pressure in one or two passes',
+        'The middle three must rotate — one drops to help build, one holds, one pushes on',
+        'The lone striker occupies both centre-backs so the players behind can run past them',
+      ],
+      keyRoles: [
+        { role: 'The central midfielder', job: 'Sit in the middle of the grid, receive on the half-turn, and switch play before pressure arrives' },
+        { role: 'The lone striker', job: 'Hold the ball up under pressure and give the three behind time to arrive' },
+      ],
+      strength: 'Superb spacing, so the ball can be circulated calmly against even an aggressive press',
+      vulnerability: 'Demands constant movement, and one player out of position leaves a whole lane open',
+    },
+    funFacts: [
+      'This shape is taught more as a set of spacing rules than as a line-up: the point is that no two players occupy the same vertical lane or the same horizontal line.',
+      'Coaches often draw it on a gridded pitch, which is where the idea of dividing the field into zones and assigning each one an occupant comes from.',
+      'It is rarely written on a team sheet, but many possession sides pass through it: a 4-3-3 in which a full-back inverts and a winger stays wide arrives at exactly these positions.',
+    ],
+  },
+  '3-5-1-1': {
+    coreIdeas: {
+      inPossession: [
+        'Five midfielders give the team numbers in the middle and two outlets out wide',
+        'One player supports the striker directly, so counter-attacks have two runners not one',
+      ],
+      outOfPossession: [
+        'The wide midfielders drop right back, making a five at the back and four in front',
+        'The two forwards stay central, screening passes into the opposition midfield',
+      ],
+      principles: [
+        'The shape is built to defend deep, keep its lines close, and break quickly',
+        'The supporting forward is the first pass out — everything on the counter goes through them',
+        'Wide midfielders must cover the whole flank, defending as full-backs and attacking as wingers',
+        'Central midfielders stay compact and refuse to be pulled out of position',
+      ],
+      keyRoles: [
+        { role: 'The second striker', job: 'Give the deep block an out-ball, hold it up, and bring the wide runners into the attack' },
+        { role: 'The central midfield three', job: 'Stay tight together and block the middle — the whole plan depends on the centre staying shut' },
+      ],
+      strength: 'Extremely hard to play through, with two forwards left up for the counter',
+      vulnerability: 'Concedes territory and possession, so long spells without the ball are guaranteed',
+    },
+    funFacts: [
+      'Deep blocks like this are not a sign of a weaker team so much as a choice about where to defend: the further from your own goal you press, the more space is left behind you.',
+      'Keeping two forwards high while defending deep is the compromise at the heart of the shape — it costs a defender or midfielder, but means the team is not defending for the whole match.',
+      'Underdogs favour it in knockout football, where conceding possession matters far less than conceding goals.',
+    ],
+  },
 };
 
 // ---------------------------------------------------------------------------

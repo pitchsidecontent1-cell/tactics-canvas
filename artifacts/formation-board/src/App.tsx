@@ -83,6 +83,9 @@ type Era = {
 
 type Manager = {
   name: string;
+  /** Whether they are still coaching a team. Anyone out of the dugout is
+   *  listed as retired, including those now in a front-office role. */
+  status: 'current' | 'retired';
   eras: Era[];
 };
 
@@ -210,6 +213,12 @@ const FORMATIONS: Formation[] = [
   { name: '4-1-2-1-2', subtitle: 'Midfield diamond', shape: [4, 1, 2, 1, 2] },
   { name: '4-2-1-3', subtitle: 'Three-lane attack', shape: [4, 2, 1, 3] },
   { name: '4-4-2 Diamond', subtitle: 'Narrow midfield', shape: [4, 4, 2] },
+  { name: '3-4-3 Diamond', subtitle: 'Diamond behind a front three', shape: [3, 4, 3] },
+  { name: '3-2-4-1', subtitle: 'Modern build-up', shape: [3, 2, 4, 1] },
+  { name: '4-1-3-2', subtitle: 'Anchor and three', shape: [4, 1, 3, 2] },
+  { name: '5-2-1-2', subtitle: 'Wing-back diamond', shape: [5, 2, 1, 2] },
+  { name: '3-3-3-1', subtitle: 'Three lines of three', shape: [3, 3, 3, 1] },
+  { name: '3-5-1-1', subtitle: 'Deep block, two up', shape: [3, 5, 1, 1] },
 ];
 
 // The user-built shape, listed above the presets. Only its `shape` changes as
@@ -301,6 +310,7 @@ function lineLabel(row: number, totalRows: number): string {
 const MANAGERS: Manager[] = [
   {
     name: 'Alex Ferguson',
+    status: 'retired',
     eras: [
       {
         id: 'fergie-99',
@@ -390,6 +400,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Pep Guardiola',
+    status: 'current',
     eras: [
       {
         id: 'pep-barca',
@@ -479,6 +490,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'José Mourinho',
+    status: 'current',
     eras: [
       {
         id: 'mou-porto',
@@ -568,6 +580,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Carlo Ancelotti',
+    status: 'current',
     eras: [
       {
         id: 'carlo-milan',
@@ -657,6 +670,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Johan Cruyff',
+    status: 'retired',
     eras: [
       {
         id: 'cruyff-barca',
@@ -690,6 +704,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Arsène Wenger',
+    status: 'retired',
     eras: [
       {
         id: 'wenger-invincibles',
@@ -723,6 +738,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Luis Enrique',
+    status: 'current',
     eras: [
       {
         id: 'lucho-barca',
@@ -784,6 +800,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Jürgen Klopp',
+    status: 'current',
     eras: [
       {
         id: 'klopp-liverpool',
@@ -817,6 +834,7 @@ const MANAGERS: Manager[] = [
   },
   {
     name: 'Zinédine Zidane',
+    status: 'current',
     eras: [
       {
         id: 'zidane-undecima',
@@ -877,6 +895,16 @@ const MANAGERS: Manager[] = [
     ],
   },
 ];
+
+// The dugout list is split by whether the manager is still coaching, so the
+// people you can watch this weekend are not buried among the greats.
+const MANAGER_SECTIONS = [
+  { status: 'current' as const, title: 'Current managers' },
+  { status: 'retired' as const, title: 'Retired managers' },
+].map((section) => ({
+  ...section,
+  managers: MANAGERS.filter((manager) => manager.status === section.status),
+}));
 
 // Tactic animations live in ./era-animations and are pulled in with a dynamic
 // import() the first time a clip is played, so the initial bundle stays small.
@@ -1046,6 +1074,13 @@ const PHASE_MOVES: Record<string, { attack: PhaseMove; defend: PhaseMove }> = {
   FWD: { attack: { dy: -6, spread: 0 }, defend: { dy: 13, spread: -2 } },
 };
 
+// How far a piece may be dragged. 1 to 100 rather than a safe inset, so the
+// touchlines and goal lines are usable positions.
+const MIN_POS = 1;
+const MAX_POS = 100;
+
+// Shape phases are generated, not dragged, so they keep a margin: a
+// computed position on the touchline would look like a mistake.
 const clampPitch = (value: number) => Math.max(6, Math.min(94, value));
 
 function phasePlayers(players: Player[], phase: 'attack' | 'defend'): Player[] {
@@ -1433,6 +1468,7 @@ function PitchLines() {
 
 function Home() {
   const [panelTab, setPanelTab] = useState<'shapes' | 'managers'>('shapes');
+  const [managerTab, setManagerTab] = useState<'current' | 'retired'>('current');
   const [formation, setFormation] = useState<Formation>(FORMATIONS[1]);
   // Kept outside `formation` so an edited custom shape survives a trip through
   // the presets and the manager tab.
@@ -1905,6 +1941,17 @@ function Home() {
     setMessage('Board cleared. Choose reset when you want the shape back.');
   };
 
+  // The position initials are editable: a coach running a 4-4-2 with an
+  // inverted winger can relabel RM as RW. The role also drives the number in
+  // the circle and the phase-animation movement, so a known code retunes
+  // both, while free text simply shows as typed.
+  const setPlayerRole = (id: string, role: string) => {
+    const cleaned = role.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+    setPlayers((current) =>
+      current.map((p) => (p.id === id ? { ...p, role: cleaned || p.role } : p)),
+    );
+  };
+
   const renamePlayer = (id: string, name: string) => {
     setPlayers((current) =>
       current.map((p) => (p.id === id ? { ...p, name: name.trim() ? name : undefined } : p)),
@@ -1916,8 +1963,10 @@ function Home() {
     if (!pitch) return null;
     const bounds = pitch.getBoundingClientRect();
     return {
-      x: Math.max(1, Math.min(99, ((event.clientX - bounds.left) / bounds.width) * 100)),
-      y: Math.max(1, Math.min(99, ((event.clientY - bounds.top) / bounds.height) * 100)),
+      // Clamped here as well as at the drop, so the pointer position can
+      // reach the goal lines and touchlines rather than stopping short.
+      x: Math.max(MIN_POS, Math.min(MAX_POS, ((event.clientX - bounds.left) / bounds.width) * 100)),
+      y: Math.max(MIN_POS, Math.min(MAX_POS, ((event.clientY - bounds.top) / bounds.height) * 100)),
     };
   };
 
@@ -1954,8 +2003,10 @@ function Home() {
     }
     const drag = dragRef.current;
     if (!drag) return;
-    const x = Math.max(4, Math.min(96, point.x));
-    const y = Math.max(4, Math.min(96, point.y));
+    // The full pitch is reachable: a piece can sit right on a touchline or
+    // goal line rather than stopping short of it.
+    const x = Math.max(MIN_POS, Math.min(MAX_POS, point.x));
+    const y = Math.max(MIN_POS, Math.min(MAX_POS, point.y));
     if (drag.id === 'ball') {
       setBall({ x, y });
       return;
@@ -2244,33 +2295,59 @@ function Home() {
               <div className="panel-heading">
                 <div className="eyebrow">The dugout</div>
                 <h2 className="panel-title">Steal a blueprint</h2>
-                <p className="panel-copy">Nine serial winners, each frozen at a defining moment of their career.</p>
+                <p className="panel-copy">
+                  Nine serial winners, each frozen at a defining moment of their career.
+                </p>
+              </div>
+              <div className="panel-tabs manager-tabs" role="tablist" aria-label="Dugout sections">
+                {MANAGER_SECTIONS.map((section) => (
+                  <button
+                    aria-selected={managerTab === section.status}
+                    className={`panel-tab ${managerTab === section.status ? 'is-active' : ''}`}
+                    data-testid={`tab-managers-${section.status}`}
+                    key={section.status}
+                    onClick={() => setManagerTab(section.status)}
+                    role="tab"
+                    type="button"
+                  >
+                    {section.title}
+                    <span className="tab-count">{section.managers.length}</span>
+                  </button>
+                ))}
               </div>
               <div className="formation-list manager-list">
-                {MANAGERS.map((manager) => (
-                  <div className="manager-group" key={manager.name}>
-                    <div className="manager-name">
-                      <ManagerPhoto manager={manager.name} size="small" />
-                      <Trophy size={13} aria-hidden="true" />
-                      {manager.name}
-                    </div>
-                    {manager.eras.map((era) => (
-                      <button
-                        className={`formation-item era-item ${activeEra?.id === era.id ? 'is-active' : ''}`}
-                        data-testid={`button-era-${era.id}`}
-                        key={era.id}
-                        type="button"
-                        onClick={() => selectEra(era, manager.name)}
-                      >
-                        <ClubSwatch club={era.club} />
-                        <span>
-                          <span className="formation-item-name">
-                            {era.club} <span className="era-years">{era.years}</span>
-                          </span>
-                          <span className="formation-item-meta">{era.formation}</span>
-                        </span>
-                        {activeEra?.id === era.id ? <Crosshair size={15} /> : <ListFilter size={14} />}
-                      </button>
+                {MANAGER_SECTIONS.filter((section) => section.status === managerTab).map((section) => (
+                  <div className="manager-section" key={section.status}>
+                    {section.managers.map((manager) => (
+                      <div className="manager-group" key={manager.name}>
+                        <div className="manager-name">
+                          <ManagerPhoto manager={manager.name} size="small" />
+                          <Trophy size={13} aria-hidden="true" />
+                          {manager.name}
+                        </div>
+                        {manager.eras.map((era) => (
+                          <button
+                            className={`formation-item era-item ${activeEra?.id === era.id ? 'is-active' : ''}`}
+                            data-testid={`button-era-${era.id}`}
+                            key={era.id}
+                            type="button"
+                            onClick={() => selectEra(era, manager.name)}
+                          >
+                            <ClubSwatch club={era.club} />
+                            <span>
+                              <span className="formation-item-name">
+                                {era.club} <span className="era-years">{era.years}</span>
+                              </span>
+                              <span className="formation-item-meta">{era.formation}</span>
+                            </span>
+                            {activeEra?.id === era.id ? (
+                              <Crosshair size={15} />
+                            ) : (
+                              <ListFilter size={14} />
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     ))}
                   </div>
                 ))}
@@ -2603,7 +2680,24 @@ function Home() {
                 aria-label="Player name"
               />
             </div>
-            <div className="inspector-role">{selectedPlayer ? roleName(selectedPlayer.role) : 'Board is empty'}</div>
+            <div className="inspector-role">
+              {selectedPlayer ? (
+                <>
+                  <input
+                    aria-label="Position initials"
+                    className="inspector-role-input"
+                    data-testid="input-player-role"
+                    maxLength={4}
+                    onChange={(e) => setPlayerRole(selectedPlayer.id, e.target.value)}
+                    type="text"
+                    value={selectedPlayer.role}
+                  />
+                  <span className="inspector-role-name">{roleName(selectedPlayer.role)}</span>
+                </>
+              ) : (
+                'Board is empty'
+              )}
+            </div>
             {selectedPlayerPhoto && (
               <p className="photo-credit">
                 Photo:{' '}

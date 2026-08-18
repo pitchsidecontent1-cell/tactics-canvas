@@ -1565,15 +1565,64 @@ input:focus-visible {
   color: hsl(var(--primary-foreground));
 }
 
+/* The dugout has its own pair of menus, nested under the library tabs. */
+.manager-tabs {
+  padding: 4px 17px 0;
+}
+
+.manager-tabs .panel-tab {
+  gap: 5px;
+  min-height: 30px;
+  font-size: 0.63rem;
+}
+
+.tab-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: hsl(var(--foreground) / 0.14);
+  font-family: var(--app-font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.panel-tab.is-active .tab-count {
+  background: hsl(var(--primary-foreground) / 0.26);
+}
+
+/* Era rows are tightened so more of the list fits on screen at once. */
+.era-item {
+  gap: 8px;
+  padding: 5px 8px;
+}
+
+.era-item .formation-item-name {
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.era-item .formation-item-meta {
+  margin-top: 0;
+  font-size: 0.58rem;
+}
+
+.era-item .club-kit {
+  width: 20px;
+  height: 24px;
+}
+
 .manager-group {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .manager-name {
   display: flex;
   align-items: center;
   gap: 7px;
-  padding: 11px 4px 6px;
+  padding: 7px 4px 4px;
   color: hsl(var(--primary));
   font-family: var(--app-font-mono);
   font-size: 0.63rem;
@@ -1644,6 +1693,34 @@ input:focus-visible {
 .inspector-name-input:disabled {
   cursor: default;
   opacity: 0.45;
+}
+
+/* The position code is editable, so it reads as a field rather than a label. */
+.inspector-role-input {
+  width: 4.4ch;
+  margin-right: 7px;
+  padding: 2px 5px;
+  border: 1px dashed hsl(var(--border));
+  border-radius: 6px;
+  background: hsl(var(--background));
+  color: hsl(var(--primary));
+  font: inherit;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.inspector-role-input:hover {
+  border-color: hsl(var(--primary));
+}
+
+.inspector-role-input:focus-visible {
+  border-style: solid;
+  outline: 2px solid hsl(var(--primary) / 0.55);
+  outline-offset: 1px;
+}
+
+.inspector-role-name {
+  color: hsl(var(--muted-foreground));
 }
 
 .inspector-role {

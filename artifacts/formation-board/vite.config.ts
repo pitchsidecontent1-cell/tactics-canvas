@@ -1,7 +1,7 @@
 import path from 'path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
@@ -27,12 +27,41 @@ if (!basePath) {
   );
 }
 
+/**
+ * Emits `404.html` as a byte-for-byte copy of the built `index.html`.
+ *
+ * GitHub Pages serves 404.html for any path it has no file for. Because this
+ * app routes on the client, a deep link (or a refresh on a routed URL) would
+ * otherwise land on GitHub's own "page not found" instead of the app. Copying
+ * index.html means the app boots and handles the route itself.
+ *
+ * This lives in the build rather than the deploy script so the published
+ * output is self-contained: the file cannot go missing because a publish step
+ * forgot to recreate it, and it can never reference a stale asset hash.
+ */
+function spaFallback(): Plugin {
+  return {
+    name: 'spa-404-fallback',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const html = bundle['index.html'];
+      if (!html || html.type !== 'asset') {
+        this.warn('index.html not found in the bundle; skipping 404.html');
+        return;
+      }
+      this.emitFile({ type: 'asset', fileName: '404.html', source: html.source });
+    },
+  };
+}
+
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
+    spaFallback(),
     ...(process.env.NODE_ENV !== 'production' &&
     process.env.REPL_ID !== undefined
       ? [

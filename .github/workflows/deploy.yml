@@ -1,0 +1,94 @@
+# Builds the tactics board and publishes it to the gh-pages branch, which is
+# what GitHub Pages serves. Replaces the previous manual routine of building
+# locally, copying dist/public into a worktree, and pushing by hand.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Allows re-publishing from the Actions tab without pushing a commit.
+  workflow_dispatch:
+
+# The site is served from the gh-pages branch, so the job needs to write to the
+# repo. No other scope is required.
+permissions:
+  contents: write
+
+# Never let two deploys race for the same branch: a queued run waits for the
+# one in flight instead of pushing on top of it.
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # --frozen-lockfile fails the build if pnpm-lock.yaml is out of step with
+      # the package.json files, rather than silently resolving new versions.
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter @workspace/formation-board run typecheck
+
+      - name: Build
+        env:
+          # Both are required by vite.config.ts, which throws without them.
+          # BASE_PATH must match the repo name, since Pages serves the site
+          # from /<repo>/ rather than the domain root.
+          PORT: '4173'
+          BASE_PATH: /tactics-canvas/
+          NODE_ENV: production
+        run: pnpm --filter @workspace/formation-board run build
+
+      # Guards against publishing a half-built directory: index.html and the
+      # 404.html fallback must both exist before anything is pushed.
+      - name: Check build output
+        run: |
+          dist=artifacts/formation-board/dist/public
+          for f in index.html 404.html; do
+            test -s "$dist/$f" || { echo "::error::$dist/$f is missing or empty"; exit 1; }
+          done
+          ls -la "$dist"
+
+      - name: Publish to gh-pages
+        run: |
+          set -euo pipefail
+          dist="$PWD/artifacts/formation-board/dist/public"
+
+          # .nojekyll stops Pages running Jekyll, which would drop any asset
+          # directory whose name begins with an underscore.
+          touch "$dist/.nojekyll"
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Check the published branch out beside the source tree. Its history
+          # is kept, so a bad deploy can be reverted to the previous commit.
+          git fetch --depth=1 origin gh-pages
+          git worktree add ../pages origin/gh-pages
+          cd ../pages
+          git checkout -B gh-pages
+
+          # Clear tracked content first so files dropped since the last deploy
+          # do not linger on the live site, then lay the fresh build down.
+          find . -mindepth 1 -maxdepth 1 -not -name .git -exec rm -rf {} +
+          cp -r "$dist/." .
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Build output is unchanged; nothing to deploy."
+            exit 0
+          fi
+          git commit -q -m "Deploy ${GITHUB_SHA::7}"
+          git push origin gh-pages

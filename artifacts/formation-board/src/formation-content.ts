@@ -1,4 +1,4 @@
-// Editorial content for each formation, keyed by formation name (the ID used
+﻿// Editorial content for each formation, keyed by formation name (the ID used
 // throughout the app). Edit copy here without touching any UI code.
 
 export type KeyRole = {
@@ -1200,4 +1200,448 @@ export const ERA_CONTENT: Record<string, EraContent> = {
       ],
     },
   },
+  'cruyff-barca': {
+    teamFacts: [
+      'Cruyff\u2019s Dream Team won four straight La Liga titles from 1991 to 1994, the last arriving on a dramatic final day when Deportivo missed a last-minute penalty.',
+      'Barcelona\u2019s first-ever European Cup came under Cruyff at Wembley in 1992, won by a Ronald Koeman free kick in extra time.',
+      'Cruyff rebuilt the club around the Ajax principles of his playing days \u2014 the philosophy that shaped La Masia and, through Guardiola, modern football itself.',
+    ],
+    playerFacts: {
+      Zubizarreta: [
+        'Andoni Zubizarreta retired as Spain\u2019s most-capped player and appeared at four World Cups.',
+        'He later returned to Barcelona as sporting director, overseeing the signings of Neymar and Su\u00e1rez.',
+      ],
+      Ferrer: [
+        'Albert Ferrer came through La Masia and won Olympic gold with Spain at the Barcelona 1992 Games.',
+        'He was the Dream Team\u2019s first-choice right-back for all four league titles before later joining Chelsea.',
+      ],
+      Koeman: [
+        'Ronald Koeman scored the extra-time free kick that won Barcelona\u2019s first European Cup in 1992.',
+        'He is one of the highest-scoring defenders in football history, with over 250 career goals.',
+      ],
+      Nadal: [
+        'Miguel \u00c1ngel Nadal\u2019s physical dominance earned him the nickname "The Beast of Barcelona".',
+        'His nephew is the 22-time Grand Slam tennis champion Rafael Nadal.',
+      ],
+      Sergi: [
+        'Sergi Barju\u00e1n came through La Masia and owned Barcelona\u2019s left flank for a decade.',
+        'He returned to the club in 2021 as interim head coach after Koeman\u2019s dismissal.',
+      ],
+      Guardiola: [
+        'Pep Guardiola was promoted from La Masia by Cruyff as a skinny 19-year-old many considered too weak for the position.',
+        'He later returned as coach and won 14 trophies in four seasons, extending Cruyff\u2019s ideas into a new era.',
+      ],
+      Bakero: [
+        'Jos\u00e9 Mari Bakero\u2019s last-minute header away at Kaiserslautern in 1991 kept alive the run that ended at Wembley.',
+        'He arrived from Real Sociedad in 1988 as part of Cruyff\u2019s first rebuilding wave.',
+      ],
+      Amor: [
+        'Guillermo Amor was one of La Masia\u2019s first great midfield products, making over 400 appearances for the club.',
+        'He later ran Barcelona\u2019s youth academy, mentoring the generation of Xavi and Iniesta.',
+      ],
+      Stoichkov: [
+        'Hristo Stoichkov won the 1994 Ballon d\u2019Or after firing Bulgaria to the World Cup semi-finals.',
+        'His temper was as famous as his left foot \u2014 he was banned for two months in his first season after stamping on a referee\u2019s foot.',
+      ],
+      'Rom\u00e1rio': [
+        'Rom\u00e1rio scored 30 league goals in his debut season, including a hat-trick in a 5-0 Cl\u00e1sico demolition of Real Madrid.',
+        'He won the 1994 World Cup with Brazil that summer and was named the tournament\u2019s best player.',
+      ],
+      Beguiristain: [
+        'Txiki Beguiristain was Cruyff\u2019s left winger across all four Dream Team title seasons.',
+        'He later became the transfer architect of Guardiola\u2019s Barcelona and Manchester City as director of football.',
+      ],
+    },
+  },
+  'wenger-invincibles': {
+    teamFacts: [
+      'Arsenal went the entire 2003-04 Premier League season unbeaten \u2014 26 wins, 12 draws \u2014 the only 38-game unbeaten campaign in English top-flight history.',
+      'The unbeaten run eventually stretched to 49 league games, still an English record, before ending at Old Trafford in October 2004.',
+      'The Premier League commissioned a unique golden trophy to mark the achievement.',
+    ],
+    playerFacts: {
+      Lehmann: [
+        'Jens Lehmann played every minute of the unbeaten league season in his first year in England.',
+        'He was sent off inside 20 minutes of the 2006 Champions League final, Arsenal\u2019s closest brush with the trophy.',
+      ],
+      'A. Cole': [
+        'Ashley Cole came through Arsenal\u2019s academy and won two league titles before his controversial move to Chelsea in 2006.',
+        'He retired as England\u2019s most-capped full-back with 107 caps.',
+      ],
+      Campbell: [
+        'Sol Campbell crossed the north London divide from Tottenham on a free transfer in 2001, one of the most controversial moves in Premier League history.',
+        'He scored Arsenal\u2019s goal in the 2006 Champions League final, a towering header from a corner.',
+      ],
+      'Tour\u00e9': [
+        'Kolo Tour\u00e9 earned his Arsenal deal after a trial in which he famously clattered into Wenger himself with a flying tackle.',
+        'He and his younger brother Yaya later won a Premier League title together at Manchester City.',
+      ],
+      Lauren: [
+        'Lauren was a midfielder whom Wenger converted into the Invincibles\u2019 right-back.',
+        'He won Olympic gold with Cameroon at Sydney 2000 and back-to-back Africa Cup of Nations titles.',
+      ],
+      Pires: [
+        'Robert Pires scored 14 league goals from the left wing in the unbeaten season.',
+        'He was voted Footballer of the Year in 2002, only his second season in England.',
+      ],
+      Vieira: [
+        'Patrick Vieira captained the Invincibles and scored the goal at Tottenham that clinched the title.',
+        'His final kick for Arsenal was the winning penalty in the 2005 FA Cup final shoot-out.',
+      ],
+      Gilberto: [
+        'Gilberto Silva was nicknamed "the Invisible Wall" for the quiet way he shielded the back four.',
+        'He joined Arsenal weeks after winning the 2002 World Cup with Brazil.',
+      ],
+      Ljungberg: [
+        'Freddie Ljungberg\u2019s red-streaked hair and late runs into the box made him a Highbury cult hero.',
+        'He scored in consecutive FA Cup finals, in 2001 and 2002.',
+      ],
+      Henry: [
+        'Thierry Henry scored 30 league goals in the unbeaten season and won the European Golden Shoe.',
+        'He is Arsenal\u2019s record scorer with 228 goals, and his statue stands outside the Emirates.',
+      ],
+      Bergkamp: [
+        'Dennis Bergkamp\u2019s fear of flying earned him the nickname "the Non-Flying Dutchman" \u2014 he skipped most European away trips.',
+        'His spinning flick-and-finish against Newcastle in 2002 is regularly voted the Premier League\u2019s greatest goal.',
+      ],
+    },
+  },
+  'lucho-barca': {
+    teamFacts: [
+      'Barcelona became the first European club to win the continental treble twice, adding 2014-15 to Guardiola\u2019s 2008-09.',
+      'The MSN front three of Messi, Su\u00e1rez and Neymar scored 122 goals in all competitions in 2014-15, then a Spanish record for a trio.',
+      'Luis Enrique won the treble in his first season in charge, beating Juventus 3-1 in the Berlin final.',
+    ],
+    playerFacts: {
+      'Ter Stegen': [
+        'Marc-Andr\u00e9 ter Stegen was the cup and Champions League keeper in his debut season while Claudio Bravo played the league games.',
+        'He lifted the trophy in Berlin \u2014 in his home country \u2014 at just 23.',
+      ],
+      Alba: [
+        'Jordi Alba was released by Barcelona\u2019s academy as a teenager and returned from Valencia as one of Europe\u2019s fastest left-backs.',
+        'His over-the-top connection with Messi produced goals for more than a decade.',
+      ],
+      'Piqu\u00e9': [
+        'Gerard Piqu\u00e9 won the 2015 treble six years after winning the first one under Guardiola.',
+        'Off the pitch he bought FC Andorra and reshaped tennis\u2019s Davis Cup while still an active player.',
+      ],
+      Mascherano: [
+        'Javier Mascherano, a career defensive midfielder, was converted into a centre-back at Barcelona.',
+        'He won 147 caps for Argentina, long the national record.',
+      ],
+      Alves: [
+        'Dani Alves\u2019s overlaps from right-back supplied Messi for eight seasons across two great Barcelona eras.',
+        'He retired as the most decorated footballer in history, with over 40 senior trophies.',
+      ],
+      Iniesta: [
+        'Andr\u00e9s Iniesta was named man of the match in the 2015 Champions League final, six years after running the 2009 final in Rome.',
+        'He left Barcelona in 2018 with 32 trophies, then the most in the club\u2019s history.',
+      ],
+      Busquets: [
+        'Sergio Busquets anchored both of Barcelona\u2019s treble-winning midfields, in 2009 and 2015.',
+        'Vicente del Bosque said of him: "You watch the game, you don\u2019t see Busquets. You watch Busquets, you see the whole game."',
+      ],
+      'Rakiti\u0107': [
+        'Ivan Rakiti\u0107 opened the scoring in the 2015 Champions League final against Juventus.',
+        'He arrived from Sevilla having just captained them to a Europa League title.',
+      ],
+      Neymar: [
+        'Neymar finished the 2014-15 Champions League as joint top scorer and sealed the final with its last goal.',
+        'His \u20ac222 million move to PSG in 2017 remains the world transfer record.',
+      ],
+      'Su\u00e1rez': [
+        'Luis Su\u00e1rez joined in 2014 while serving a four-month ban and scored the decisive second goal in the Berlin final.',
+        'The following season he won the European Golden Shoe with 40 league goals, breaking the Messi-Ronaldo duopoly.',
+      ],
+      Messi: [
+        'Lionel Messi\u2019s solo goal past Boateng and chip over Neuer in the 2015 semi-final is among his most replayed moments.',
+        'The 2015 treble sits in the middle of the run that brought him a record eight Ballons d\u2019Or.',
+      ],
+    },
+  },
+  'klopp-liverpool': {
+    teamFacts: [
+      'Liverpool overturned a 3-0 first-leg deficit against Barcelona at Anfield in the 2019 semi-final \u2014 "corner taken quickly" \u2014 on the way to a sixth European Cup.',
+      'The 2019-20 championship was Liverpool\u2019s first league title in 30 years, sealed with seven games to spare, the earliest in Premier League history.',
+      'Klopp\u2019s side posted 97 and 99 points in successive league seasons and added the UEFA Super Cup and Club World Cup in between.',
+    ],
+    playerFacts: {
+      Alisson: [
+        'Alisson arrived in 2018 as the world\u2019s most expensive goalkeeper and won the Golden Glove in his first Premier League season.',
+        'In 2021 he scored a stoppage-time headed winner at West Brom \u2014 the first goal by a goalkeeper in Liverpool\u2019s history.',
+      ],
+      Robertson: [
+        'Andy Robertson was playing amateur football for Queen\u2019s Park in 2012 and joined Liverpool for just \u00a38 million five years later.',
+        'He captained Scotland while setting Premier League assist records for a defender alongside Alexander-Arnold.',
+      ],
+      'Van Dijk': [
+        'Virgil van Dijk\u2019s \u00a375 million move from Southampton transformed Liverpool\u2019s defence overnight.',
+        'In 2019 he was UEFA Men\u2019s Player of the Year and missed the Ballon d\u2019Or by seven votes.',
+      ],
+      Matip: [
+        'Jo\u00ebl Matip joined on a free transfer from Schalke and became a cult hero for his deadpan humour and marauding dribbles.',
+        'He started the 2019 Champions League final and set up Origi\u2019s clinching goal.',
+      ],
+      'Alexander-Arnold': [
+        'Trent Alexander-Arnold\u2019s quickly taken corner for Origi against Barcelona is one of the most famous assists in football history.',
+        'A West Derby academy product, he redefined the right-back position as a playmaking role.',
+      ],
+      Wijnaldum: [
+        'Gini Wijnaldum came off the bench at half-time against Barcelona in 2019 and scored twice in nine minutes.',
+        'Signed from relegated Newcastle, he became the tireless connector of Klopp\u2019s midfield.',
+      ],
+      Fabinho: [
+        'Fabinho needed months on the bench to learn Klopp\u2019s system after arriving from Monaco, then became undroppable.',
+        'Teammates nicknamed him "the Dyson" for the way he hoovered up loose balls in front of the defence.',
+      ],
+      Henderson: [
+        'Jordan Henderson captained Liverpool to every major trophy available between 2019 and 2022.',
+        'His shuffle-then-lift of the Champions League trophy in Madrid became an instant celebration classic.',
+      ],
+      'Man\u00e9': [
+        'Sadio Man\u00e9 shared the 2018-19 Premier League Golden Boot with Salah and Aubameyang.',
+        'He was named African Footballer of the Year in 2019 and later led Senegal to their first Africa Cup of Nations title.',
+      ],
+      Firmino: [
+        'Roberto Firmino\u2019s false-nine role made the front three work \u2014 pressing first, scoring second, and creating space for both wide men.',
+        'He scored the winner in both the semi-final and final of the 2019 Club World Cup.',
+      ],
+      Salah: [
+        'Mohamed Salah broke the record for goals in a 38-game Premier League season with 32 in his debut year.',
+        'He converted the penalty that put Liverpool ahead inside two minutes of the 2019 Champions League final.',
+      ],
+    },
+  },
+  'zidane-madrid': {
+    teamFacts: [
+      'Real Madrid in 2016-17 became the first club to retain the Champions League since the competition\u2019s 1992 rebrand, beating Juventus 4-1 in Cardiff \u2014 then made it three in a row in Kyiv in 2018.',
+      'Zidane won the Champions League in each of his first three seasons as a head coach \u2014 a feat no other manager has matched. Five days after the Kyiv final, he resigned at the very top.',
+      'The 2016-17 season was Madrid\u2019s first league and European Cup double since 1958, and Bale\u2019s overhead kick in the 2018 final is widely called the greatest goal ever scored in one.',
+    ],
+    playerFacts: {
+      Navas: [
+        'Keylor Navas won three straight Champions Leagues as Madrid\u2019s number one.',
+        'His breakout 2014 World Cup with Costa Rica, conceding twice in five games, earned him the move to Madrid.',
+      ],
+      Marcelo: [
+        'Marcelo inherited Roberto Carlos\u2019s flank and left as Madrid\u2019s most decorated player at the time, with 25 trophies.',
+        'He captained the club to another Champions League in 2022 in his final match before leaving.',
+      ],
+      Ramos: [
+        'Sergio Ramos captained Madrid to four Champions Leagues in five seasons between 2014 and 2018.',
+        'He scored 101 goals for the club \u2014 an extraordinary total for a centre-back.',
+      ],
+      Varane: [
+        'Rapha\u00ebl Varane was signed at 18 on Zidane\u2019s personal recommendation, before Zidane had even become a coach.',
+        'In 2018 he won the Champions League and the World Cup in the same summer.',
+      ],
+      Carvajal: [
+        'Dani Carvajal was forced off injured and in tears in both the 2016 and 2018 finals, yet started every final of the three-peat.',
+        'He later captained Madrid and scored in the 2024 Champions League final against Dortmund.',
+      ],
+      Kroos: [
+        'Toni Kroos cost under \u20ac30 million from Bayern in 2014, one of the great bargains of the decade.',
+        'He retired in 2024 immediately after winning a sixth Champions League, leaving at the very top.',
+      ],
+      Casemiro: [
+        'Casemiro scored Madrid\u2019s second goal in the 2017 Cardiff final with a deflected long-range strike.',
+        'He was the destroyer who freed Kroos and Modri\u0107 \u2014 the balance of the midfield depended on him.',
+      ],
+      'Modri\u0107': [
+        'Luka Modri\u0107 was voted La Liga\u2019s worst signing of 2012 in a newspaper poll \u2014 and left over a decade later as a club legend.',
+        'He was still starting and winning Champions League finals for Madrid past his 38th birthday.',
+      ],
+      Isco: [
+        'Isco stepped in for the injured Bale during the 2017 run-in, and his form in the diamond made him undroppable for the final.',
+        'He was the star of Spain\u2019s 2013 European Under-21 Championship win alongside Thiago and De Gea.',
+      ],
+      Ronaldo: [
+        'Cristiano Ronaldo scored twice in the Cardiff final and collected his fifth Ballon d\u2019Or later that year.',
+        'That spring he became the first player to reach 100 Champions League goals.',
+      ],
+      Benzema: [
+        'Karim Benzema sacrificed goals for the system in 2016-17, his movement creating the space Isco and Ronaldo attacked.',
+        'Zidane repeatedly called him the best number nine in the world \u2014 and the 2022 Ballon d\u2019Or eventually proved him right.',
+      ],
+    },
+  },
+  'zidane-undecima': {
+    teamFacts: [
+      'Zidane replaced Rafa Ben\u00edtez in January 2016 and won the Champions League barely five months into his first head-coaching job.',
+      'La Und\u00e9cima was settled on penalties against Atl\u00e9tico in Milan, with Ronaldo converting the winning kick.',
+      'Madrid also chased La Liga to the final day, closing with a 12-game winning run to finish a single point behind Barcelona.',
+    ],
+    playerFacts: {
+      Navas: [
+        'Keylor Navas kept a clean sheet through 120 minutes of the Milan final before the shoot-out.',
+        'He nearly left for Manchester United on deadline day in 2015 \u2014 the paperwork famously failed at the last minute, and he stayed to win three European Cups.',
+      ],
+      Marcelo: [
+        'Marcelo converted Madrid\u2019s third penalty in the Milan shoot-out.',
+        'His triangle with Ronaldo on the left flank defined Madrid\u2019s attack throughout the era.',
+      ],
+      Ramos: [
+        'Sergio Ramos scored Madrid\u2019s goal in the 2016 final \u2014 both of Atl\u00e9tico\u2019s final defeats came with a Ramos goal against them.',
+        'He captained the side through all three consecutive Champions League triumphs.',
+      ],
+      Pepe: [
+        'Pepe played the full 120 minutes of the Milan final at 33.',
+        'He left in 2017 with three Champions Leagues and kept playing at Porto into his forties.',
+      ],
+      Carvajal: [
+        'Dani Carvajal tore a ligament in extra time of the Milan final and left the pitch in tears.',
+        'The injury cost him Euro 2016 with Spain; he recovered to start the next two finals.',
+      ],
+      Kroos: [
+        'Toni Kroos\u2019s metronomic passing let Zidane\u2019s 4-3-3 switch between control and chaos.',
+        'The 2016 title was his second Champions League, after winning it with Bayern in 2013.',
+      ],
+      Casemiro: [
+        'Promoting Casemiro to starter was Zidane\u2019s first major decision as coach \u2014 the move that balanced the galaxy of attackers.',
+        'A year earlier he had been on loan at Porto.',
+      ],
+      'Modri\u0107': [
+        'Luka Modri\u0107 outran and outpassed Atl\u00e9tico\u2019s double pivot in the Milan final.',
+        'By 2016 he was already regarded as the best midfielder in the competition \u2014 the Ballon d\u2019Or followed two years later.',
+      ],
+      Ronaldo: [
+        'Cristiano Ronaldo buried the winning penalty in the Milan shoot-out and ripped his shirt off in celebration.',
+        'He top-scored in that Champions League campaign with 16 goals.',
+      ],
+      Benzema: [
+        'Karim Benzema\u2019s hold-up play released Ronaldo and Bale into space \u2014 the BBC\u2019s quiet engine.',
+        'He played in all three of the era\u2019s winning finals without ever demanding the spotlight.',
+      ],
+      Bale: [
+        'Gareth Bale converted his penalty in the Milan shoot-out despite carrying an injury.',
+        'Weeks later he carried Wales to the semi-finals of Euro 2016, their first major tournament in 58 years.',
+      ],
+    },
+  },
+  'lucho-psg': {
+    teamFacts: [
+      'PSG\u2019s 5-0 demolition of Inter in the 2025 Munich final is the biggest winning margin in the history of European Cup and Champions League finals.',
+      'Luis Enrique joined Pep Guardiola as the only coaches to win the continental treble with two different clubs.',
+      'The club had chased the trophy for a decade with gal\u00e1cticos \u2014 it finally arrived the season after Mbapp\u00e9 left, won by the youngest average starting XI in the knockout rounds.',
+    ],
+    playerFacts: {
+      Donnarumma: [
+        'Gianluigi Donnarumma\u2019s shoot-out saves against Liverpool and heroics against Arsenal carried PSG through the knockout rounds.',
+        'He was named Player of the Tournament at Euro 2020 after saving two penalties in the final shoot-out.',
+      ],
+      'Nuno Mendes': [
+        'Nuno Mendes was widely rated the world\u2019s best left-back by the end of the treble season, winning his duels against Europe\u2019s elite wingers.',
+        'PSG signed him from Sporting at 19, and he racked up four straight Ligue 1 titles.',
+      ],
+      Pacho: [
+        'Willian Pacho arrived from Eintracht Frankfurt in 2024 and played virtually every minute of the Champions League run.',
+        'He became the first Ecuadorian ever to win the Champions League.',
+      ],
+      Marquinhos: [
+        'Marquinhos captained PSG for nearly a decade before finally lifting the trophy the project was built to win.',
+        'He joined from Roma in 2013 \u2014 the Champions League arrived in his twelfth season at the club.',
+      ],
+      Hakimi: [
+        'Achraf Hakimi opened the scoring in the 2025 final against Inter, his former club.',
+        'He reached a World Cup semi-final with Morocco in 2022, a first for any African nation.',
+      ],
+      Vitinha: [
+        'Vitinha conducted the final from the base of midfield, the heartbeat of Luis Enrique\u2019s press-and-possess machine.',
+        'He finished third in the 2025 Ballon d\u2019Or, behind teammate Demb\u00e9l\u00e9.',
+      ],
+      Neves: [
+        'Jo\u00e3o Neves joined from Benfica at 19 for one of the biggest fees ever paid for a teenage midfielder.',
+        'He and Vitinha gave PSG two press-resistant conductors barely 1.75m tall \u2014 the anti-gal\u00e1ctico midfield.',
+      ],
+      Ruiz: [
+        'Fabi\u00e1n Ruiz completed the midfield trio a year after being named in the team of the tournament at Euro 2024.',
+        'He became a European champion at both international and club level within twelve months.',
+      ],
+      Kvaratskhelia: [
+        'Khvicha Kvaratskhelia arrived in January 2025, and PSG\u2019s European campaign transformed after his debut.',
+        'At Napoli he was nicknamed "Kvaradona", winning the 2023 Scudetto and Serie A\u2019s MVP award.',
+      ],
+      'Demb\u00e9l\u00e9': [
+        'Ousmane Demb\u00e9l\u00e9 won the 2025 Ballon d\u2019Or after Luis Enrique reinvented him as a false nine \u2014 over 30 goals from a winger once written off as inconsistent.',
+        'Luis Enrique publicly campaigned for his Ballon d\u2019Or, citing his pressing as much as his goals.',
+      ],
+      'Dou\u00e9': [
+        'D\u00e9sir\u00e9 Dou\u00e9 scored twice in the 2025 final at 19, one of the great final performances by a teenager.',
+        'PSG beat Bayern Munich to his signature when they signed him from Rennes in 2024.',
+      ],
+    },
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Glossary of football jargon. Terms found in panel copy are marked with an
+// asterisk and defined in small text at the bottom of that panel, for readers
+// newer to the game. Keys are the canonical (singular, lowercase) form.
+// ---------------------------------------------------------------------------
+
+export const GLOSSARY: Record<string, string> = {
+  trequartista:
+    'an attacking playmaker who floats in the pocket of space behind the strikers',
+  gegenpressing:
+    'winning the ball back immediately after losing it, by pressing the new ball-carrier at once',
+  'counter-press':
+    'pressing the opponent the instant possession is lost, before they can organise',
+  'juego de posición':
+    'Spanish for positional play — the pitch is split into zones that players occupy to guarantee passing options',
+  'positional play':
+    'a possession system where players hold set zones so there is always a passing triangle available',
+  'half-space':
+    'the two vertical channels of the pitch between the centre and the wings',
+  'false nine':
+    'a centre-forward who drops into midfield instead of staying on the last defender',
+  'single pivot': 'one lone deep midfielder shielding the defence',
+  'double pivot': 'two deep midfielders sharing the shielding job in front of the defence',
+  pivot: 'the deepest midfielder, who shields the defence and links play',
+  'number ten':
+    'the creative attacking midfielder who plays between the opposition’s midfield and defence',
+  'low block': 'a deep, compact defensive shape camped close to a team’s own goal',
+  'rest defence':
+    'the players who stay back in secure covering positions while their own team attacks',
+  overload: 'creating a numerical advantage in one area of the pitch',
+  'inverted full-back':
+    'a full-back who steps into central midfield when his team has the ball',
+  'third-man':
+    'a passing pattern where a layoff is met by a third player arriving — the one no defender is marking',
+  underlap: 'a run by a full-back inside the winger, rather than around the outside',
+  'tiki-taka': 'the short-passing, high-possession style of Guardiola’s Barcelona and Spain',
+  'total football':
+    'the Dutch philosophy in which any outfield player can rotate into any position',
+  'wing-back':
+    'the wide player in a back-five system who covers the entire flank, defending and attacking',
+  fantasista: 'Italian for a creative attacking player given complete artistic freedom',
+  libero: 'a “free” defender who sweeps up behind the rest of the defensive line',
+  regista: 'Italian for a deep-lying playmaker who conducts the game from in front of the defence',
+  raumdeuter:
+    'German for “space interpreter” — a forward who finds unmarked pockets rather than holding a fixed position',
+};
+
+// ---------------------------------------------------------------------------
+// Manager playstyles, keyed by manager name exactly as it appears in MANAGERS
+// (App.tsx). Shown in the inspector under Core Ideas when an era is active.
+// ---------------------------------------------------------------------------
+
+export const MANAGER_PLAYSTYLES: Record<string, string> = {
+  'Alex Ferguson':
+    'Ferguson\u2019s football was built on speed, width and relentless attacking tempo: two genuine wingers delivering early crosses, full-backs overlapping in waves, and strikers working in pairs. Underneath the style sat psychology \u2014 squad rotation years before it was fashionable, ruthless rebuilding of ageing teams, and the famous \u201cFergie time\u201d belief that a match is never finished. His sides pressed forward hardest in the final fifteen minutes, when opponents were praying for the whistle.',
+  'Pep Guardiola':
+    'Guardiola plays positional play \u2014 juego de posici\u00f3n \u2014 a grid of zones the pitch is divided into, with strict rules about who occupies which lane and half-space. The ball is circulated to pull opponents out of their shape until a free man appears between the lines; losing it triggers an immediate six-second counter-press. Around that core he has never stopped experimenting: the false nine at Barcelona, inverted full-backs at Bayern, and a defender stepping into midfield at City. Control of the ball is really control of the game\u2019s risk.',
+  'Jos\u00e9 Mourinho':
+    'Mourinho is football\u2019s great reactive strategist: the game is won by denying the opponent what they do best, then punishing the moments they over-commit. His teams defend in a compact mid or low block, concede possession by design, and break with devastating four-second vertical transitions. Every player has one job and the discipline to do only that job \u2014 creative licence is granted to a single trusted number ten. In knockout football, where one mistake decides everything, his method has been ruthlessly effective.',
+  'Carlo Ancelotti':
+    'Ancelotti bends the system to the players, never the reverse \u2014 the Christmas tree at Milan existed only because Kak\u00e1, Seedorf and Rui Costa had to coexist. His trademark is the deep-lying playmaker: dropping Pirlo in front of the defence redefined the position for a generation. Tactically his teams are balanced rather than extreme \u2014 a solid block, freedom for the artists, and devastating transitions \u2014 while his real genius is man-management, keeping dressing rooms of superstars calm, humble and pulling together.',
+  'Johan Cruyff':
+    'Cruyff imported Total Football from the Ajax of his playing days and turned it into a philosophy: every player comfortable in every zone, constant positional rotation, and the ball as the best defender. His 3-4-3 diamond created triangles all over the pitch so there was always a passing angle, with the spare defender stepping into midfield to create overloads. Defending meant winning the ball back high and fast, before the opponent could organise. Barcelona\u2019s entire modern identity \u2014 La Masia, Guardiola, tiki-taka \u2014 descends directly from these ideas.',
+  'Ars\u00e8ne Wenger':
+    'Wenger fused English pace and power with continental technique \u2014 the Invincibles were as physically dominant as they were beautiful. His football was about speed of combination: win the ball, then move it forward through one- and two-touch passing before the opponent could reset, with Henry drifting into the left channel and Bergkamp threading passes between the lines. He gave players frameworks rather than scripts, trusting technical intelligence over drilled patterns, and pioneered sports science, nutrition and data in the English game.',
+  'Luis Enrique':
+    'Luis Enrique plays aggressive, vertical positional play: the build-up patterns of the Barcelona school, but faster and more direct, always looking to release the forwards the moment a line can be broken. Without the ball his teams press as an eleven, suffocating opponents in their own third \u2014 his PSG side pressed harder than any European champion before it. He is also ruthlessly collective: stars who won\u2019t defend don\u2019t play, which is why a post-gal\u00e1ctico PSG of runners and pressers finally won the trophy the superstars never could.',
+  'J\u00fcrgen Klopp':
+    'Klopp\u2019s gegenpressing treats the counter-press as the best playmaker: the instant the ball is lost, the nearest players swarm it in a five-second frenzy, because an opponent who has just won the ball is at their most disorganised. Played at full intensity \u2014 \u201cheavy metal football\u201d \u2014 it turns defence into attack thirty metres from goal. His Liverpool added a high defensive line behind the press, full-backs as the chief creators, and a front three who defended from the front, all fuelled by an emotional connection between team and crowd that he treated as a tactical weapon.',
+  'Zin\u00e9dine Zidane':
+    'Zidane\u2019s genius was balance: fitting Kroos, Modri\u0107 and Casemiro into a midfield that could control any game, then letting the BBC decide it. Tactically flexible \u2014 4-3-3 one season, a diamond the next \u2014 his Madrid conceded territory when needed, trusted individual brilliance in decisive moments, and managed the calendar masterfully, resting stars so they peaked in the Champions League spring. Critics called it lucky; three consecutive European Cups suggest it was something closer to mastery of the knockout format.',
 };

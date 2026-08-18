@@ -574,11 +574,12 @@ input:focus-visible {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(250px, 286px) minmax(420px, 1fr) minmax(220px, 276px);
-  gap: clamp(16px, 2.4vw, 32px);
+  grid-template-columns: minmax(220px, 250px) minmax(380px, 1fr) minmax(300px, 380px);
+  gap: clamp(14px, 2vw, 26px);
   width: min(1680px, 100%);
   margin: 0 auto;
   padding: clamp(18px, 3vw, 40px);
+  padding-left: clamp(10px, 1.4vw, 20px);
   flex: 1;
 }
 
@@ -753,6 +754,8 @@ input:focus-visible {
 
 .pitch-frame {
   position: relative;
+  max-width: 540px;
+  margin: 0 auto;
   padding: clamp(9px, 1.6vw, 16px);
   border-radius: 22px;
   background: hsl(var(--foreground));
@@ -762,7 +765,8 @@ input:focus-visible {
 .pitch {
   position: relative;
   width: 100%;
-  aspect-ratio: 0.72;
+  /* Must equal 100 / PITCH_VIEWBOX_HEIGHT (see App.tsx) so viewBox units stay square. */
+  aspect-ratio: 100 / 122;
   overflow: hidden;
   border: 2px solid rgba(255, 248, 221, 0.9);
   border-radius: 10px;
@@ -796,8 +800,8 @@ input:focus-visible {
 .player-marker {
   position: absolute;
   z-index: 2;
-  width: clamp(38px, 5.5vw, 55px);
-  height: clamp(38px, 5.5vw, 55px);
+  width: clamp(36px, 4.8vw, 48px);
+  height: clamp(36px, 4.8vw, 48px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -826,7 +830,7 @@ input:focus-visible {
 
 .player-number {
   font-family: var(--app-font-mono);
-  font-size: clamp(0.68rem, 1.3vw, 0.84rem);
+  font-size: clamp(0.85rem, 1.6vw, 1.05rem);
   font-weight: 700;
   line-height: 1;
 }
@@ -834,7 +838,7 @@ input:focus-visible {
 .player-role {
   margin-top: 2px;
   font-family: var(--app-font-mono);
-  font-size: clamp(0.43rem, 0.9vw, 0.56rem);
+  font-size: clamp(0.48rem, 0.95vw, 0.6rem);
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1;
@@ -844,17 +848,177 @@ input:focus-visible {
 .player-label {
   position: absolute;
   top: calc(100% + 5px);
-  max-width: 84px;
+  max-width: 112px;
   overflow: hidden;
   color: #fff8dd;
   font-family: var(--app-font-mono);
-  font-size: clamp(0.44rem, 0.85vw, 0.57rem);
+  font-size: clamp(0.6rem, 1.05vw, 0.75rem);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-align: center;
   text-overflow: ellipsis;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   white-space: nowrap;
+}
+
+.numbers-note {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  z-index: 40;
+  width: min(460px, calc(100vw - 32px));
+  padding: 16px 44px 16px 18px;
+  border: 1.5px solid hsl(var(--primary));
+  border-radius: 14px;
+  background: hsl(var(--card));
+  box-shadow: 6px 6px 0 hsl(var(--primary) / 0.35);
+  transform: translateX(-50%);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.numbers-note strong {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--app-font-serif);
+  font-size: 1.05rem;
+}
+
+.numbers-note-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+}
+
+.numbers-note-close:hover {
+  border-color: hsl(var(--foreground));
+}
+
+.ball-marker {
+  position: absolute;
+  z-index: 3;
+  width: clamp(20px, 2.2vw, 26px);
+  height: clamp(20px, 2.2vw, 26px);
+  border: 1.5px solid rgba(0, 0, 0, 0.55);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 28%, #ffffff 0 45%, #e8e4d8 70%, #c6c1b0 100%);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+  cursor: grab;
+  touch-action: none;
+  transform: translate(-50%, -50%);
+}
+
+.ball-marker::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(20, 20, 20, 0.9) 0 20%, transparent 21%),
+    radial-gradient(circle at 16% 32%, rgba(20, 20, 20, 0.75) 0 11%, transparent 12%),
+    radial-gradient(circle at 84% 32%, rgba(20, 20, 20, 0.75) 0 11%, transparent 12%),
+    radial-gradient(circle at 28% 82%, rgba(20, 20, 20, 0.75) 0 11%, transparent 12%),
+    radial-gradient(circle at 72% 82%, rgba(20, 20, 20, 0.75) 0 11%, transparent 12%);
+}
+
+.ball-marker:active {
+  cursor: grabbing;
+}
+
+/* Tactic animation: pieces glide to each step's spot over the step duration. */
+.pitch.is-animating .player-marker,
+.pitch.is-animating .ball-marker,
+.pitch.is-animating .opponent-marker {
+  transition:
+    left var(--anim-dur, 0.8s) ease-in-out,
+    top var(--anim-dur, 0.8s) ease-in-out;
+}
+
+.pitch.is-animating .player-marker {
+  cursor: default;
+}
+
+.opponent-marker {
+  position: absolute;
+  z-index: 1;
+  width: clamp(28px, 3.6vw, 38px);
+  height: clamp(28px, 3.6vw, 38px);
+  border: 2.5px solid rgba(255, 248, 221, 0.65);
+  border-radius: 50%;
+  background: hsl(220 12% 26% / 0.92);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.gloss-term {
+  font-weight: 700;
+}
+
+.gloss-footer {
+  margin-top: 11px;
+  padding-top: 8px;
+  border-top: 1px dashed hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.gloss-footer em {
+  color: hsl(var(--primary));
+  font-style: normal;
+  font-weight: 700;
+}
+
+.tactic-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.anim-disclaimer {
+  margin: 9px 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.72rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.anim-caption {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 5;
+  transition: top 0.45s ease;
+  max-width: 88%;
+  padding: 7px 14px;
+  border-radius: 10px;
+  background: rgba(15, 20, 15, 0.72);
+  color: #fff8dd;
+  font-family: var(--app-font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* When the ball plays up near the caption, slide the caption down out of the
+   way — still close to the action, never covering it. */
+.anim-caption.is-dodged {
+  top: 32%;
 }
 
 .pitch-footer {
@@ -1053,30 +1217,30 @@ input:focus-visible {
   gap: 12px;
   padding: 8px 0;
   color: hsl(var(--muted-foreground));
-  font-size: 0.73rem;
+  font-size: 0.82rem;
 }
 
 .inspector-stat strong {
   color: hsl(var(--foreground));
   font-family: var(--app-font-mono);
-  font-size: 0.7rem;
+  font-size: 0.78rem;
 }
 
 .tip-box {
   margin-top: 20px;
-  padding: 13px;
+  padding: 16px;
   border: 1px solid hsl(var(--accent) / 0.65);
   border-radius: 12px;
   background: hsl(var(--accent) / 0.17);
-  font-size: 0.73rem;
-  line-height: 1.45;
+  font-size: 0.86rem;
+  line-height: 1.5;
 }
 
 .tip-box strong {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   font-family: var(--app-font-serif);
-  font-size: 0.92rem;
+  font-size: 1.08rem;
 }
 
 .pitch-toolbar {
@@ -1178,7 +1342,7 @@ input:focus-visible {
   margin-bottom: 2px;
   color: hsl(var(--primary));
   font-family: var(--app-font-mono);
-  font-size: 0.58rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;

@@ -63,6 +63,23 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // React and its renderer are the biggest thing in the bundle and they
+        // only change when the dependency is upgraded, so they get their own
+        // chunk. Browsers then keep it cached across deploys instead of
+        // re-downloading it every time a manager or an animation is edited.
+        manualChunks: (id) => {
+          if (!id.includes('node_modules')) return undefined;
+          // Match on the package directory rather than a bare substring, so
+          // packages that merely contain "react" in their name (react-query,
+          // lucide-react, react-hook-form, ...) stay in the app chunk.
+          return /[\\/]node_modules[\\/](?:react|react-dom|scheduler)[\\/]/.test(id)
+            ? 'react-vendor'
+            : undefined;
+        },
+      },
+    },
   },
   server: {
     port,

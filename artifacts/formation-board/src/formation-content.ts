@@ -2152,6 +2152,333 @@ export const ERA_CONTENT: Record<string, EraContent> = {
       ],
     },
   },
+  "simeone-atleti-21": {
+    teamFacts: [
+      "Atlético won the 2020-21 title by two points from Real Madrid, having led by ten at one stage and nearly let it slip.",
+      "Luis Suárez was signed from Barcelona, who had decided he was finished, and scored 21 league goals in the title season.",
+      "Simeone switched from his usual back four to a back three during the season, an unusually large change for a manager known for consistency.",
+    ],
+    playerFacts: {
+      "Oblak": [
+        "Jan Oblak won the award for the league’s best goalkeeper in five of six consecutive seasons.",
+      ],
+      "Suárez": [
+        "Luis Suárez scored the goal that clinched the title on the final day, having been told he was surplus at Barcelona.",
+      ],
+      "Llorente": [
+        "Marcos Llorente was converted from a defensive midfielder into a runner from deep and became one of the season’s outstanding players.",
+      ],
+      "Koke": [
+        "Koke won a second league title nearly a decade after the first, having spent his whole career at the club.",
+      ],
+      "Trippier": [
+        "Kieran Trippier moved from Tottenham and won a league title in Spain before returning to England.",
+      ],
+      "João Félix": [
+        "João Félix arrived as one of the most expensive teenagers in history and had to adapt to a system built on defensive work.",
+      ],
+    },
+  },
+  "shankly-liverpool-66": {
+    teamFacts: [
+      "Liverpool won the 1965-66 title using only fourteen players across the entire league season.",
+      "Shankly had taken over in 1959 with the club in the Second Division and a training ground he described as a wasteland.",
+      "The side reached the European Cup Winners’ Cup final the same season, losing to Borussia Dortmund after extra time.",
+    ],
+    playerFacts: {
+      "Lawrence": [
+        "Tommy Lawrence was nicknamed the Flying Pig and swept far off his line, decades before that became standard.",
+      ],
+      "Yeats": [
+        "Ron Yeats was introduced by Shankly to reporters with an invitation to walk around him and admire the size of him.",
+      ],
+      "Hunt": [
+        "Roger Hunt remains Liverpool’s record league goalscorer and won the World Cup with England the same summer.",
+      ],
+      "St John": [
+        "Ian St John scored the winning goal in the 1965 FA Cup final, the club’s first.",
+      ],
+      "Callaghan": [
+        "Ian Callaghan made more appearances for Liverpool than any other player in the club’s history.",
+      ],
+      "Smith": [
+        "Tommy Smith was said by Shankly to have been born a man rather than a boy.",
+      ],
+    },
+  },
+  "paisley-liverpool-77": {
+    teamFacts: [
+      "Paisley won the league and Liverpool’s first European Cup in 1976-77, then two more European Cups within four years.",
+      "He won six league titles and three European Cups in nine seasons, and never wanted the job in the first place.",
+      "He had been at the club since 1939 as player, physiotherapist and coach before taking charge.",
+    ],
+    playerFacts: {
+      "Clemence": [
+        "Ray Clemence conceded only sixteen league goals in the 1978-79 season, a record that still stands.",
+      ],
+      "Keegan": [
+        "Kevin Keegan played his last match for Liverpool in the 1977 European Cup final before joining Hamburg.",
+      ],
+      "Hughes": [
+        "Emlyn Hughes captained the side and was nicknamed Crazy Horse for the way he threw himself into challenges.",
+      ],
+      "Neal": [
+        "Phil Neal scored in the 1977 final and went on to win four European Cups, more than any other English player.",
+      ],
+      "Callaghan": [
+        "Ian Callaghan was still in the side more than a decade after winning the title under Shankly.",
+      ],
+      "Heighway": [
+        "Steve Heighway joined from university football rather than an apprenticeship, which was highly unusual.",
+      ],
+    },
+  },
+  "sacchi-milan-89": {
+    teamFacts: [
+      "Milan won back-to-back European Cups in 1989 and 1990, beating Steaua Bucharest 4-0 in the first final.",
+      "Sacchi never played professional football, and answered doubts by pointing out that a jockey does not need to have been a horse.",
+      "The team trained the offside trap and the press without any opposition at all, moving as a unit against imaginary opponents.",
+    ],
+    playerFacts: {
+      "Baresi": [
+        "Franco Baresi organised the offside line and is regarded as one of the greatest defenders the game has produced.",
+      ],
+      "Maldini": [
+        "Paolo Maldini was barely twenty and would still be playing at the top level twenty years later.",
+      ],
+      "Van Basten": [
+        "Marco van Basten won three Ballon d’Or awards before injury ended his career at twenty-eight.",
+      ],
+      "Gullit": [
+        "Ruud Gullit could play in defence, midfield or attack, which was central to how Sacchi wanted the team to work.",
+      ],
+      "Rijkaard": [
+        "Frank Rijkaard scored the winning goal in the 1990 European Cup final and later managed Barcelona.",
+      ],
+      "Ancelotti": [
+        "Carlo Ancelotti played in this midfield and went on to manage AC Milan to two European Cups of his own.",
+      ],
+    },
+  },
+  "capello-milan-94": {
+    teamFacts: [
+      "Milan conceded fifteen goals in the entire 1993-94 league season, a record for a European top division.",
+      "They beat Barcelona 4-0 in the Champions League final while missing both first-choice centre-backs through suspension.",
+      "Capello won four league titles in five seasons at Milan, having never managed a club before taking the job.",
+    ],
+    playerFacts: {
+      "Maldini": [
+        "Paolo Maldini played centre-back in the 1994 final having spent most of his career at left-back.",
+      ],
+      "Savićević": [
+        "Dejan Savićević scored from the halfway line in the 1994 final, a goal replayed ever since.",
+      ],
+      "Desailly": [
+        "Marcel Desailly won the European Cup in consecutive years with two different clubs.",
+      ],
+      "Massaro": [
+        "Daniele Massaro scored twice in the 1994 final having been considered a squad player.",
+      ],
+      "Albertini": [
+        "Demetrio Albertini controlled the tempo from deep midfield throughout Capello’s Milan side.",
+      ],
+      "Boban": [
+        "Zvonimir Boban joined from Dinamo Zagreb and later became a senior football administrator.",
+      ],
+    },
+  },
+  "delbosque-spain-10": {
+    teamFacts: [
+      "Spain lost their opening match of the 2010 World Cup to Switzerland and still won the tournament.",
+      "They won every knockout match 1-0, and scored only eight goals in seven games in total.",
+      "Del Bosque had already won two Champions Leagues with Real Madrid before taking the national team.",
+    ],
+    playerFacts: {
+      "Casillas": [
+        "Iker Casillas captained Spain to the World Cup and made a decisive save with his foot in the final.",
+      ],
+      "Iniesta": [
+        "Andrés Iniesta scored the winning goal in the 116th minute of the final against the Netherlands.",
+      ],
+      "Xavi": [
+        "Xavi completed more passes than any other player at the tournament, by a wide margin.",
+      ],
+      "Puyol": [
+        "Carles Puyol scored the only goal of the semi-final against Germany, from a corner.",
+      ],
+      "Villa": [
+        "David Villa scored five of Spain’s eight goals at the tournament.",
+      ],
+      "Busquets": [
+        "Sergio Busquets was twenty-one and playing in only his first major tournament.",
+      ],
+      "Xabi Alonso": [
+        "Xabi Alonso played in the double pivot here and is now a manager in his own right.",
+      ],
+    },
+  },
+  "heynckes-bayern-13": {
+    teamFacts: [
+      "Bayern won the treble in 2012-13 and took the Bundesliga with a record points total and six matches to spare.",
+      "They beat Barcelona 7-0 on aggregate in the semi-final.",
+      "Heynckes retired at the end of the season, having lost the previous year’s final at Bayern’s own stadium.",
+    ],
+    playerFacts: {
+      "Neuer": [
+        "Manuel Neuer’s sweeping from goal changed expectations of what a goalkeeper does with the ball at his feet.",
+      ],
+      "Robben": [
+        "Arjen Robben scored the winning goal in the 2013 final, a year after missing a penalty in the final Bayern lost.",
+      ],
+      "Ribéry": [
+        "Franck Ribéry attacked from the left all season and was named European footballer of the year.",
+      ],
+      "Lahm": [
+        "Philipp Lahm played at full-back and in midfield, often within the same match.",
+      ],
+      "Schweinsteiger": [
+        "Bastian Schweinsteiger anchored the midfield and later won the World Cup with Germany.",
+      ],
+      "Javi Martínez": [
+        "Javi Martínez was signed as a record transfer for the club and converted into a defensive midfielder.",
+      ],
+    },
+  },
+  "lippi-italy-06": {
+    teamFacts: [
+      "Italy conceded two goals in seven matches at the 2006 World Cup: a penalty and an own goal.",
+      "The tournament was played while a match-fixing scandal was unfolding at home, involving several of the players’ clubs.",
+      "The final against France was decided on penalties after Zinédine Zidane was sent off in extra time.",
+    ],
+    playerFacts: {
+      "Buffon": [
+        "Gianluigi Buffon did not concede a single goal to an opponent all tournament.",
+      ],
+      "Cannavaro": [
+        "Fabio Cannavaro captained the side and won the Ballon d’Or that year, rare for a defender.",
+      ],
+      "Pirlo": [
+        "Andrea Pirlo dictated from deep midfield and was named man of the match three times.",
+      ],
+      "Grosso": [
+        "Fabio Grosso scored the winning goal in the semi-final and the decisive penalty in the final.",
+      ],
+      "Materazzi": [
+        "Marco Materazzi scored Italy’s goal in the final and was involved in the incident that saw Zidane sent off.",
+      ],
+      "Totti": [
+        "Francesco Totti played the tournament months after breaking his ankle.",
+      ],
+    },
+  },
+  "michels-netherlands-74": {
+    teamFacts: [
+      "The Netherlands reached the 1974 World Cup final and lost to West Germany, having scored inside the first two minutes before the Germans had touched the ball.",
+      "The squad was numbered alphabetically, which is why the goalkeeper wore 8 — Johan Cruyff insisted on keeping 14.",
+      "Michels later won the 1988 European Championship with the Netherlands, the country’s only major trophy.",
+    ],
+    playerFacts: {
+      "Cruyff": [
+        "Johan Cruyff gave his name to the Cruyff turn, first performed at this tournament against Sweden.",
+      ],
+      "Neeskens": [
+        "Johan Neeskens scored the fastest goal in a World Cup final at the time, from a penalty in the second minute.",
+      ],
+      "Krol": [
+        "Ruud Krol played across the whole back line and pushed forward constantly, which was the point of the system.",
+      ],
+      "Jongbloed": [
+        "Jan Jongbloed wore number 8 because the squad numbers were assigned alphabetically.",
+      ],
+      "Rep": [
+        "Johnny Rep scored four goals at the tournament from the right of the front three.",
+      ],
+      "Rensenbrink": [
+        "Rob Rensenbrink attacked from the left and later hit the post in the final minute of the 1978 final.",
+      ],
+    },
+  },
+  "aragones-spain-08": {
+    teamFacts: [
+      "Euro 2008 was Spain’s first major trophy since 1964, ending forty-four years without one.",
+      "Aragonés dropped Raúl, the country’s record goalscorer at the time, and built the team around smaller technical midfielders instead.",
+      "Spain won every match at the tournament, beating the reigning world champions Italy on penalties in the quarter-final.",
+    ],
+    playerFacts: {
+      "Senna": [
+        "Marcos Senna screened the defence alone and was named in the team of the tournament.",
+      ],
+      "Torres": [
+        "Fernando Torres scored the only goal of the final against Germany.",
+      ],
+      "Xavi": [
+        "Xavi was named player of the tournament, the first sign of what Spain would go on to do.",
+      ],
+      "Casillas": [
+        "Iker Casillas saved two penalties in the quarter-final shoot-out against Italy.",
+      ],
+      "Silva": [
+        "David Silva was twenty-two and playing his first major tournament.",
+      ],
+      "Iniesta": [
+        "Andrés Iniesta played wide left in this side before becoming a central midfielder for Spain.",
+      ],
+    },
+  },
+  "benitez-liverpool-05": {
+    teamFacts: [
+      "Liverpool trailed AC Milan 3-0 at half-time in the 2005 Champions League final and were level within six minutes of the restart.",
+      "Benítez changed shape at half-time, bringing on Dietmar Hamann and moving to three at the back.",
+      "Liverpool had finished fifth in the league that season and only entered the following season’s competition by special dispensation.",
+    ],
+    playerFacts: {
+      "Gerrard": [
+        "Steven Gerrard scored the goal that started the comeback and finished the final playing as a right-back.",
+      ],
+      "Dudek": [
+        "Jerzy Dudek saved the decisive penalty and distracted takers with a much-copied movement on his line.",
+      ],
+      "Carragher": [
+        "Jamie Carragher played through cramp in extra time and made two goal-saving blocks.",
+      ],
+      "Xabi Alonso": [
+        "Xabi Alonso scored Liverpool’s third goal from the rebound after his own penalty was saved.",
+      ],
+      "Hyypiä": [
+        "Sami Hyypiä anchored a defence that conceded only three goals in the knockout rounds before the final.",
+      ],
+      "Luis García": [
+        "Luis García scored the semi-final goal against Chelsea that was never conclusively shown to have crossed the line.",
+      ],
+    },
+  },
+  "dalglish-liverpool-88": {
+    teamFacts: [
+      "Liverpool went twenty-nine league matches unbeaten from the start of the 1987-88 season.",
+      "The side is frequently voted the best in the club’s history, though it lost the FA Cup final to Wimbledon that year.",
+      "Dalglish was still registered as a player and had won the double as player-manager two seasons earlier.",
+    ],
+    playerFacts: {
+      "Barnes": [
+        "John Barnes was named footballer of the year in his first season at the club.",
+      ],
+      "Beardsley": [
+        "Peter Beardsley played between midfield and attack, linking the two in a role few English sides used.",
+      ],
+      "Aldridge": [
+        "John Aldridge scored in a record number of consecutive league matches that season.",
+      ],
+      "Hansen": [
+        "Alan Hansen brought the ball out of defence rather than clearing it, unusual for an English centre-back then.",
+      ],
+      "Grobbelaar": [
+        "Bruce Grobbelaar was known for unorthodox goalkeeping and for the wobbly legs routine in the 1984 final.",
+      ],
+      "Houghton": [
+        "Ray Houghton and John Barnes swapped flanks constantly, which defenders found almost impossible to track.",
+      ],
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -2241,4 +2568,26 @@ export const MANAGER_PLAYSTYLES: Record<string, string> = {
     'Kompany coaches from the perspective of the defender he was, but the football is front-footed: a high defensive line, quick vertical passing, and possession used to pin opponents back rather than to slow the game down. At Bayern he gave Jamal Musiala and Michael Olise freedom to drift and swap across the front while the structure behind them stayed disciplined, with Harry Kane as the reference point. The approach reclaimed the Bundesliga in his first season and asks the same question as every high line: whether the press can win the ball back before the space behind matters.',
   'Thomas Tuchel':
     'Tuchel is a problem-solver who reshapes his team around the opponent, and his sides are defined by structure rather than a single signature. At PSG he freed Neymar and Mbappé from defensive work and built a midfield that could cover for them, reaching a first Champions League final. At Chelsea he switched to a back three and two holding midfielders and conceded almost nothing, winning the Champions League four months after arriving mid-season. The common thread is control of the centre: whatever the shape, the middle of the pitch is crowded and the opposition is pushed towards the touchlines.',
+  "Bill Shankly":
+    "Shankly’s method was simplicity carried out perfectly: pass to the nearest red shirt, move, and ask for it back. He rebuilt Liverpool from the second division on fitness, repetition and an emotional bond with the crowd that he cultivated deliberately. The football was direct without being crude — wingers held the touchlines and delivered early to two forwards — and the team was picked with almost no rotation, so the understanding between players became instinctive. He also built the boot room, the coaching structure that let Liverpool keep winning long after he left.",
+  "Bob Paisley":
+    "Paisley inherited Shankly’s side and quietly made it better, winning three European Cups in five years while barely raising his voice. The football was pass-and-move: give the ball early, run to support it, and never hold on longer than necessary. Defensively his teams were patient rather than aggressive, holding shape and declining to dive into tackles, which is why they conceded so little. He rarely spent big, preferring to sign one player a year and let them adapt slowly, and he moved players between positions when he saw something others had not.",
+  "Arrigo Sacchi":
+    "Sacchi rebuilt defending as a collective act rather than a set of individual duels. His Milan pressed the ball the instant it was lost, held an offside line dozens of times a match on a signal, and kept the distance between the highest and deepest player to around twenty-five metres — squeezing opponents into a space too small to play in. It was drilled relentlessly, sometimes with shadow play against no opposition at all. Sacchi had never played professionally, which he answered with the line that you do not need to have been a horse to be a jockey.",
+  "Fabio Capello":
+    "Capello was a pragmatist who won wherever he went, and his teams were built from the defence forward. The back four defended as a single unit, stepped up together, and conceded almost nothing — his 1993-94 Milan let in fifteen goals in an entire league season. In attack he preferred patience: keep the shape, wait for the opponent to commit, then break with two forwards who interchanged constantly. He was known for strict discipline and for being willing to leave out any player, however famous, who did not meet it.",
+  "Vicente del Bosque":
+    "Del Bosque took a team that already knew how to keep the ball and made it relentless about it. Two holding midfielders freed the technicians ahead of them, and possession was treated as a defensive act as much as an attacking one: an opponent without the ball cannot score. Spain won the 2010 World Cup scoring only eight goals in seven matches, every knockout tie by a single goal, which drew criticism for caution and missed the point — the control was the plan. He managed quietly, deferring to senior players rather than dominating them.",
+  "Jupp Heynckes":
+    "Heynckes was a calm, meticulous coach whose 2012-13 Bayern combined German organisation with two of the finest wingers of the era attacking from either flank. The double pivot controlled tempo and won the ball back at once; the full-backs pushed high, trusting that cover; and Robben and Ribéry were left one-against-one as often as possible. The side won the treble in his final season before retirement, having lost the previous year’s final at home — a rebuild driven by disappointment rather than by any change of philosophy.",
+  "Marcello Lippi":
+    "Lippi built from the back and made it look like ambition rather than caution. His Italy conceded twice in seven matches on the way to the 2006 World Cup, one of those an own goal, with a back four that defended as a unit and full-backs who supplied all the width. In midfield Andrea Pirlo dictated from deep while Gennaro Gattuso covered the ground around him, a division of labour Lippi used repeatedly. He was also a skilled manager of people, holding a squad together through a match-fixing scandal at home during the tournament.",
+  "Rinus Michels":
+    "Michels invented what became known as Total Football: a system in which any outfield player could take up any position, provided someone immediately filled the space they left. It demanded extraordinary intelligence and fitness, and it worked because the players — Cruyff above all — could genuinely play anywhere. The defence pushed to halfway to compress the pitch, an idea that predated the modern high line by decades. He was uncompromising about work rate, and gave the game one of its most quoted lines: football is war.",
+  "Luis Aragonés":
+    "Aragonés made the decision that changed Spanish football: he dropped the traditional target man and built the team around small, technical midfielders who kept the ball. Marcos Senna screened the defence alone so four creators could play in front of him, and Spain passed opponents into submission on the way to Euro 2008 — a first trophy in forty-four years. The choice was unpopular before it worked, and it laid the foundation for everything Spain won afterwards. He was blunt, stubborn, and entirely willing to be disliked while being proved right.",
+  "Rafael Benítez":
+    "Benítez is a systems coach who prepares in exhaustive detail and changes shape within matches rather than between them. At Liverpool he introduced zonal marking at set pieces, which drew years of criticism in England, and rotated squads in a way that was then unusual. His most famous night was Istanbul in 2005: three goals down at half-time in the Champions League final, he changed formation, brought on a holding midfielder, and Liverpool were level within six minutes. The football is not romantic, but the planning behind it is unusually thorough.",
+  "Kenny Dalglish":
+    "Dalglish took over Liverpool as player-manager in the hardest circumstances imaginable and won the double in his first season. His 1987-88 side is often called the best the club has produced: fast, fluent attacking football, with John Barnes and Peter Beardsley given freedom to move wherever they liked and the ball moved forward first time whenever possible. He led the club through the Hillsborough disaster with a personal commitment to the bereaved families that defined his standing at Liverpool long after he stopped managing.",
 };

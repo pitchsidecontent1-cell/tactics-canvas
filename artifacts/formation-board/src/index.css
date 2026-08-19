@@ -2184,14 +2184,20 @@ input:focus-visible {
   line-height: 1.5;
 }
 
+/* Entries collapse too, so an open section is a list of titles rather than
+   several thousand words. Only the name and its badge show while shut. */
 .guide-entry {
-  margin-top: 11px;
-  padding: 12px 13px;
+  margin-top: 9px;
+  padding: 9px 12px;
   border: 1px solid hsl(var(--border));
   border-radius: 12px;
   background: hsl(var(--muted) / 0.4);
   /* Clears the section summary it sits under when jumped to. */
   scroll-margin-top: 62px;
+}
+
+.guide-entry[open] {
+  padding-bottom: 12px;
 }
 
 
@@ -2217,12 +2223,49 @@ input:focus-visible {
 .guide-entry-title {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px;
+  align-items: center;
+  gap: 5px 9px;
   margin: 0;
-  font-size: 0.95rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.guide-entry-title::-webkit-details-marker {
+  display: none;
+}
+
+.guide-entry-title::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid hsl(var(--muted-foreground));
+  border-bottom: 2px solid hsl(var(--muted-foreground));
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.guide-entry[open] > .guide-entry-title::before {
+  border-color: hsl(var(--primary));
+  transform: rotate(45deg);
+}
+
+.guide-entry-name {
+  flex: 1 1 auto;
+  font-size: 0.92rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
+}
+
+.guide-entry-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.guide-entry[open] > .guide-entry-title .summary-hint {
+  display: none;
 }
 
 .guide-entry-badge {
@@ -2237,11 +2280,12 @@ input:focus-visible {
 }
 
 .guide-entry-aka {
-  margin: 4px 0 0;
+  margin: 9px 0 0;
   color: hsl(var(--muted-foreground));
   font-size: 0.68rem;
   font-style: italic;
 }
+
 
 .guide-entry-summary {
   margin: 7px 0 0;

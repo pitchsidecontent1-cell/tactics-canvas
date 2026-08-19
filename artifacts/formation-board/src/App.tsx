@@ -2384,14 +2384,15 @@ function GuideArticle({
   activeId,
   backLabel,
   onBack,
-  onToggleSection,
-  openSections,
+  onTogglePart,
+  openParts,
 }: {
   activeId: string;
   backLabel: string;
   onBack: () => void;
-  onToggleSection: (sectionId: string, open: boolean) => void;
-  openSections: string[];
+  /** Sections and entries share one list of what is open; ids never collide. */
+  onTogglePart: (partId: string, open: boolean) => void;
+  openParts: string[];
 }) {
   return (
     <div className="guide-article" data-testid="panel-guide">
@@ -2406,16 +2407,17 @@ function GuideArticle({
         board puts in its circle, so a 6 on the pitch and the six in a write-up are plainly the
         same thing.
       </p>
-      {/* Every section starts closed, so the guide opens as a contents page
-          rather than a wall of text. Following a link from a write-up opens
-          the section it landed in on the way past. */}
+      {/* Sections and the entries inside them all start closed, so the guide
+          opens as a contents page rather than a wall of text: seven headings,
+          then a list of titles under whichever one is asked for. Following a
+          link from a write-up opens both on the way past. */}
       {GUIDE_SECTIONS.map((section) => (
         <details
           className="guide-section"
           data-testid={`guide-section-${section.id}`}
           key={section.id}
-          open={openSections.includes(section.id)}
-          onToggle={(event) => onToggleSection(section.id, event.currentTarget.open)}
+          open={openParts.includes(section.id)}
+          onToggle={(event) => onTogglePart(section.id, event.currentTarget.open)}
         >
           <summary>
             <span className="guide-section-title">{section.title}</span>
@@ -2424,15 +2426,20 @@ function GuideArticle({
             <span className="guide-section-blurb">{section.blurb}</span>
           </summary>
           {section.entries.map((entry) => (
-            <article
+            <details
               className={`guide-entry ${entry.id === activeId ? 'is-active' : ''}`}
               id={`guide-${entry.id}`}
               key={entry.id}
+              open={openParts.includes(entry.id)}
+              onToggle={(event) => onTogglePart(entry.id, event.currentTarget.open)}
             >
-              <h4 className="guide-entry-title">
-                <span>{entry.title}</span>
-                {entry.badge && <span className="guide-entry-badge">{entry.badge}</span>}
-              </h4>
+              <summary className="guide-entry-title">
+                <span className="guide-entry-name">{entry.title}</span>
+                <span className="guide-entry-meta">
+                  {entry.badge && <span className="guide-entry-badge">{entry.badge}</span>}
+                  <span className="summary-hint">tap to show</span>
+                </span>
+              </summary>
               {entry.aka && <p className="guide-entry-aka">Also called: {entry.aka}</p>}
               <p className="guide-entry-summary">{entry.summary}</p>
               <ul className="guide-entry-points">
@@ -2445,7 +2452,7 @@ function GuideArticle({
                   <strong>Watch for</strong> {entry.watch}
                 </p>
               )}
-            </article>
+            </details>
           ))}
         </details>
       ))}
@@ -2460,7 +2467,9 @@ function Home() {
   const [guideReturn, setGuideReturn] = useState<'shapes' | 'managers'>('shapes');
   const [guideEntryId, setGuideEntryId] = useState(GUIDE_SECTIONS[0].entries[0].id);
   const [guideQuery, setGuideQuery] = useState('');
-  const [openGuideSections, setOpenGuideSections] = useState<string[]>([]);
+  // Which guide sections and entries are open. One list for both, since the
+  // two sets of ids never collide.
+  const [openGuideParts, setOpenGuideParts] = useState<string[]>([]);
   // Bumped on every jump so asking for the same entry twice scrolls again.
   const [guideNonce, setGuideNonce] = useState(0);
   const [managerTab, setManagerTab] = useState<'current' | 'retired'>('current');
@@ -2754,23 +2763,28 @@ function Home() {
 
   // Returns the same array when nothing changes, so the <details> element
   // reporting a state React set does not loop.
-  const setGuideSectionOpen = (sectionId: string, open: boolean) => {
-    setOpenGuideSections((current) => {
-      const isOpen = current.includes(sectionId);
+  const setGuidePartOpen = (partId: string, open: boolean) => {
+    setOpenGuideParts((current) => {
+      const isOpen = current.includes(partId);
       if (isOpen === open) return current;
-      return open ? [...current, sectionId] : current.filter((id) => id !== sectionId);
+      return open ? [...current, partId] : current.filter((id) => id !== partId);
     });
   };
 
-  // Opens the Guide at one entry, from the index or from a linked word. The
-  // section holding it is opened too, or there would be nothing to scroll to.
+  // Opens the Guide at one entry, from the index or from a linked word. Both
+  // the entry and the section holding it are opened, or there would be
+  // nothing on screen to scroll to.
   const openGuide = (entryId: string) => {
     if (panelTab !== 'guide') setGuideReturn(panelTab);
     setPanelTab('guide');
     setGuideEntryId(entryId);
     setGuideNonce((current) => current + 1);
     const section = GUIDE_ENTRY_SECTION[entryId];
-    if (section) setGuideSectionOpen(section, true);
+    setOpenGuideParts((current) => {
+      const wanted = section ? [section, entryId] : [entryId];
+      const missing = wanted.filter((id) => !current.includes(id));
+      return missing.length ? [...current, ...missing] : current;
+    });
   };
   guideJump.current = openGuide;
 
@@ -3158,10 +3172,12 @@ function Home() {
   useEffect(() => {
     if (panelTab !== 'guide') return;
     const node = document.getElementById(`guide-${guideEntryId}`);
-    // A closed section keeps its entries in the DOM and, under the browser's
+    // A closed panel keeps its contents in the DOM and, under the browser's
     // own details styling, they even keep their measurements. Asking the
-    // section itself is the only reliable way to know they are on screen.
-    if (!node || !node.closest('details')?.open) return;
+    // entry and its section is the only reliable way to know it is on screen.
+    if (!node || !(node as HTMLDetailsElement).open) return;
+    if (!node.parentElement?.closest('details')?.open) return;
+
 
 
     // Jumped to instantly, and then again once the layout has settled. A
@@ -3868,8 +3884,8 @@ function Home() {
               activeId={guideEntryId}
               backLabel={guideReturn === 'managers' ? 'the dugout' : 'the shapes'}
               onBack={() => setPanelTab(guideReturn)}
-              onToggleSection={setGuideSectionOpen}
-              openSections={openGuideSections}
+              onTogglePart={setGuidePartOpen}
+              openParts={openGuideParts}
             />
           </aside>
         ) : (

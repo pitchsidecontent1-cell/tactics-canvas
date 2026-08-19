@@ -1548,20 +1548,25 @@ input:focus-visible {
   padding: 17px 17px 0;
 }
 
+/* Three tabs share this row now, so the gap and the label are trimmed to keep
+   the longest of them ("Managers") on one line in the narrow panel. */
 .panel-tab {
   display: inline-flex;
   flex: 1;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
+  padding: 0 4px;
   min-height: 34px;
   border: 1px solid hsl(var(--border));
   border-radius: 9px;
   background: transparent;
   color: hsl(var(--muted-foreground));
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -1863,12 +1868,23 @@ input:focus-visible {
   pointer-events: none;
 }
 
+/* The invisible band that catches clicks on an arrow. Kept close to the drawn
+   line, so a click near an arrow lands on the pitch rather than selecting the
+   arrow: wide enough to be hittable, narrow enough that "directly on it" means
+   what it says. Measured in viewBox units — about 11px on a desktop board. A
+   finger gets a little more than a cursor does. */
 .arrow-hit {
   fill: none;
   stroke: transparent;
-  stroke-width: 4;
+  stroke-width: 2.2;
   pointer-events: stroke;
   cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .arrow-hit {
+    stroke-width: 3.4;
+  }
 }
 
 .arrow-path {
@@ -1982,9 +1998,294 @@ input:focus-visible {
   letter-spacing: 0.03em;
 }
 
+/* --- Selecting and deleting pieces on the pitch ------------------------- */
+
+.tool-button.danger-tool {
+  border-color: hsl(var(--destructive));
+  color: hsl(var(--destructive));
+}
+
+.opponent-marker.is-selected {
+  border-color: hsl(var(--accent));
+  box-shadow: 0 0 0 3px hsl(var(--accent) / 0.45);
+}
+
+/* The delete badge that rides on whatever is selected. Positioned in pitch
+   percentages like the markers themselves, so it tracks the thing it belongs
+   to as that thing is dragged around. */
+.pitch-delete {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid hsl(var(--card));
+  border-radius: 50%;
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+/* On an opponent the badge is nudged up and clear of the marker, so the
+   circle underneath stays draggable. */
+.pitch-delete.is-offset {
+  transform: translate(45%, -125%);
+}
+
+/* --- The guide ---------------------------------------------------------- */
+
+/* A term the guide covers becomes a button, but it has to read as part of the
+   sentence: no button chrome, just the emphasis the word would have had
+   anyway, plus a dotted underline to say it leads somewhere. */
+.guide-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.guide-link:hover,
+.guide-link:focus-visible {
+  color: hsl(var(--primary));
+  text-decoration-style: solid;
+}
+
+.guide-panel {
+  align-self: start;
+  padding: 19px;
+}
+
+.guide-article {
+  display: grid;
+  gap: 9px;
+}
+
+.guide-back {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  margin-bottom: 3px;
+  padding: 0 10px 0 7px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.guide-heading {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.guide-intro {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.guide-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.guide-section-title {
+  margin: 0;
+  color: hsl(var(--primary));
+  font-family: var(--app-font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.guide-section-blurb {
+  margin: 6px 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.guide-entry {
+  margin-top: 12px;
+  padding: 12px 13px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  background: hsl(var(--muted) / 0.4);
+  scroll-margin-top: 16px;
+}
+
+.guide-entry.is-active {
+  border-color: hsl(var(--primary));
+}
+
+/* A jumped-to entry pulses once, so it is obvious which word was followed. */
+.guide-entry.is-flashing {
+  animation: guide-flash 1.7s ease-out;
+}
+
+@keyframes guide-flash {
+  0%,
+  40% {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0);
+  }
+}
+
+.guide-entry-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.guide-entry-badge {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.guide-entry-aka {
+  margin: 4px 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.68rem;
+  font-style: italic;
+}
+
+.guide-entry-summary {
+  margin: 7px 0 0;
+  font-size: 0.79rem;
+  line-height: 1.55;
+}
+
+.guide-entry-points {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding-left: 16px;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.guide-entry-watch {
+  margin: 9px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.guide-entry-watch strong {
+  color: hsl(var(--primary));
+  font-family: var(--app-font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* The index down the left. It scrolls on its own, so the page scroll belongs
+   to the article beside it. */
+.guide-index {
+  display: grid;
+  gap: 10px;
+  max-height: 560px;
+  padding: 0 17px 17px;
+  overflow-y: auto;
+}
+
+.guide-index-group {
+  display: grid;
+  gap: 3px;
+}
+
+.guide-index-title {
+  margin-top: 4px;
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.guide-index-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: hsl(var(--foreground));
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.guide-index-item:hover {
+  border-color: hsl(var(--border));
+  background: hsl(var(--muted) / 0.5);
+}
+
+.guide-index-item.is-active {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.12);
+}
+
+.guide-index-badge {
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.56rem;
+  white-space: nowrap;
+}
+
 @media (max-width: 1120px) {
   .workspace {
     grid-template-columns: minmax(240px, 272px) minmax(420px, 1fr);
+  }
+
+  /* The guide reads across the full width once the third column is gone. */
+  .guide-panel {
+    grid-column: 1 / -1;
+  }
+
+  .guide-index {
+    max-height: 320px;
   }
 
   .inspector {
@@ -2049,10 +2350,15 @@ input:focus-visible {
     max-height: 300px;
   }
 
+  .guide-index {
+    max-height: 260px;
+  }
+
   .inspector {
     display: block;
   }
 }
+
 
 @media (max-width: 420px) {
   .brand-lockup {

@@ -17,6 +17,7 @@ import {
   Download,
   Eraser,
   Goal,
+  GraduationCap,
   Grip,
   LayoutGrid,
   Lightbulb,
@@ -32,6 +33,7 @@ import {
   Shield,
   Sparkles,
   Spline,
+  Trash2,
   Trophy,
   Users,
 } from 'lucide-react';
@@ -41,6 +43,7 @@ import {
   GLOSSARY,
   MANAGER_PLAYSTYLES,
 } from './formation-content';
+import { GUIDE_SECTIONS, GUIDE_TERMS } from './guide-content';
 import { MANAGER_PHOTOS, managerPhotoUrl } from './manager-photos';
 import { PLAYER_PHOTOS, playerPhotoUrl, type PlayerPhoto } from './player-photos';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -1759,15 +1762,61 @@ const KEY_TERM_SOURCES = [
   'narrow',
 ];
 
-// Glossary patterns come first so they take priority at the same position.
+// Glossary patterns first, then guide terms, then plain emphasis: at the same
+// position the earlier alternative wins, so the more specific pattern has to
+// come first or the general one swallows it.
 const EMPHASIS_REGEX = new RegExp(
-  [...GLOSS_PATTERNS.map(([source]) => source), ...KEY_TERM_SOURCES]
+  [
+    ...GLOSS_PATTERNS.map(([source]) => source),
+    ...GUIDE_TERMS.map(([source]) => source),
+    ...KEY_TERM_SOURCES,
+  ]
     .map((source) => `(?:\\b(?:${source})\\b)`)
     .join('|'),
   'gi',
 );
 
-// Renders text with glossary terms starred and other key words bolded.
+// Which guide entry a matched word opens, if any.
+function guideIdFor(match: string): string | undefined {
+  return GUIDE_TERMS.find(([source]) => new RegExp(`^(?:${source})$`, 'i').test(match))?.[1];
+}
+
+// The Guide jump handler is parked here rather than threaded through as a
+// prop, because glossify() is a plain function called from a dozen places in
+// the panel tree. There is only ever one board on the page.
+const guideJump: { current: ((entryId: string) => void) | null } = { current: null };
+
+// One emphasised word. When the Guide documents it the word becomes a link
+// into that entry; otherwise it is simply emphasised, so the copy reads the
+// same whether or not the term happens to be covered.
+function EmphasisTerm({
+  guideId,
+  starred,
+  text,
+}: {
+  guideId?: string;
+  starred: boolean;
+  text: string;
+}) {
+  const label = starred ? `${text}*` : text;
+  if (!guideId) {
+    return <strong className={starred ? 'gloss-term' : 'key-term'}>{label}</strong>;
+  }
+  return (
+    <button
+      className={`key-term guide-link${starred ? ' gloss-term' : ''}`}
+      data-guide-term={guideId}
+      onClick={() => guideJump.current?.(guideId)}
+      title={`Read about ${text} in the guide`}
+      type="button"
+    >
+      {label}
+    </button>
+  );
+}
+
+// Renders text with glossary terms starred, terms the Guide covers linked,
+// and other key words simply bolded.
 function glossify(text: string): ReactNode {
   const parts: ReactNode[] = [];
   let last = 0;
@@ -1776,15 +1825,12 @@ function glossify(text: string): ReactNode {
     const glossKey = glossKeyFor(match[0]);
     parts.push(text.slice(last, index));
     parts.push(
-      glossKey && GLOSSARY[glossKey] ? (
-        <span key={`${index}-${match[0]}`} className="gloss-term">
-          {match[0]}*
-        </span>
-      ) : (
-        <strong key={`${index}-${match[0]}`} className="key-term">
-          {match[0]}
-        </strong>
-      ),
+      <EmphasisTerm
+        guideId={guideIdFor(match[0])}
+        key={`${index}-${match[0]}`}
+        starred={Boolean(glossKey && GLOSSARY[glossKey])}
+        text={match[0]}
+      />,
     );
     last = index + match[0].length;
   }
@@ -2131,6 +2177,42 @@ function FormationThumb({ shape, isDiamond = false }: { shape: number[]; isDiamo
   );
 }
 
+// Where one arrow is drawn, and the point halfway along it. Shared between the
+// SVG layer and the delete badge so the badge can never drift off its line.
+function arrowGeometry(arrow: Arrow, players: Player[]) {
+  const start = arrowStart(arrow, players);
+  if (!start) return null;
+  // Pitch coordinates are percentages; the viewBox matches the pitch aspect
+  // ratio, so y scales by PITCH_Y_SCALE.
+  const sx = start.x;
+  const sy = start.y * PITCH_Y_SCALE;
+  const ex = arrow.endX;
+  const ey = arrow.endY * PITCH_Y_SCALE;
+  if (arrow.style !== 'curved') {
+    return { d: `M ${sx} ${sy} L ${ex} ${ey}`, midX: (sx + ex) / 2, midY: (sy + ey) / 2 };
+  }
+  const mx = (sx + ex) / 2;
+  const my = (sy + ey) / 2;
+  const dx = ex - sx;
+  const dy = ey - sy;
+  const length = Math.hypot(dx, dy) || 1;
+  // Bow along the unit normal (-dy, dx)/length. A recorded bend from the drag
+  // path picks the side and depth; near-straight drags fall back to the
+  // historical default bow of a quarter of the length.
+  const bend =
+    arrow.bend !== undefined && Math.abs(arrow.bend) >= CURVE_BEND_THRESHOLD
+      ? Math.max(-length * 0.5, Math.min(length * 0.5, arrow.bend))
+      : length * 0.25;
+  const cx = mx - (dy / length) * bend;
+  const cy = my + (dx / length) * bend;
+  return {
+    d: `M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`,
+    // A quadratic sits halfway to its control point at t = 0.5.
+    midX: (sx + 2 * cx + ex) / 4,
+    midY: (sy + 2 * cy + ey) / 4,
+  };
+}
+
 // Arrows anchor to their player, so a dragged circle carries its arrows along.
 // Rendered in a layer above the pitch lines but below the player circles.
 function ArrowLayer({
@@ -2157,39 +2239,15 @@ function ArrowLayer({
         </marker>
       </defs>
       {arrows.map((arrow) => {
-        const start = arrowStart(arrow, players);
-        if (!start) return null;
+        const geometry = arrowGeometry(arrow, players);
+        if (!geometry) return null;
         const anchor = players.find((player) => player.id === arrow.playerId);
-        // Pitch coordinates are percentages; the viewBox matches the pitch
-        // aspect ratio, so y scales by PITCH_Y_SCALE.
-        const sx = start.x;
-        const sy = start.y * PITCH_Y_SCALE;
-        const ex = arrow.endX;
-        const ey = arrow.endY * PITCH_Y_SCALE;
-        let d = `M ${sx} ${sy} L ${ex} ${ey}`;
-        if (arrow.style === 'curved') {
-          const mx = (sx + ex) / 2;
-          const my = (sy + ey) / 2;
-          const dx = ex - sx;
-          const dy = ey - sy;
-          const length = Math.hypot(dx, dy) || 1;
-          // Bow along the unit normal (-dy, dx)/length. A recorded bend from
-          // the drag path picks the side and depth; near-straight drags fall
-          // back to the historical default bow of a quarter of the length.
-          const bend =
-            arrow.bend !== undefined && Math.abs(arrow.bend) >= CURVE_BEND_THRESHOLD
-              ? Math.max(-length * 0.5, Math.min(length * 0.5, arrow.bend))
-              : length * 0.25;
-          const cx = mx - (dy / length) * bend;
-          const cy = my + (dx / length) * bend;
-          d = `M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`;
-        }
         const isSelected = arrow.id === selectedArrowId;
         return (
           <g key={arrow.id}>
             <path
               className="arrow-hit"
-              d={d}
+              d={geometry.d}
               data-testid={`arrow-${arrow.id}`}
               role="button"
               tabIndex={0}
@@ -2212,7 +2270,7 @@ function ArrowLayer({
             />
             <path
               className={`arrow-path ${arrow.style === 'dashed' ? 'is-dashed' : ''} ${isSelected ? 'is-selected' : ''}`}
-              d={d}
+              d={geometry.d}
               markerEnd={isSelected ? 'url(#arrowhead-selected)' : 'url(#arrowhead)'}
             />
           </g>
@@ -2242,8 +2300,151 @@ function PitchLines() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// The Guide. The library panel holds the index; the right-hand column holds
+// the whole reference as one scrollable article, so a link inside a write-up
+// can scroll to the exact entry rather than swapping the page underneath the
+// reader.
+// ---------------------------------------------------------------------------
+
+function GuideIndex({
+  activeId,
+  onQuery,
+  onSelect,
+  query,
+}: {
+  activeId: string;
+  onQuery: (value: string) => void;
+  onSelect: (entryId: string) => void;
+  query: string;
+}) {
+  const needle = query.toLowerCase().trim();
+  const sections = GUIDE_SECTIONS.map((section) => ({
+    ...section,
+    entries: section.entries.filter((entry) =>
+      `${entry.title} ${entry.badge ?? ''} ${entry.aka ?? ''} ${entry.summary}`
+        .toLowerCase()
+        .includes(needle),
+    ),
+  })).filter((section) => section.entries.length > 0);
+
+  return (
+    <>
+      <div className="panel-heading">
+        <div className="eyebrow">The guide</div>
+        <h2 className="panel-title">Learn the game</h2>
+        <p className="panel-copy">
+          Every position with its number, the jargon behind the write-ups, and the rules that
+          decide what you are watching.
+        </p>
+        <label className="search-wrap">
+          <Search size={16} aria-hidden="true" />
+          <input
+            aria-label="Search the guide"
+            className="search-input"
+            data-testid="input-guide-search"
+            onChange={(event) => onQuery(event.target.value)}
+            placeholder="Search positions and rules"
+            type="search"
+            value={query}
+          />
+        </label>
+      </div>
+      <div className="guide-index">
+        {sections.length ? (
+          sections.map((section) => (
+            <div className="guide-index-group" key={section.id}>
+              <div className="guide-index-title">{section.title}</div>
+              {section.entries.map((entry) => (
+                <button
+                  className={`guide-index-item ${entry.id === activeId ? 'is-active' : ''}`}
+                  data-testid={`button-guide-${entry.id}`}
+                  key={entry.id}
+                  onClick={() => onSelect(entry.id)}
+                  type="button"
+                >
+                  <span className="guide-index-name">{entry.title}</span>
+                  {entry.badge && <span className="guide-index-badge">{entry.badge}</span>}
+                </button>
+              ))}
+            </div>
+          ))
+        ) : (
+          <div className="empty-search" data-testid="empty-guide-search">
+            <strong>Nothing found</strong>
+            Try a position, a number, or a word like offside.
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function GuideArticle({
+  activeId,
+  backLabel,
+  onBack,
+}: {
+  activeId: string;
+  backLabel: string;
+  onBack: () => void;
+}) {
+  return (
+    <div className="guide-article" data-testid="panel-guide">
+      <button className="guide-back" data-testid="button-guide-back" onClick={onBack} type="button">
+        <ChevronLeft size={14} />
+        Back to {backLabel}
+      </button>
+      <div className="eyebrow">The guide</div>
+      <h2 className="guide-heading">How football works</h2>
+      <p className="guide-intro">
+        Written for anyone still learning the vocabulary. Every position carries the number this
+        board puts in its circle, so a 6 on the pitch and the six in a write-up are plainly the
+        same thing.
+      </p>
+      {GUIDE_SECTIONS.map((section) => (
+        <section className="guide-section" key={section.id}>
+          <h3 className="guide-section-title">{section.title}</h3>
+          <p className="guide-section-blurb">{section.blurb}</p>
+          {section.entries.map((entry) => (
+            <article
+              className={`guide-entry ${entry.id === activeId ? 'is-active' : ''}`}
+              id={`guide-${entry.id}`}
+              key={entry.id}
+            >
+              <h4 className="guide-entry-title">
+                <span>{entry.title}</span>
+                {entry.badge && <span className="guide-entry-badge">{entry.badge}</span>}
+              </h4>
+              {entry.aka && <p className="guide-entry-aka">Also called: {entry.aka}</p>}
+              <p className="guide-entry-summary">{entry.summary}</p>
+              <ul className="guide-entry-points">
+                {entry.points.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+              {entry.watch && (
+                <p className="guide-entry-watch">
+                  <strong>Watch for</strong> {entry.watch}
+                </p>
+              )}
+            </article>
+          ))}
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function Home() {
-  const [panelTab, setPanelTab] = useState<'shapes' | 'managers'>('shapes');
+
+  const [panelTab, setPanelTab] = useState<'shapes' | 'managers' | 'guide'>('shapes');
+  // The tab the Guide was opened from, so the back button returns there.
+  const [guideReturn, setGuideReturn] = useState<'shapes' | 'managers'>('shapes');
+  const [guideEntryId, setGuideEntryId] = useState(GUIDE_SECTIONS[0].entries[0].id);
+  const [guideQuery, setGuideQuery] = useState('');
+  // Bumped on every jump so asking for the same entry twice scrolls again.
+  const [guideNonce, setGuideNonce] = useState(0);
   const [managerTab, setManagerTab] = useState<'current' | 'retired'>('current');
   const [formation, setFormation] = useState<Formation>(FORMATIONS[1]);
   // Kept outside `formation` so an edited custom shape survives a trip through
@@ -2258,6 +2459,7 @@ function Home() {
   const [arrowMode, setArrowMode] = useState(false);
   const [arrowStyle, setArrowStyle] = useState<ArrowStyle>('solid');
   const [selectedArrowId, setSelectedArrowId] = useState<string | null>(null);
+  const [selectedOpponent, setSelectedOpponent] = useState<number | null>(null);
   const [arrowDraft, setArrowDraft] = useState<Arrow | null>(null);
   const [ball, setBall] = useState<Position | null>(null);
   const [showNumbersNote, setShowNumbersNote] = useState(false);
@@ -2490,6 +2692,57 @@ function Home() {
     setArrowDraft(null);
   };
 
+  // Arrows and hand-placed opponents share a single selection, so the delete
+  // control always has exactly one thing to act on.
+  const selectArrow = (id: string) => {
+    setSelectedArrowId(id);
+    setSelectedOpponent(null);
+  };
+
+  const selectOpponent = (index: number) => {
+    setSelectedOpponent(index);
+    setSelectedArrowId(null);
+  };
+
+  const clearSelection = () => {
+    setSelectedArrowId(null);
+    setSelectedOpponent(null);
+  };
+
+  const deleteArrow = (id: string) => {
+    setArrows((current) => current.filter((arrow) => arrow.id !== id));
+    setSelectedArrowId((current) => (current === id ? null : current));
+    setMessage('Arrow deleted.');
+  };
+
+  const deleteOpponent = (index: number) => {
+    setClipOpponents((current) => current.filter((_, i) => i !== index));
+    setSelectedOpponent(null);
+    setMessage('Opponent removed.');
+  };
+
+  // Tap a thing, then delete it. The same gesture works with a mouse, with a
+  // keyboard and with a thumb, which is the point of having it at all.
+  const deleteSelection = () => {
+    if (selectedArrowId) {
+      deleteArrow(selectedArrowId);
+    } else if (selectedOpponent !== null) {
+      deleteOpponent(selectedOpponent);
+    }
+  };
+
+  const deleteSelectionRef = useRef(deleteSelection);
+  deleteSelectionRef.current = deleteSelection;
+
+  // Opens the Guide at one entry, from the index or from a linked word.
+  const openGuide = (entryId: string) => {
+    if (panelTab !== 'guide') setGuideReturn(panelTab);
+    setPanelTab('guide');
+    setGuideEntryId(entryId);
+    setGuideNonce((current) => current + 1);
+  };
+  guideJump.current = openGuide;
+
   const selectFormation = (nextFormation: Formation) => {
     stopTactic(false);
     setFormation(nextFormation);
@@ -2594,13 +2847,30 @@ function Home() {
 
   const addOpponent = () => {
     if (animRunning) return;
-    // Fanned across the pitch so a second opponent never lands exactly on the
-    // first one, where it would look like a single marker.
-    setClipOpponents((current) => [
-      ...current,
-      { x: 30 + ((current.length * 13) % 45), y: 34 + ((current.length * 7) % 22) },
-    ]);
+    setClipOpponents((current) => {
+      // Fanned across the pitch so a second opponent never lands exactly on
+      // the first, and walked along that fan until it clears every player and
+      // every marker already down. A marker sitting underneath a player circle
+      // cannot be tapped, so it could not be selected or deleted either.
+      const taken: Position[] = [
+        ...players.map((player) => ({ x: player.x, y: player.y })),
+        ...current,
+      ];
+      const spotAt = (index: number) => ({
+        x: 30 + ((index * 13) % 45),
+        y: 34 + ((index * 7) % 22),
+      });
+      for (let step = 0; step < 24; step += 1) {
+        const spot = spotAt(current.length + step);
+        if (taken.every((other) => Math.hypot(other.x - spot.x, other.y - spot.y) > 7)) {
+          return [...current, spot];
+        }
+      }
+      return [...current, spotAt(current.length)];
+    });
+    setMessage('Opponent added. Drag it anywhere, or tap it and press delete.');
   };
+
 
   const playCustomClip = () => {
     if (clipFrames.length < 2 || animRunning) return;
@@ -2713,6 +2983,8 @@ function Home() {
     setPlayers([]);
     setSelectedId('');
     clearArrows();
+    clearSelection();
+    setClipOpponents([]);
     setBall(null);
     setMessage('Board cleared. Choose reset when you want the shape back.');
   };
@@ -2805,7 +3077,12 @@ function Home() {
     if (start) {
       const length = Math.hypot(arrowDraft.endX - start.x, arrowDraft.endY - start.y);
       if (length > 4) {
-        setArrows((current) => [...current, arrowDraft]);
+        // A real pointerup fires both the pitch handler and the window one,
+        // and both land in the same React batch reading the same draft, so
+        // appending blindly filed every arrow twice.
+        setArrows((current) =>
+          current.some((arrow) => arrow.id === arrowDraft.id) ? current : [...current, arrowDraft],
+        );
         setSelectedArrowId(arrowDraft.id);
         setMessage('Arrow added. Click an arrow and press Delete to remove it.');
       }
@@ -2837,14 +3114,36 @@ function Home() {
       if (event.key !== 'Delete' && event.key !== 'Backspace') return;
       const target = event.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
-      if (!selectedArrowId) return;
+      if (!selectedArrowId && selectedOpponent === null) return;
       event.preventDefault();
-      setArrows((current) => current.filter((arrow) => arrow.id !== selectedArrowId));
-      setSelectedArrowId(null);
+      deleteSelectionRef.current();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedArrowId]);
+  }, [selectedArrowId, selectedOpponent]);
+
+  // The article has to be on the page before it can be scrolled, which is why
+  // the jump lives in an effect rather than inside openGuide.
+  useEffect(() => {
+    if (panelTab !== 'guide') return;
+    const node = document.getElementById(`guide-${guideEntryId}`);
+    if (!node) return;
+    // Jumped to instantly, and then again once the layout has settled. A
+    // smooth scroll aims at an offset measured before the portraits above it
+    // have loaded, so it lands a few hundred pixels short of the entry.
+    const align = () => node.scrollIntoView({ block: 'start' });
+    align();
+    const frame = requestAnimationFrame(align);
+    const settle = window.setTimeout(align, 280);
+    node.classList.add('is-flashing');
+    const flash = window.setTimeout(() => node.classList.remove('is-flashing'), 1800);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
+      window.clearTimeout(flash);
+    };
+  }, [panelTab, guideEntryId, guideNonce]);
+
 
   const boardLabel = activeEra
     ? `${activeEra.club} ${activeEra.years} / ${activeEra.formation}`
@@ -2857,9 +3156,20 @@ function Home() {
   const showShapePhases = !activeEra && (Boolean(content) || (isCustom && customIsFull));
 
   // While a clip plays, the markers come from the frame being shown; the rest
-  // of the time they are the ones placed by hand for the clip being built.
+  // of the time they are the ones placed by hand. Hand-placed markers can be
+  // dragged and deleted on any shape or era, not only in the clip builder.
   const visibleOpponents = animRunning ? opponents : clipOpponents;
-  const opponentsDraggable = isCustom && !animRunning;
+  const opponentsDraggable = !animRunning;
+  // Guarded against a stale index: deleting an opponent shifts the ones after
+  // it, and playback swaps the whole list out from underneath.
+  const selectedOpponentSpot =
+    opponentsDraggable && selectedOpponent !== null ? visibleOpponents[selectedOpponent] : undefined;
+
+
+  // Where the selected arrow's delete badge goes: halfway along its own line.
+  const selectedArrow = arrows.find((arrow) => arrow.id === selectedArrowId);
+  const selectedArrowGeometry =
+    selectedArrow && !animRunning ? arrowGeometry(selectedArrow, players) : null;
 
   return (
     <main className="board-shell">
@@ -2927,9 +3237,27 @@ function Home() {
               <BookOpen size={14} />
               Managers
             </button>
+            <button
+              className={`panel-tab ${panelTab === 'guide' ? 'is-active' : ''}`}
+              data-testid="tab-guide"
+              type="button"
+              role="tab"
+              aria-selected={panelTab === 'guide'}
+              onClick={() => openGuide(guideEntryId)}
+            >
+              <GraduationCap size={14} />
+              Guide
+            </button>
           </div>
 
-          {panelTab === 'shapes' ? (
+          {panelTab === 'guide' ? (
+            <GuideIndex
+              activeId={guideEntryId}
+              onQuery={setGuideQuery}
+              onSelect={openGuide}
+              query={guideQuery}
+            />
+          ) : panelTab === 'shapes' ? (
             <>
               <div className="panel-heading">
                 <div className="eyebrow">The library</div>
@@ -3220,6 +3548,28 @@ function Home() {
               <CircleDot size={14} />
               {ball ? 'Remove ball' : 'Add ball'}
             </button>
+            <button
+              className="tool-button"
+              data-testid="button-add-opponent-pitch"
+              type="button"
+              disabled={animRunning}
+              title="Drop an opposition marker on the pitch"
+              onClick={addOpponent}
+            >
+              <Shield size={14} />
+              Add opponent
+            </button>
+            {(selectedArrowGeometry || selectedOpponentSpot) && (
+              <button
+                className="tool-button danger-tool"
+                data-testid="button-delete-selected"
+                type="button"
+                onClick={deleteSelection}
+              >
+                <Trash2 size={14} />
+                Delete {selectedArrowId ? 'arrow' : 'opponent'}
+              </button>
+            )}
             {arrows.length > 0 && (
               <button
                 className="tool-button"
@@ -3243,6 +3593,10 @@ function Home() {
               style={{ '--anim-dur': `${animStepDuration}s` } as CSSProperties}
               data-testid="pitch-board"
               onPointerDown={(event) => {
+                // A press on bare grass drops the current selection, so the
+                // delete control never acts on something the user has already
+                // moved on from.
+                if (!animRunning) clearSelection();
                 // Arrow mode: pressing open grass starts an arrow from that
                 // spot, so runs and passes can be drawn anywhere, not just
                 // from a player circle.
@@ -3273,11 +3627,8 @@ function Home() {
                 arrows={arrowDraft ? [...arrows, arrowDraft] : arrows}
                 players={players}
                 selectedArrowId={selectedArrowId}
-                onSelect={setSelectedArrowId}
-                onDelete={(id) => {
-                  setArrows((current) => current.filter((arrow) => arrow.id !== id));
-                  setSelectedArrowId((current) => (current === id ? null : current));
-                }}
+                onSelect={selectArrow}
+                onDelete={deleteArrow}
               />
               {players.map((player) => (
                 <button
@@ -3291,6 +3642,9 @@ function Home() {
                     if (animRunning) return;
                     event.preventDefault();
                     event.stopPropagation();
+                    // Picking up a player is a different intent, so it drops
+                    // any arrow or opponent that was picked out before.
+                    clearSelection();
                     setSelectedId(player.id);
                     if (arrowMode) {
                       arrowCounter.current += 1;
@@ -3350,28 +3704,71 @@ function Home() {
                     if (animRunning) return;
                     event.preventDefault();
                     event.stopPropagation();
+                    clearSelection();
                     dragRef.current = { id: 'ball' };
                   }}
+
                 />
               )}
               {visibleOpponents.map((opponent, index) => (
                 <div
                   key={`opp-${index}`}
-                  className={`opponent-marker ${opponentsDraggable ? 'is-draggable' : ''}`}
+                  className={`opponent-marker ${opponentsDraggable ? 'is-draggable' : ''} ${
+                    opponentsDraggable && selectedOpponent === index ? 'is-selected' : ''
+                  }`}
+                  data-testid={`opponent-marker-${index}`}
                   style={{ left: `${opponent.x}%`, top: `${opponent.y}%` }}
                   {...(opponentsDraggable
                     ? {
-                        role: 'img',
-                        'aria-label': `Opponent ${index + 1}`,
+                        role: 'button' as const,
+                        tabIndex: 0,
+                        'aria-label': `Opponent ${index + 1}${
+                          selectedOpponent === index ? ', selected' : ''
+                        }. Press Delete to remove.`,
+                        onFocus: () => selectOpponent(index),
                         onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
                           event.preventDefault();
                           event.stopPropagation();
+                          selectOpponent(index);
                           dragRef.current = { id: `opp-${index}` };
                         },
                       }
                     : { 'aria-hidden': true as const })}
                 />
               ))}
+              {/* A delete badge on whatever is selected. The toolbar button and
+                  the Delete key do the same job; this one is here because on a
+                  phone the thing you just tapped is where your thumb already
+                  is. */}
+              {selectedOpponentSpot && (
+                <button
+                  aria-label="Delete this opponent"
+                  className="pitch-delete is-offset"
+                  data-testid="button-delete-opponent-badge"
+                  onClick={() => deleteOpponent(selectedOpponent!)}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  style={{ left: `${selectedOpponentSpot.x}%`, top: `${selectedOpponentSpot.y}%` }}
+                  type="button"
+                >
+                  <X size={12} />
+                </button>
+              )}
+              {selectedArrowGeometry && (
+                <button
+                  aria-label="Delete this arrow"
+                  className="pitch-delete"
+                  data-testid="button-delete-arrow-badge"
+                  onClick={() => deleteArrow(selectedArrowId!)}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  style={{
+                    left: `${selectedArrowGeometry.midX}%`,
+                    top: `${selectedArrowGeometry.midY / PITCH_Y_SCALE}%`,
+                  }}
+                  type="button"
+                >
+                  <X size={12} />
+                </button>
+              )}
               {animCaption && (
                 <div
                   className={`anim-caption ${ball && ball.y < 26 ? 'is-dodged' : ''}`}
@@ -3424,6 +3821,15 @@ function Home() {
           </div>
         </section>
 
+        {panelTab === 'guide' ? (
+          <aside className="panel guide-panel" aria-label="The guide">
+            <GuideArticle
+              activeId={guideEntryId}
+              backLabel={guideReturn === 'managers' ? 'the dugout' : 'the shapes'}
+              onBack={() => setPanelTab(guideReturn)}
+            />
+          </aside>
+        ) : (
         <aside className="panel inspector" aria-label="Selected player details">
           {selectedPlayerPhoto ? (
             <img
@@ -3847,8 +4253,10 @@ function Home() {
           )}
           <div className="reset-message">{message}</div>
         </aside>
+        )}
       </div>
     </main>
+
   );
 }
 

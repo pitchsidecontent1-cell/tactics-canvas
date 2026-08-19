@@ -2104,10 +2104,50 @@ input:focus-visible {
   line-height: 1.55;
 }
 
+/* Each section is a closed box until it is asked for, so the guide opens as a
+   contents page rather than several thousand words. Same bargain as Core
+   Ideas: a chevron, a nudge to open it, and here a count of what is inside. */
 .guide-section {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid hsl(var(--border));
+  margin-top: 10px;
+  padding: 11px 13px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  background: hsl(var(--card));
+}
+
+.guide-section > summary {
+  display: grid;
+  grid-template-columns: 9px auto auto 1fr;
+  align-items: center;
+  gap: 5px 9px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.guide-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.guide-section > summary::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid hsl(var(--primary));
+  border-bottom: 2px solid hsl(var(--primary));
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.guide-section[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.guide-section > summary .summary-hint {
+  justify-self: end;
+}
+
+.guide-section[open] > summary .summary-hint {
+  display: none;
 }
 
 .guide-section-title {
@@ -2120,21 +2160,40 @@ input:focus-visible {
   text-transform: uppercase;
 }
 
+.guide-section-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+/* The blurb stays visible while the section is shut, so the reader can tell
+   what is behind each one without opening all seven. */
 .guide-section-blurb {
-  margin: 6px 0 0;
+  grid-column: 1 / -1;
+  margin: 0;
   color: hsl(var(--muted-foreground));
   font-size: 0.74rem;
   line-height: 1.5;
 }
 
 .guide-entry {
-  margin-top: 12px;
+  margin-top: 11px;
   padding: 12px 13px;
   border: 1px solid hsl(var(--border));
   border-radius: 12px;
   background: hsl(var(--muted) / 0.4);
-  scroll-margin-top: 16px;
+  /* Clears the section summary it sits under when jumped to. */
+  scroll-margin-top: 62px;
 }
+
 
 .guide-entry.is-active {
   border-color: hsl(var(--primary));

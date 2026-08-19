@@ -262,6 +262,282 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     ],
   },
   {
+    id: 'shapes',
+    title: 'Shapes and formations',
+    blurb:
+      'How the eleven are arranged. Pick any of these out of the library on the left and the board will lay it out for you.',
+    entries: [
+      {
+        id: 'reading-a-formation',
+        title: 'How to read a formation',
+        summary:
+          'The numbers count the outfield players from the back forwards, and leave the goalkeeper out. A 4-4-2 is four defenders, four midfielders and two forwards — ten, plus the keeper who is never mentioned.',
+        points: [
+          'Extra numbers just split a line in two. A 4-2-3-1 is a 4-5-1 with the five written as a two and a three, because those five do not stand on the same line.',
+          'The same numbers can be very different shapes: a flat 4-4-2 and a 4-4-2 diamond field identical numbers and play almost nothing alike.',
+          'No team holds its formation for ninety minutes. Every side has one shape with the ball and another without it, and the second is usually a line deeper and much narrower.',
+          'A formation says where players start, not what they do. Two teams in the same 4-3-3 can be opposites once the whistle goes.',
+        ],
+        watch:
+          'Look at the shape when the other team has the ball. That is the honest one — the attacking shape is mostly wishful thinking on a team sheet.',
+      },
+      {
+        id: 'formation-4-4-2',
+        title: '4-4-2',
+        badge: 'Back four',
+        aka: 'two banks of four, the flat four-four-two',
+        summary:
+          'The shape everyone learns first: four defenders, four midfielders across, two forwards. Its virtue is that every player has an obvious neighbour and an obvious job, which makes it the easiest shape in football to defend in.',
+        points: [
+          'Out of possession the two lines of four sit close together and shuffle sideways as one, leaving no gaps to pass through.',
+          'The two wide midfielders supply width and the two centre-midfielders cover the middle, so the full-backs are rarely left alone.',
+          'The two forwards work as a pair — one holds the ball up, the other runs beyond.',
+          'Its weakness is the middle: two central midfielders can be outnumbered by a three, which is why so many teams moved away from it.',
+        ],
+        watch:
+          'When the ball goes wide, watch the far-side midfielder tuck almost into the centre circle. That squeeze is what makes the shape work.',
+      },
+      {
+        id: 'formation-4-4-2-diamond',
+        title: '4-4-2 Diamond',
+        badge: 'Back four',
+        aka: '4-1-2-1-2, midfield diamond',
+        summary:
+          'The same four midfielders, stacked instead of spread: a holder at the base, two carriers either side, a creator at the tip behind the two strikers. It wins the middle of the pitch outright and concedes the flanks to do it.',
+        points: [
+          'Four central midfielders against a normal three means an extra body in every duel in the centre.',
+          'All width has to come from the full-backs, who are the only wide players in the team.',
+          'The tip of the diamond sits in the space between the opposition midfield and defence, which is why the shape suits a genuine number ten.',
+          'It is vulnerable to a quick switch of play, because the far flank is empty by design.',
+        ],
+        watch:
+          'Count the players inside the width of the penalty box. In a diamond it is six of the ten outfielders.',
+      },
+      {
+        id: 'formation-4-3-3',
+        title: '4-3-3',
+        badge: 'Back four',
+        aka: 'four-three-three',
+        summary:
+          'A back four, a midfield three and a front three. The modern default at the top of the game: it presses well because the front three can cover the whole width, and it builds well because the midfield three makes triangles everywhere.',
+        points: [
+          'The midfield three is normally one holder and two eights, though it can be inverted as two holders and one ten.',
+          'The wingers hold the touchline to stretch the defence, which opens the middle for the striker and the eights.',
+          'It presses in a natural shape: the front three cut off the centre-backs and the holding midfielder at the same time.',
+          'The full-backs have a lot of ground to cover, since there is nobody in front of them in the midfield line.',
+        ],
+        watch:
+          'On a goal kick, see whether the front three fan out to cover both centre-backs and the six. That is the press being set.',
+      },
+      {
+        id: 'formation-4-2-3-1',
+        title: '4-2-3-1',
+        badge: 'Back four',
+        aka: 'double pivot with a ten',
+        summary:
+          'Two holding midfielders, a band of three attackers behind one striker. It has been the most popular shape in Europe for two decades because it is hard to counter-attack against and it still leaves four attackers.',
+        points: [
+          'The double pivot is the point: two players screening the defence means the team is protected even when the full-backs push on.',
+          'The three behind the striker are usually two wingers and a ten, and they can rotate freely because the pivot holds the shape.',
+          'Out of possession it drops into a 4-4-1-1 or a 4-5-1, with the wingers falling into the midfield line.',
+          'Its risk is isolation: one striker against two centre-backs, with no support if the three behind do not get forward.',
+        ],
+        watch:
+          'Watch the two holders when their team attacks. One steps forward and one stays — they rarely both go.',
+      },
+      {
+        id: 'formation-4-1-4-1',
+        title: '4-1-4-1',
+        badge: 'Back four',
+        aka: 'compact block',
+        summary:
+          'A lone holder in front of the defence, a flat four ahead of them, one striker. A defensive shape first: it leaves no space between the lines at all, which is exactly where good teams want to play.',
+        points: [
+          'The single holder plugs the gap the number ten wants to receive in, and the flat four ahead blocks the passing lanes into it.',
+          'With the ball it usually becomes a 4-3-3, with the two inner midfielders pushing up and the wide ones going higher.',
+          'It defends the centre of the pitch better than almost any other shape and the flanks worse than most.',
+          'It asks a great deal of the single striker, who presses two centre-backs alone.',
+        ],
+      },
+      {
+        id: 'formation-4-4-1-1',
+        title: '4-4-1-1',
+        badge: 'Back four',
+        aka: 'second striker link',
+        summary:
+          'A 4-4-2 with one forward dropped into the space behind the other. It is what a 4-4-2 becomes when a team wants a link between midfield and attack without giving up either bank of four.',
+        points: [
+          'The dropping forward is a second striker: deep enough to receive between the lines, high enough to still get in the box.',
+          'Defensively it is a 4-4-2 with the deeper forward screening the opposition holding midfielder.',
+          'It suits a partnership where one is quick and one is clever, rather than two of the same type.',
+        ],
+      },
+      {
+        id: 'formation-4-5-1',
+        title: '4-5-1',
+        badge: 'Back four',
+        aka: 'midfield overload',
+        summary:
+          'Five across the middle in front of a back four, one forward alone. Rarely a starting plan and often a game-state shape: a team protecting a lead, or an away side happy to concede possession.',
+        points: [
+          'Five in midfield means the opposition cannot outnumber you there, whatever they play.',
+          'The two widest of the five drop in alongside the full-backs, giving a defensive line that is effectively six.',
+          'Everything depends on the lone striker holding the ball long enough for the midfield to come up and support.',
+        ],
+      },
+      {
+        id: 'formation-4-3-1-2',
+        title: '4-3-1-2',
+        badge: 'Back four',
+        aka: 'narrow diamond',
+        summary:
+          'Three midfielders in a line, a playmaker just ahead of them, two strikers. A narrow shape that floods the centre and asks the full-backs to be the entire width of the team.',
+        points: [
+          'The two strikers pin both centre-backs, which leaves the ten one against one with a midfielder.',
+          'The midfield three behind can shuffle across quickly, so the middle is dense even without the ball.',
+          'Against a team with two good wingers it can be pulled apart on the flanks.',
+        ],
+      },
+      {
+        id: 'formation-4-3-2-1',
+        title: '4-3-2-1',
+        badge: 'Back four',
+        aka: 'the Christmas tree',
+        summary:
+          'A back four, a midfield three, two attackers tucked inside behind a lone striker. Carlo Ancelotti built it at Milan to get Kaká, Seedorf and Rui Costa on the pitch together without losing the midfield.',
+        points: [
+          'The two inside forwards sit in the half-spaces, the most awkward area for a back four to pick up.',
+          'It is extremely narrow, so the full-backs are the only source of width and must overlap constantly.',
+          'It exists to serve creative players, and it needs a striker content to work alone.',
+        ],
+      },
+      {
+        id: 'formation-4-2-2-2',
+        title: '4-2-2-2',
+        badge: 'Back four',
+        aka: 'box midfield, the Brazilian magic square',
+        summary:
+          'Two holders, two attacking midfielders in the half-spaces, two strikers. The four central midfielders form a box rather than a diamond, which gives two players between the lines instead of one.',
+        points: [
+          'Two players between the lines is much harder to mark than one, because a single holding midfielder cannot screen both.',
+          'The box shape guarantees short passing angles in every direction, which is why possession teams keep returning to it.',
+          'As with every narrow shape, the full-backs provide all of the width.',
+        ],
+      },
+      {
+        id: 'formation-4-2-4',
+        title: '4-2-4',
+        badge: 'Back four',
+        aka: 'full send',
+        summary:
+          'Four defenders, two midfielders, four attackers. Brazil won the 1958 World Cup with it, and it survives today mostly as a chasing shape in the last ten minutes.',
+        points: [
+          'Two central midfielders against a modern three or four is a losing count, and the space in front of the back four is enormous.',
+          'It puts four players in advanced areas, so crosses always have targets.',
+          'Use it knowing what it costs: it is a trade of control for bodies in the box.',
+        ],
+      },
+      {
+        id: 'formation-3-5-2',
+        title: '3-5-2',
+        badge: 'Back five',
+        aka: 'three at the back with wing-backs',
+        summary:
+          'Three centre-backs, wing-backs on both flanks, three central midfielders and two strikers. On paper a five-man midfield; in defence a back five, because the wing-backs drop in.',
+        points: [
+          'It is really two shapes: a 5-3-2 without the ball and a 3-5-2 or 3-3-4 with it, and the wing-backs do the converting.',
+          'Three central midfielders plus two strikers means the middle is heavily populated in both boxes.',
+          'The spare centre-back can step into midfield with the ball, creating an overload against a front two.',
+          'Everything rests on the wing-backs, and it falls apart quickly when they tire.',
+        ],
+        watch:
+          'Count the back line at both ends of the same attack. Three going forward, five coming back.',
+      },
+      {
+        id: 'formation-3-4-3',
+        title: '3-4-3',
+        badge: 'Back three',
+        aka: 'three at the back, high and wide',
+        summary:
+          'Three centre-backs, two wing-backs and two central midfielders, three forwards. The aggressive version of a back three: it puts three players high and central and asks the wing-backs to be everywhere.',
+        points: [
+          'Three centre-backs against two forwards means one is always spare to carry the ball forward.',
+          'Only two central midfielders is a thin base, so the wing-backs have to make good decisions about when to go.',
+          'It creates natural one-against-ones for the wide forwards, who start inside with the wing-back outside them.',
+          'Out of possession it usually becomes a 5-4-1 or a 5-2-3.',
+        ],
+      },
+      {
+        id: 'formation-3-4-2-1',
+        title: '3-4-2-1',
+        badge: 'Back three',
+        aka: 'two between the lines',
+        summary:
+          'A back three, two central midfielders, two wing-backs, and two inside forwards behind a striker. It is the shape Antonio Conte and Rúben Amorim built their titles on, and it defends the centre while attacking through it.',
+        points: [
+          'The two inside forwards live in the half-spaces, where a back four is least comfortable picking up.',
+          'Without the ball it becomes a 5-4-1 that is very hard to play through centrally.',
+          'The striker attacks the space behind while the two behind them arrive late.',
+          'It can be stretched by a team that overloads one flank and switches quickly.',
+        ],
+      },
+      {
+        id: 'formation-3-2-4-1',
+        title: '3-2-4-1',
+        badge: 'Back three',
+        aka: 'the modern build-up shape',
+        summary:
+          'Less a formation than the shape a possession team takes while it has the ball: three at the back, a double pivot, four across the attacking line, one striker. It usually starts life as a 4-3-3 with a full-back stepping inside.',
+        points: [
+          'The three plus two forms a stable base that cannot be pressed by a front three.',
+          'The four ahead of them occupy both touchlines and both half-spaces, which covers all five vertical lanes with the striker.',
+          'Losing the ball leaves five players already behind it, which is what makes an aggressive counter-press safe.',
+          'It is a rest-defence structure as much as an attacking one.',
+        ],
+      },
+      {
+        id: 'formation-5-3-2',
+        title: '5-3-2',
+        badge: 'Back five',
+        aka: 'wing-back security',
+        summary:
+          'A back five with three central midfielders and two forwards. Written as a five rather than a three because the wing-backs start deep — this is a shape for a team that expects to defend.',
+        points: [
+          'Five across the back means the wide areas are covered without pulling a centre-back out of the middle.',
+          'Two forwards give an out-ball on the counter, which a lone striker cannot.',
+          'It concedes the middle of the pitch and dares the opponent to break down a compact block.',
+        ],
+      },
+      {
+        id: 'formation-5-4-1',
+        title: '5-4-1',
+        badge: 'Back five',
+        aka: 'deep and patient, the low block',
+        summary:
+          'Nine players behind the ball in two banks, one forward. The most defensive shape in common use, and the standard answer when a smaller team meets a much better one.',
+        points: [
+          'There is almost no space between the lines, and the pitch is made as short and as narrow as it can be.',
+          'The lone striker stays high to give the team somewhere to clear the ball to.',
+          'It invites shots from distance and crosses, which are the two lowest-value ways to score.',
+          'It is exhausting: the whole team defends for long periods and has to sprint the length of the pitch to counter.',
+        ],
+      },
+      {
+        id: 'formation-wm',
+        title: 'The WM and 2-3-5',
+        aka: 'the pyramid, the WM',
+        summary:
+          'Where the numbers came from. The 2-3-5 pyramid of the early 1900s gave the shirt numbers still used today, and Herbert Chapman WM of the 1920s was the first great tactical response to a change in the offside law.',
+        points: [
+          'In a 2-3-5 the players were numbered across each line in turn, which is why 2 and 3 are full-backs, 6 is a half-back and 9 is the centre-forward.',
+          'The 1925 offside change cut the number of defenders needed between an attacker and the goal from three to two, and goals exploded.',
+          'Chapman answer was to drop the centre-half back into defence, making a 3-2-2-3 that looks like a W above an M.',
+          'Every shape since is a variation on the same trade: more bodies forward, or more bodies back.',
+        ],
+      },
+    ],
+  },
+  {
     id: 'roles',
     title: 'Specialist roles',
     blurb:
@@ -734,6 +1010,25 @@ export const GUIDE_SECTIONS: GuideSection[] = [
 // ---------------------------------------------------------------------------
 
 export const GUIDE_TERMS: Array<[source: string, entryId: string]> = [
+  // Formation names first: the compound ones have to beat the plain number
+  // they start with, or '4-4-2' swallows '4-4-2 diamond'.
+  ['4-4-2 diamond|4-1-2-1-2', 'formation-4-4-2-diamond'],
+  ['4-4-2', 'formation-4-4-2'],
+  ['4-4-1-1', 'formation-4-4-1-1'],
+  ['4-3-3', 'formation-4-3-3'],
+  ['4-2-3-1', 'formation-4-2-3-1'],
+  ['4-1-4-1', 'formation-4-1-4-1'],
+  ['4-5-1', 'formation-4-5-1'],
+  ['4-3-1-2', 'formation-4-3-1-2'],
+  ['4-3-2-1', 'formation-4-3-2-1'],
+  ['4-2-2-2', 'formation-4-2-2-2'],
+  ['4-2-4', 'formation-4-2-4'],
+  ['3-5-2', 'formation-3-5-2'],
+  ['3-4-2-1', 'formation-3-4-2-1'],
+  ['3-4-3', 'formation-3-4-3'],
+  ['3-2-4-1', 'formation-3-2-4-1'],
+  ['5-3-2', 'formation-5-3-2'],
+  ['5-4-1', 'formation-5-4-1'],
   ['juego de posición', 'positional-play'],
   ['positional play', 'positional-play'],
   ['tiki-taka', 'positional-play'],
@@ -786,7 +1081,8 @@ export const GUIDE_TERMS: Array<[source: string, entryId: string]> = [
   ['throw-ins?', 'throw-in'],
 ];
 
-/** Flat lookup of every entry by id, for the jump links. */
-export const GUIDE_ENTRY_IDS = new Set(
-  GUIDE_SECTIONS.flatMap((section) => section.entries.map((entry) => entry.id)),
+/** Which section each entry lives in, so a jump can open the right one first. */
+export const GUIDE_ENTRY_SECTION: Record<string, string> = Object.fromEntries(
+  GUIDE_SECTIONS.flatMap((section) => section.entries.map((entry) => [entry.id, section.id])),
 );
+

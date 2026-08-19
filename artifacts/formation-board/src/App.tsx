@@ -43,7 +43,7 @@ import {
   GLOSSARY,
   MANAGER_PLAYSTYLES,
 } from './formation-content';
-import { GUIDE_SECTIONS, GUIDE_TERMS } from './guide-content';
+import { GUIDE_ENTRY_SECTION, GUIDE_SECTIONS, GUIDE_TERMS } from './guide-content';
 import { MANAGER_PHOTOS, managerPhotoUrl } from './manager-photos';
 import { PLAYER_PHOTOS, playerPhotoUrl, type PlayerPhoto } from './player-photos';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -2384,10 +2384,14 @@ function GuideArticle({
   activeId,
   backLabel,
   onBack,
+  onToggleSection,
+  openSections,
 }: {
   activeId: string;
   backLabel: string;
   onBack: () => void;
+  onToggleSection: (sectionId: string, open: boolean) => void;
+  openSections: string[];
 }) {
   return (
     <div className="guide-article" data-testid="panel-guide">
@@ -2402,10 +2406,23 @@ function GuideArticle({
         board puts in its circle, so a 6 on the pitch and the six in a write-up are plainly the
         same thing.
       </p>
+      {/* Every section starts closed, so the guide opens as a contents page
+          rather than a wall of text. Following a link from a write-up opens
+          the section it landed in on the way past. */}
       {GUIDE_SECTIONS.map((section) => (
-        <section className="guide-section" key={section.id}>
-          <h3 className="guide-section-title">{section.title}</h3>
-          <p className="guide-section-blurb">{section.blurb}</p>
+        <details
+          className="guide-section"
+          data-testid={`guide-section-${section.id}`}
+          key={section.id}
+          open={openSections.includes(section.id)}
+          onToggle={(event) => onToggleSection(section.id, event.currentTarget.open)}
+        >
+          <summary>
+            <span className="guide-section-title">{section.title}</span>
+            <span className="guide-section-count">{section.entries.length}</span>
+            <span className="summary-hint">tap to show</span>
+            <span className="guide-section-blurb">{section.blurb}</span>
+          </summary>
           {section.entries.map((entry) => (
             <article
               className={`guide-entry ${entry.id === activeId ? 'is-active' : ''}`}
@@ -2430,7 +2447,7 @@ function GuideArticle({
               )}
             </article>
           ))}
-        </section>
+        </details>
       ))}
     </div>
   );
@@ -2443,6 +2460,7 @@ function Home() {
   const [guideReturn, setGuideReturn] = useState<'shapes' | 'managers'>('shapes');
   const [guideEntryId, setGuideEntryId] = useState(GUIDE_SECTIONS[0].entries[0].id);
   const [guideQuery, setGuideQuery] = useState('');
+  const [openGuideSections, setOpenGuideSections] = useState<string[]>([]);
   // Bumped on every jump so asking for the same entry twice scrolls again.
   const [guideNonce, setGuideNonce] = useState(0);
   const [managerTab, setManagerTab] = useState<'current' | 'retired'>('current');
@@ -2734,12 +2752,25 @@ function Home() {
   const deleteSelectionRef = useRef(deleteSelection);
   deleteSelectionRef.current = deleteSelection;
 
-  // Opens the Guide at one entry, from the index or from a linked word.
+  // Returns the same array when nothing changes, so the <details> element
+  // reporting a state React set does not loop.
+  const setGuideSectionOpen = (sectionId: string, open: boolean) => {
+    setOpenGuideSections((current) => {
+      const isOpen = current.includes(sectionId);
+      if (isOpen === open) return current;
+      return open ? [...current, sectionId] : current.filter((id) => id !== sectionId);
+    });
+  };
+
+  // Opens the Guide at one entry, from the index or from a linked word. The
+  // section holding it is opened too, or there would be nothing to scroll to.
   const openGuide = (entryId: string) => {
     if (panelTab !== 'guide') setGuideReturn(panelTab);
     setPanelTab('guide');
     setGuideEntryId(entryId);
     setGuideNonce((current) => current + 1);
+    const section = GUIDE_ENTRY_SECTION[entryId];
+    if (section) setGuideSectionOpen(section, true);
   };
   guideJump.current = openGuide;
 
@@ -3127,7 +3158,12 @@ function Home() {
   useEffect(() => {
     if (panelTab !== 'guide') return;
     const node = document.getElementById(`guide-${guideEntryId}`);
-    if (!node) return;
+    // A closed section keeps its entries in the DOM and, under the browser's
+    // own details styling, they even keep their measurements. Asking the
+    // section itself is the only reliable way to know they are on screen.
+    if (!node || !node.closest('details')?.open) return;
+
+
     // Jumped to instantly, and then again once the layout has settled. A
     // smooth scroll aims at an offset measured before the portraits above it
     // have loaded, so it lands a few hundred pixels short of the entry.
@@ -3243,7 +3279,12 @@ function Home() {
               type="button"
               role="tab"
               aria-selected={panelTab === 'guide'}
-              onClick={() => openGuide(guideEntryId)}
+              onClick={() => {
+                // Opening the tab by hand lands on the contents, with every
+                // section still closed; only a link jumps to an entry.
+                if (panelTab !== 'guide') setGuideReturn(panelTab);
+                setPanelTab('guide');
+              }}
             >
               <GraduationCap size={14} />
               Guide
@@ -3827,6 +3868,8 @@ function Home() {
               activeId={guideEntryId}
               backLabel={guideReturn === 'managers' ? 'the dugout' : 'the shapes'}
               onBack={() => setPanelTab(guideReturn)}
+              onToggleSection={setGuideSectionOpen}
+              openSections={openGuideSections}
             />
           </aside>
         ) : (

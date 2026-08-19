@@ -99,7 +99,16 @@ export default defineConfig({
         // chunk. Browsers then keep it cached across deploys instead of
         // re-downloading it every time a manager or an animation is edited.
         manualChunks: (id) => {
+          // The editorial copy — formation write-ups, manager histories and
+          // the guide — is a third of the bundle and gets edited far more
+          // often than the app code around it. Its own chunk means a wording
+          // change does not invalidate the app chunk in everyone's cache, and
+          // the two download in parallel rather than one after the other.
+          if (/[\\/]src[\\/](?:formation-content|guide-content)\.ts$/.test(id)) {
+            return 'editorial';
+          }
           if (!id.includes('node_modules')) return undefined;
+
           // Match on the package directory rather than a bare substring, so
           // packages that merely contain "react" in their name (react-query,
           // lucide-react, react-hook-form, ...) stay in the app chunk.

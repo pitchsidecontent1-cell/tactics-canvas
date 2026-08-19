@@ -575,9 +575,11 @@ input:focus-visible {
 .workspace {
   display: grid;
   /* The reading column on the right is the widest of the three so long lines
-     of copy wrap less often; the library is trimmed and the outer padding
-     pulled in to pay for it, which also pushes the whole board leftwards. */
-  grid-template-columns: minmax(200px, 230px) minmax(360px, 1fr) minmax(330px, 460px);
+     of copy wrap less often, and the library is wide enough that a formation
+     subtitle fits on one line. Both are paid for out of the middle column,
+     which can spare it: .pitch-frame is capped at 540px, so the extra width
+     there was only centring margin, not pitch. */
+  grid-template-columns: minmax(250px, 292px) minmax(360px, 1fr) minmax(330px, 460px);
   gap: clamp(14px, 2vw, 26px);
   width: min(1760px, 100%);
   margin: 0 auto;
@@ -1982,7 +1984,7 @@ input:focus-visible {
 
 @media (max-width: 1120px) {
   .workspace {
-    grid-template-columns: minmax(200px, 230px) minmax(420px, 1fr);
+    grid-template-columns: minmax(240px, 272px) minmax(420px, 1fr);
   }
 
   .inspector {

@@ -36,6 +36,7 @@ import {
 import { useLocation } from "wouter";
 import { FORMATIONS, type Formation } from "./formations";
 import { TUTORIAL, TUTORIAL_DONE, type MatchEvent } from "./tutorial-content";
+import { HowToPlayPanel } from "./how-to-play";
 import type { Position } from "./pitch-types";
 import {
   type ActionId,
@@ -753,6 +754,8 @@ export default function MatchGame({
   /** Out of the tutorial and into a real match. Nobody is ever held in it: the
    *  way out is on screen from the first step. */
   const leaveTutorial = () => navigate("/match");
+  /** Whether the controls reference at the foot of the panel is open. */
+  const [howToOpen, setHowToOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("setup");
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [homeSide, setHomeSide] = useState<SideChoice>(FIRST_SHAPE);
@@ -2149,10 +2152,14 @@ export default function MatchGame({
             <ArrowLeft size={15} />
             Back to the board
           </button>
+          {/* Back out to the rules — the page you came in through. The
+              controls reference is still in the panel below, so looking up
+              what right-drag does need not cost you the match; this button is
+              for when you want the laws again. */}
           <button
             className="match-back"
             data-testid="button-how-to-play"
-            onClick={() => navigate("/how-to-play")}
+            onClick={() => navigate("/rules")}
             type="button"
           >
             <BookOpen size={15} />
@@ -2868,6 +2875,10 @@ export default function MatchGame({
               </span>
             </div>
           )}
+
+          {/* The reference, at the bottom of the panel and closed until it is
+              wanted. Every control is here, beside the pitch it is about. */}
+          <HowToPlayPanel onToggle={setHowToOpen} open={howToOpen} />
         </aside>
       </div>
     </main>

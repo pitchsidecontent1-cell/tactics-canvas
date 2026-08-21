@@ -49,6 +49,7 @@ import { FORMATIONS, type Formation } from './formations';
 import { MANAGERS, type Era } from './managers';
 import MatchGame from './match-game';
 import HowToPlay from './how-to-play';
+import Rules from './rules';
 import { MANAGER_PHOTOS, managerPhotoUrl } from './manager-photos';
 import { PLAYER_PHOTOS, playerPhotoUrl, type PlayerPhoto } from './player-photos';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -905,6 +906,83 @@ function PitchLines() {
 // reader.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// What a guide entry points at on the pitch.
+//
+// Reading about a position should light that man up on the board, and reading
+// about a shape should put the board into it. The reference and the pitch
+// beside it are meant to be one thing rather than two things side by side.
+// ---------------------------------------------------------------------------
+
+/** Entry id to the role codes it is about. A position covers every code the
+ *  board might write for it — a centre-back is LCB, RCB, CB or a plain DEF,
+ *  depending on how many are in the line. */
+const GUIDE_ROLES: Record<string, string[]> = {
+  goalkeeper: ['GK'],
+  'centre-back': ['CB', 'LCB', 'RCB', 'DEF'],
+  'full-back': ['LB', 'RB'],
+  'wing-back': ['LWB', 'RWB'],
+  sweeper: ['CB', 'LCB', 'RCB', 'DEF'],
+  'defensive-midfielder': ['DM'],
+  'central-midfielder': ['CM', 'LCM', 'RCM', 'MID'],
+  'attacking-midfielder': ['AM'],
+  'wide-midfielder': ['LM', 'RM'],
+  winger: ['LW', 'RW'],
+  striker: ['ST', 'FWD'],
+  'centre-forward': ['CF', 'ST', 'FWD'],
+  'second-striker': ['SS', 'AM'],
+  // A named role is a job done from a position, so it lights the position
+  // that does the job: a regista is a deep midfielder who happens to be the
+  // one picking the passes.
+  'false-nine': ['ST', 'CF', 'FWD'],
+  'number-ten': ['AM', 'SS'],
+  regista: ['DM'],
+  trequartista: ['AM', 'SS'],
+  fantasista: ['AM', 'SS'],
+  raumdeuter: ['RW', 'RM'],
+  pivot: ['DM'],
+  'inverted-full-back': ['LB', 'RB', 'LWB', 'RWB'],
+  'target-man': ['ST', 'CF', 'FWD'],
+  'box-to-box': ['CM', 'LCM', 'RCM', 'MID'],
+};
+
+/** Entry id to the preset it describes, matched on the name so a new
+ *  formation entry wires itself up without being listed twice. The WM has no
+ *  modern preset to load and simply gets none. */
+const GUIDE_FORMATIONS: Record<string, Formation> = Object.fromEntries(
+  GUIDE_SECTIONS.flatMap((section) => section.entries).flatMap((entry) => {
+    const preset = FORMATIONS.find(
+      (item) => item.name.toLowerCase() === entry.title.toLowerCase(),
+    );
+    return preset ? [[entry.id, preset] as const] : [];
+  }),
+);
+
+/** Counting a line-up out loud. A shape plays two wing-backs, not 2. */
+const COUNT_WORDS = ['none', 'one', 'two', 'three', 'four', 'five'];
+
+const GUIDE_TITLES: Record<string, string> = Object.fromEntries(
+  GUIDE_SECTIONS.flatMap((section) => section.entries).map((entry) => [
+    entry.id,
+    entry.title,
+  ]),
+);
+
+/** The first preset that actually fields each role. Reading about a wing-back
+ *  while a back four is on the board would otherwise light nothing at all —
+ *  so the board changes to a shape that plays one, which is the answer to the
+ *  question being asked anyway: wing-backs live in a back five. */
+const FORMATION_WITH_ROLE: Record<string, Formation> = (() => {
+  const found: Record<string, Formation> = {};
+  for (const item of FORMATIONS) {
+    const diamond = item.name.toLowerCase().includes('diamond');
+    for (const player of makePlayers(item.shape, diamond)) {
+      if (!found[player.role]) found[player.role] = item;
+    }
+  }
+  return found;
+})();
+
 function GuideIndex({
   activeId,
   onQuery,
@@ -1070,6 +1148,10 @@ function Home() {
   const [openGuideParts, setOpenGuideParts] = useState<string[]>([]);
   // Bumped on every jump so asking for the same entry twice scrolls again.
   const [guideNonce, setGuideNonce] = useState(0);
+  // The entry currently being read, which is what the pitch is lit for. Null
+  // until something is actually opened — arriving at the Guide should not
+  // light a player nobody asked about.
+  const [litEntryId, setLitEntryId] = useState<string | null>(null);
   const [managerTab, setManagerTab] = useState<'current' | 'retired'>('current');
   const [formation, setFormation] = useState<Formation>(FORMATIONS[1]);
   // Kept outside `formation` so an edited custom shape survives a trip through
@@ -1311,6 +1393,19 @@ function Home() {
     : undefined;
   const factGlossTerms = currentFact ? findGlossTerms([currentFact]) : [];
 
+  // Which circles the Guide is pointing at. Empty everywhere else, so the
+  // pitch only ever lights up while something is being read.
+  const litRoles =
+    panelTab === 'guide' && litEntryId ? GUIDE_ROLES[litEntryId] ?? [] : [];
+  // Read about a wing-back while a back four is up and there is nobody to
+  // point at. Resolving to actual players first means the board dims only
+  // when it has something to show, rather than fading the lot for nothing.
+  const litIds = litRoles.length
+    ? players
+        .filter((player) => litRoles.includes(player.role))
+        .map((player) => player.id)
+    : [];
+
   const clearArrows = () => {
     setArrows([]);
     setSelectedArrowId(null);
@@ -1367,6 +1462,43 @@ function Home() {
       if (isOpen === open) return current;
       return open ? [...current, partId] : current.filter((id) => id !== partId);
     });
+    // Sections and entries share this handler; only entries point at the
+    // pitch, and GUIDE_ENTRY_SECTION is what tells the two apart.
+    if (!GUIDE_ENTRY_SECTION[partId]) return;
+    if (open) pointBoardAt(partId);
+    else setLitEntryId((current) => (current === partId ? null : current));
+  };
+
+  /** Aims the board at whatever is being read: a shape loads onto the pitch,
+   *  a position lights the men who play it. Reading and looking are meant to
+   *  be the same gesture. */
+  const pointBoardAt = (entryId: string) => {
+    setLitEntryId(entryId);
+    const preset = GUIDE_FORMATIONS[entryId];
+    // Only when it is not already up, so re-reading an entry does not wipe
+    // arrows somebody has drawn over the shape they are reading about.
+    if (preset && (activeEra !== null || formation.name !== preset.name)) {
+      selectFormation(preset);
+      return;
+    }
+    const roles = GUIDE_ROLES[entryId] ?? [];
+    if (!roles.length || players.some((player) => roles.includes(player.role))) {
+      return;
+    }
+    // Nobody on the board plays it. Put up a shape that does and say why,
+    // rather than lighting an empty pitch.
+    const swap = roles
+      .map((role) => FORMATION_WITH_ROLE[role])
+      .find((item): item is Formation => item !== undefined);
+    if (!swap) return;
+    const fielded = makePlayers(
+      swap.shape,
+      swap.name.toLowerCase().includes('diamond'),
+    ).filter((player) => roles.includes(player.role)).length;
+    selectFormation(swap);
+    setMessage(
+      `No ${GUIDE_TITLES[entryId]?.toLowerCase() ?? 'such player'} in that shape — this is ${swap.name}, which plays ${COUNT_WORDS[fielded] ?? fielded}.`,
+    );
   };
 
   // Opens the Guide at one entry, from the index or from a linked word. Both
@@ -1377,6 +1509,7 @@ function Home() {
     setPanelTab('guide');
     setGuideEntryId(entryId);
     setGuideNonce((current) => current + 1);
+    pointBoardAt(entryId);
     const section = GUIDE_ENTRY_SECTION[entryId];
     setOpenGuideParts((current) => {
       const wanted = section ? [section, entryId] : [entryId];
@@ -2116,27 +2249,19 @@ function Home() {
               <div className="eyebrow">Live board / {boardLabel}</div>
               <div className="pitch-title-row">
                 <h1 className="pitch-title">{activeEra ? 'Study the idea.' : 'Move the idea.'}</h1>
-                {/* The way into match mode, deliberately next to the headline
-                    rather than buried in the toolbar. */}
+                {/* The one way into match mode, deliberately next to the
+                    headline rather than buried in the toolbar. It lands on the
+                    rules rather than a cold match — nobody should be dropped
+                    into a game having been told nothing — and both ways in are
+                    on that page. */}
                 <button
                   className="match-cta"
                   data-testid="button-play-match"
-                  onClick={() => navigate('/match')}
+                  onClick={() => navigate('/rules')}
                   type="button"
                 >
                   <Gamepad2 size={15} />
                   Play a match
-                </button>
-                {/* Every control on one page. The tutorial has its own door
-                    there, and starts itself for anyone arriving anyway. */}
-                <button
-                  className="match-cta is-quiet"
-                  data-testid="button-how-to-play"
-                  onClick={() => navigate('/how-to-play')}
-                  type="button"
-                >
-                  <BookOpen size={15} />
-                  How to play
                 </button>
               </div>
               <p className="pitch-caption">
@@ -2263,7 +2388,14 @@ function Home() {
           <div className="pitch-frame">
             <div
               ref={pitchRef}
-              className={`pitch ${animRunning ? 'is-animating' : ''}`}
+              className={[
+                'pitch',
+                animRunning ? 'is-animating' : '',
+                panelTab === 'guide' ? 'is-guide' : '',
+                litIds.length ? 'is-lighting' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               style={{ '--anim-dur': `${animStepDuration}s` } as CSSProperties}
               data-testid="pitch-board"
               onPointerDown={(event) => {
@@ -2306,7 +2438,7 @@ function Home() {
               />
               {players.map((player) => (
                 <button
-                  className={`player-marker ${selectedId === player.id ? 'is-selected' : ''}`}
+                  className={`player-marker ${selectedId === player.id ? 'is-selected' : ''} ${litIds.includes(player.id) ? 'is-lit' : ''}`}
                   data-testid={`button-player-${player.id}`}
                   key={player.id}
                   type="button"
@@ -2951,6 +3083,10 @@ function Router() {
         <Route path="/learn">
           <MatchGame tutorial />
         </Route>
+        {/* Where Play a match lands: the laws first, then the way in. */}
+        <Route path="/rules" component={Rules} />
+        {/* The reference is a section of the match panel and a page of its
+            own, from the same content and the same collapsible sections. */}
         <Route path="/how-to-play" component={HowToPlay} />
         <Route component={NotFound} />
       </Switch>

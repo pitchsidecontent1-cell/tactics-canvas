@@ -1054,6 +1054,57 @@ input:focus-visible {
   color: hsl(var(--accent-foreground));
 }
 
+/* Reading the guide beside the board.
+   The circles come down a size, because in this mode the pitch is a diagram
+   of what you are reading rather than something you are dragging pieces
+   around — the shape matters more than the handle. */
+.pitch.is-guide .player-marker {
+  width: clamp(22px, 2.7vw, 29px);
+  height: clamp(22px, 2.7vw, 29px);
+  border-width: 2px;
+}
+
+.pitch.is-guide .player-number {
+  font-size: clamp(0.6rem, 1vw, 0.72rem);
+}
+
+.pitch.is-guide .player-label {
+  font-size: 0.5rem;
+  padding: 1px 4px;
+}
+
+/* Tap an entry and the men it is about light up. The rest fade rather than
+   disappear, so you can still read the shape they sit in — the point is
+   "these ones, out of those", which needs both halves on screen. */
+.pitch.is-lighting .player-marker {
+  opacity: 0.32;
+  filter: saturate(0.35);
+}
+
+.pitch.is-lighting .player-marker.is-lit {
+  opacity: 1;
+  filter: none;
+  border-color: hsl(var(--accent));
+  box-shadow:
+    0 0 0 4px hsl(var(--accent) / 0.45),
+    0 3px 0 rgba(0, 0, 0, 0.22);
+  animation: guide-lit 1.6s ease-in-out infinite;
+}
+
+@keyframes guide-lit {
+  50% {
+    box-shadow:
+      0 0 0 8px hsl(var(--accent) / 0.22),
+      0 3px 0 rgba(0, 0, 0, 0.22);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pitch.is-lighting .player-marker.is-lit {
+    animation: none;
+  }
+}
+
 .player-number {
   font-family: var(--app-font-mono);
   font-size: clamp(0.72rem, 1.3vw, 0.9rem);
@@ -2078,6 +2129,36 @@ input:focus-visible {
 .guide-panel {
   align-self: start;
   padding: 19px;
+}
+
+/* The guide scrolls inside itself, and the board stays put.
+   It is a long reference next to a board you are meant to be looking at, and
+   letting it grow down the page meant opening two sections pushed the pitch
+   off the top of the screen — you were reading about a shape you could no
+   longer see. Capped to the viewport and stuck to it, the column scrolls on
+   its own and the board never moves.
+
+   Only while it IS a column, though. Below 1120px the guide drops full-width
+   underneath the board, and a viewport-tall box with contained overscroll
+   sitting in the middle of a page is a scroll trap, not a convenience. */
+@media (min-width: 1121px) {
+  .guide-panel {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    /* Reaching the end of the guide must not scroll the page behind it. */
+    overscroll-behavior: contain;
+  }
+
+  /* Whatever the columns either side of it do — a long formation list, a
+     longer guide — the pitch is the thing being talked about, and must never
+     be the thing that scrolls away. */
+  .pitch-column {
+    position: sticky;
+    top: 12px;
+    align-self: start;
+  }
 }
 
 .guide-article {
@@ -3390,11 +3471,13 @@ input:focus-visible {
 }
 
 /* ---------------------------------------------------------------------------
-   How to play — the controls reference.
+   How to play — the controls reference, in two places.
 
-   A reading page rather than a working surface, so it gets the one thing the
-   match screen cannot have: room. Scrolls normally, one column, capped at a
-   comfortable measure.
+   A reference is only useful where the thing it describes is, so it sits at
+   the foot of the match panel beside the pitch: one closed heading, eleven
+   closed sections under it, nothing on screen until it is asked for. The same
+   sections get a page of their own for reading properly, away from a game in
+   progress — .howto-body scales the shared parts up to page size.
    --------------------------------------------------------------------------- */
 
 .howto-shell {
@@ -3411,16 +3494,10 @@ input:focus-visible {
   background: hsl(var(--card));
 }
 
-.match-topbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .howto-body {
   max-width: 46rem;
   margin: 0 auto;
-  padding: clamp(1.6rem, 4vw, 3rem) clamp(1rem, 3vw, 1.6rem) 4rem;
+  padding: clamp(1.4rem, 4vw, 2.6rem) clamp(1rem, 3vw, 1.6rem) 4rem;
 }
 
 .howto-eyebrow {
@@ -3433,30 +3510,116 @@ input:focus-visible {
   text-transform: uppercase;
 }
 
-.howto-intro h1 {
+.howto-body h1 {
   margin: 0;
   font-size: clamp(2rem, 5vw, 3rem);
   line-height: 1.03;
   letter-spacing: -0.02em;
 }
 
-.howto-lede {
-  margin: 0.7rem 0 0;
+/* On a page there is room, so everything shared with the panel comes up a
+   size and the controls go back to two columns. */
+.howto-body .howto-lede {
+  margin: 0.7rem 0 1.7rem;
   max-width: 34rem;
-  color: hsl(var(--muted-foreground));
+  font-size: 1rem;
+}
+
+.howto-body .howto-part {
+  padding: 0.8rem 0 0.3rem;
+}
+
+.howto-body .howto-part-title {
   font-size: 1.02rem;
+}
+
+.howto-body .howto-blurb,
+.howto-body .howto-control dd,
+.howto-body .howto-points li {
+  font-size: 0.92rem;
+}
+
+.howto-body .howto-control dt {
+  font-size: 0.86rem;
+}
+
+.howto-body .howto-note {
+  font-size: 0.83rem;
+}
+
+.howto-body .howto-control {
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  gap: 0.35rem 1.2rem;
+  padding: 0.7rem 0;
+}
+
+@media (max-width: 620px) {
+  .howto-body .howto-control {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The rules page — what Play a match lands on.
+
+   Shares the page shell above. Laid open rather than behind taps: a page that
+   hides the rules is not showing you the rules. Numbered, because they read
+   as a sequence — what you are, how long you have, on the ball, off it.
+   --------------------------------------------------------------------------- */
+
+.rules-list {
+  margin: 2.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: rule;
+}
+
+.rules-section {
+  position: relative;
+  margin-top: 2.2rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid hsl(var(--border));
+  scroll-margin-top: 1.2rem;
+}
+
+.rules-number {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: hsl(var(--primary));
+  font-family: var(--app-font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.rules-section h2 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
+  letter-spacing: -0.01em;
+}
+
+.rules-blurb {
+  margin: 0.45rem 0 0.9rem;
+  max-width: 36rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.95rem;
   line-height: 1.55;
 }
 
-.howto-actions {
+.rules-list .howto-points li {
+  font-size: 0.92rem;
+}
+
+.rules-doors {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-  margin-top: 1.3rem;
+  margin-top: 1.4rem;
 }
 
-.howto-primary,
-.howto-secondary {
+.rules-primary,
+.rules-secondary {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -3468,68 +3631,132 @@ input:focus-visible {
   cursor: pointer;
 }
 
-.howto-primary {
+.rules-primary {
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   box-shadow: 4px 4px 0 hsl(var(--foreground));
 }
 
-.howto-primary:hover {
+.rules-primary:hover {
   transform: translate(1px, 1px);
   box-shadow: 3px 3px 0 hsl(var(--foreground));
 }
 
-.howto-secondary {
+.rules-secondary {
   background: transparent;
   color: hsl(var(--foreground));
 }
 
-.howto-secondary:hover {
+.rules-secondary:hover {
   background: hsl(var(--muted));
 }
 
-/* A jump list rather than a sidebar: this page is short enough that a reader
-   wants the whole map at once, not a rail following them down it. */
-.howto-contents {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 2.4rem 0 0;
-  padding: 0.9rem 0;
+.rules-footer {
+  margin-top: 2.8rem;
+  padding-top: 1.6rem;
   border-top: 1px solid hsl(var(--border));
-  border-bottom: 1px solid hsl(var(--border));
 }
 
-.howto-jump {
-  padding: 0.3rem 0.6rem;
+.match-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.howto-panel {
+  padding: 9px 11px 10px;
   border: 1px solid hsl(var(--border));
-  color: hsl(var(--foreground));
-  font-size: 0.74rem;
-  font-weight: 700;
-  text-decoration: none;
+  border-radius: 0;
+  background: hsl(var(--muted) / 0.4);
+  scroll-margin-top: 8px;
 }
 
-.howto-jump:hover {
-  border-color: hsl(var(--primary));
+.howto-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   color: hsl(var(--primary));
+  font-family: var(--app-font-mono);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
 }
 
-.howto-section {
-  margin-top: 2.6rem;
-  scroll-margin-top: 1.5rem;
+.howto-panel-head::-webkit-details-marker {
+  display: none;
 }
 
-.howto-section h2 {
-  margin: 0;
-  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
-  letter-spacing: -0.01em;
+.howto-panel-head .summary-hint,
+.howto-part > summary .summary-hint {
+  margin-left: auto;
+}
+
+.howto-panel[open] > .howto-panel-head .summary-hint,
+.howto-part[open] > summary .summary-hint {
+  display: none;
+}
+
+.howto-lede {
+  margin: 9px 0 4px;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.79rem;
+  line-height: 1.5;
+}
+
+/* The way out of the panel and into the full page, for reading rather than
+   looking something up mid-match. */
+.howto-open-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 2px 0 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: hsl(var(--primary));
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.howto-open-page:hover {
+  color: hsl(var(--foreground));
+}
+
+/* One section per heading, all closed. Ten open sections in a working panel
+   is a wall of text where the moves used to be. */
+.howto-part {
+  padding: 8px 0 2px;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.howto-part > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.howto-part > summary::-webkit-details-marker {
+  display: none;
+}
+
+.howto-part-title {
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .howto-blurb {
-  margin: 0.4rem 0 1.1rem;
+  margin: 0.35rem 0 0.7rem;
   color: hsl(var(--muted-foreground));
-  font-size: 0.94rem;
-  line-height: 1.55;
+  font-size: 0.79rem;
+  line-height: 1.5;
 }
 
 /* Action on the left, what it does on the right — the shape a reader scans
@@ -3539,33 +3766,35 @@ input:focus-visible {
   border-top: 1px solid hsl(var(--border));
 }
 
+/* The panel is a column, not a page, so the action sits above what it does
+   rather than beside it — two narrow columns would break every line. */
 .howto-control {
   display: grid;
-  grid-template-columns: minmax(0, 13rem) minmax(0, 1fr);
-  gap: 0.4rem 1.2rem;
-  padding: 0.85rem 0;
+  gap: 0.2rem;
+  padding: 0.5rem 0;
   border-bottom: 1px solid hsl(var(--border));
 }
 
 .howto-control dt {
   margin: 0;
-  font-size: 0.84rem;
+  font-size: 0.78rem;
   font-weight: 800;
 }
 
 .howto-control dd {
   margin: 0;
-  font-size: 0.9rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.79rem;
   line-height: 1.5;
 }
 
 .howto-note {
   display: block;
-  margin-top: 0.35rem;
-  padding-left: 0.7rem;
+  margin-top: 0.3rem;
+  padding-left: 0.6rem;
   border-left: 2px solid hsl(var(--primary) / 0.5);
   color: hsl(var(--muted-foreground));
-  font-size: 0.83rem;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
@@ -3577,9 +3806,10 @@ input:focus-visible {
 
 .howto-points li {
   position: relative;
-  padding: 0.4rem 0 0.4rem 1.1rem;
-  font-size: 0.92rem;
-  line-height: 1.55;
+  padding: 0.28rem 0 0.28rem 1rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.79rem;
+  line-height: 1.5;
 }
 
 .howto-points li::before {
@@ -3588,19 +3818,6 @@ input:focus-visible {
   color: hsl(var(--primary));
   content: '—';
   font-weight: 800;
-}
-
-.howto-footer {
-  margin-top: 3rem;
-  padding-top: 1.6rem;
-  border-top: 1px solid hsl(var(--border));
-}
-
-@media (max-width: 620px) {
-  .howto-control {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.25rem;
-  }
 }
 
 /* ---------------------------------------------------------------------------

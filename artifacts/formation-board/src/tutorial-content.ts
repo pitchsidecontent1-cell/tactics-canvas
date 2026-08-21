@@ -198,6 +198,6 @@ export const TUTORIAL_DONE = {
   title: 'That is the game',
   lines: [
     'Everything else is football. Pick a shape you fancy, pick one for them, and read what is in front of you.',
-    'The How to play page has all of this as a reference if you need to look something up.',
+    'How to play, at the foot of the panel, has all of this as a reference if you need to look something up mid-match.',
   ],
 };

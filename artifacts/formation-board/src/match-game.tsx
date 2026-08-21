@@ -36,7 +36,6 @@ import {
 import { useLocation } from "wouter";
 import { FORMATIONS, type Formation } from "./formations";
 import { TUTORIAL, TUTORIAL_DONE, type MatchEvent } from "./tutorial-content";
-import { tutorialReturn } from "./first-visit";
 import type { Position } from "./pitch-types";
 import {
   type ActionId,
@@ -751,9 +750,9 @@ export default function MatchGame({
     if (current && current.done(event)) setStep((at) => at + 1);
   };
   const [, navigate] = useLocation();
-  /** Out of the tutorial and on with whatever they came here to do. Nobody is
-   *  ever held in it: the way out is on screen from the first step. */
-  const leaveTutorial = () => navigate(tutorialReturn());
+  /** Out of the tutorial and into a real match. Nobody is ever held in it: the
+   *  way out is on screen from the first step. */
+  const leaveTutorial = () => navigate("/match");
   const [stage, setStage] = useState<Stage>("setup");
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [homeSide, setHomeSide] = useState<SideChoice>(FIRST_SHAPE);

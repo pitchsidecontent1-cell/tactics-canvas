@@ -49,7 +49,6 @@ import { FORMATIONS, type Formation } from './formations';
 import { MANAGERS, type Era } from './managers';
 import MatchGame from './match-game';
 import HowToPlay from './how-to-play';
-import { isNewVisit, rememberReturn } from './first-visit';
 import { MANAGER_PHOTOS, managerPhotoUrl } from './manager-photos';
 import { PLAYER_PHOTOS, playerPhotoUrl, type PlayerPhoto } from './player-photos';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -2937,47 +2936,24 @@ function Home() {
   );
 }
 
-/** Sends anyone arriving at the site into the tutorial before anything else,
- *  once per visit, and remembers where they were going so skipping it puts
- *  them back on their way. Land on the tutorial yourself and it steps aside.
- *
- *  The decision is taken on the first render and never revisited: once the
- *  redirect has happened this component is inert, or leaving the tutorial
- *  would bounce you straight back into it. */
-function FirstVisitTutorial({ children }: { children: ReactNode }) {
-  const [location, navigate] = useLocation();
-  const sendingRef = useRef(isNewVisit && location !== '/learn');
-  useEffect(() => {
-    if (!sendingRef.current) return;
-    rememberReturn(location);
-    // replace, so Back goes wherever they came from rather than round again.
-    navigate('/learn', { replace: true });
-    sendingRef.current = false;
-    // Deliberately once, on mount: this is about how the visit started.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  // Nothing is drawn for the one frame before the redirect, so the board never
-  // flashes up behind it.
-  if (sendingRef.current) return null;
-  return <>{children}</>;
-}
-
+// The board is what the site is. Arriving anywhere near it puts you in front
+// of a pitch you can move pieces on, and the game is a door off that — never
+// something that opens itself in front of you. There was briefly a redirect
+// here that sent every visit into the tutorial first; it is gone deliberately.
 function Router() {
   return (
     <RoutedErrorBoundary>
-      <FirstVisitTutorial>
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/match">
-            <MatchGame />
-          </Route>
-          <Route path="/learn">
-            <MatchGame tutorial />
-          </Route>
-          <Route path="/how-to-play" component={HowToPlay} />
-          <Route component={NotFound} />
-        </Switch>
-      </FirstVisitTutorial>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/match">
+          <MatchGame />
+        </Route>
+        <Route path="/learn">
+          <MatchGame tutorial />
+        </Route>
+        <Route path="/how-to-play" component={HowToPlay} />
+        <Route component={NotFound} />
+      </Switch>
     </RoutedErrorBoundary>
   );
 }

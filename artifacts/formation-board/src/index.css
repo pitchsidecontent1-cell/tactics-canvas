@@ -706,7 +706,7 @@ input:focus-visible {
   flex: 0 0 auto;
   width: 26px;
   height: 32px;
-  border-radius: 4px;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -982,7 +982,8 @@ input:focus-visible {
   max-width: 540px;
   margin: 0 auto;
   padding: clamp(9px, 1.6vw, 16px);
-  border-radius: 22px;
+  /* A pitch is a rectangle, and so is the frame round it. */
+  border-radius: 0;
   background: hsl(var(--foreground));
   box-shadow: 7px 7px 0 hsl(var(--primary));
 }
@@ -994,7 +995,7 @@ input:focus-visible {
   aspect-ratio: 100 / 122;
   overflow: hidden;
   border: 2px solid rgba(255, 248, 221, 0.9);
-  border-radius: 10px;
+  border-radius: 0;
   background-color: #2f8f56;
   background-image:
     linear-gradient(90deg, rgba(255, 255, 255, 0.045) 50%, transparent 50%),
@@ -1868,24 +1869,36 @@ input:focus-visible {
   pointer-events: none;
 }
 
-/* The invisible band that catches clicks on an arrow. Kept close to the drawn
-   line, so a click near an arrow lands on the pitch rather than selecting the
-   arrow: wide enough to be hittable, narrow enough that "directly on it" means
-   what it says. Measured in viewBox units — about 11px on a desktop board. A
-   finger gets a little more than a cursor does. */
+/* The invisible band that catches clicks on an arrow. It is now barely wider
+   than the drawn line itself — 1.4 viewBox units against the line's 0.9, so
+   about 7px on a desktop board, a hair either side of the ink. A finger gets
+   a little more than a cursor does, since it has no pixel to point with. */
 .arrow-hit {
   fill: none;
   stroke: transparent;
-  stroke-width: 2.2;
+  stroke-width: 1.4;
   pointer-events: stroke;
   cursor: pointer;
 }
 
 @media (pointer: coarse) {
   .arrow-hit {
-    stroke-width: 3.4;
+    stroke-width: 3;
   }
 }
+
+/* The selection glow. Same path as the arrow, drawn underneath it and a
+   little wider, so the highlight is the arrow's own shape rather than a box
+   around it. Curves and bends are followed exactly, for free. */
+.arrow-halo {
+  fill: none;
+  stroke: hsl(var(--accent));
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 
 .arrow-path {
   fill: none;
@@ -2377,10 +2390,905 @@ input:focus-visible {
   white-space: nowrap;
 }
 
+/* --- Match mode --------------------------------------------------------- */
+
+/* The way into the game, sitting beside the headline on the board. */
+.pitch-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.match-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 2px solid hsl(var(--primary));
+  border-radius: 999px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 3px 3px 0 hsl(var(--primary) / 0.32);
+  cursor: pointer;
+}
+
+.match-cta:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 hsl(var(--primary) / 0.32);
+}
+
+/* The whole game is meant to sit in one screen: the board on the left, the
+   instructions beside it on the right, and nothing to scroll for. */
+.match-shell {
+  /* Risk is read at a glance, on the pitch and in the panel alike, so the
+     three tones mean the same thing in both places. */
+  --tone-safe: 148 52% 38%;
+  --tone-tight: 36 88% 46%;
+  --tone-risky: 0 68% 48%;
+  /* The board is as wide as its own height allows, capped so it can never
+     crowd out the panel beside it. Held in a variable because the grid column
+     needs a definite width — sizing the column to the board and the board to
+     the column is circular, and collapses it to nothing. */
+  --board-w: min(calc((100dvh - 96px) / 1.5), 46vw);
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  background: hsl(var(--background));
+}
+
+.match-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px clamp(12px, 2vw, 24px);
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}
+
+.match-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 9px;
+  background: transparent;
+  color: hsl(var(--foreground));
+  font-size: 0.66rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.match-scoreline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--app-font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.match-scoreline strong {
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+}
+
+.match-team.is-home {
+  color: hsl(var(--primary));
+}
+
+.match-team.is-away {
+  color: hsl(var(--muted-foreground));
+}
+
+.match-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 88px;
+  justify-content: center;
+  padding: 6px 12px;
+  border: 2px solid hsl(var(--foreground));
+  border-radius: 999px;
+  font-family: var(--app-font-mono);
+  font-size: 1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* He has taken it down with grass in front of him — send him, or he stops. */
+.match-run-on {
+  display: block;
+  width: 100%;
+  margin: 0.55rem 0 0.2rem;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid hsl(var(--primary));
+  border-radius: 0;
+  background: hsl(var(--primary) / 0.12);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  animation: match-run-on-in 0.16s ease-out;
+}
+
+.match-run-on:hover {
+  background: hsl(var(--primary) / 0.2);
+}
+
+.match-run-on strong {
+  display: block;
+  font-size: 1.02rem;
+  color: hsl(var(--primary));
+}
+
+.match-run-on span {
+  display: block;
+  margin-top: 2px;
+  opacity: 0.75;
+  font-size: 0.78rem;
+}
+
+@keyframes match-run-on-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+/* Changing how your side goes about it while the passage is still running. */
+.match-switch {
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.match-style-row.is-wrap {
+  flex-wrap: wrap;
+}
+
+.match-style-row.is-wrap > .match-style {
+  flex: 1 1 auto;
+  min-width: 8.5rem;
+}
+
+/* Whether bending it is on from where he is standing. */
+.match-curl {
+  display: block;
+  margin-top: 3px;
+  opacity: 0.72;
+  font-size: 0.76rem;
+  font-style: italic;
+}
+
+/* The half is up but the whistle is waiting for a natural break. */
+/* The fourth official's board: a lit chip beside a clock that has stopped at
+   the half. It reads as time being ADDED rather than time running out, which
+   is exactly what it is. Steady rather than blinking — it carries a number
+   now, and a number that flashes while it counts is unreadable. */
+.match-clock-added {
+  margin-left: 1px;
+  padding: 1px 4px;
+  border-radius: 0;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-size: 0.78em;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+/* The last ten seconds are meant to be felt. */
+.match-clock.is-urgent {
+  border-color: hsl(var(--destructive));
+  color: hsl(var(--destructive));
+  animation: match-tick 1s steps(2, end) infinite;
+}
+
+@keyframes match-tick {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* The board takes only the width its own height allows, and the panel sits
+   straight up against it — both packed to the left, so the instructions are
+   beside the pitch rather than a screen away from it. */
+.match-body {
+  display: grid;
+  grid-template-columns: var(--board-w) minmax(320px, 1fr);
+  justify-content: start;
+  gap: clamp(12px, 1.6vw, 26px);
+  flex: 1;
+  min-height: 0;
+  padding: 10px clamp(10px, 1.4vw, 18px) 10px 8px;
+}
+
+.match-stage {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+
+/* Width is driven by whatever height is left over, so the board fills the
+   screen top to bottom without ever pushing the page sideways. */
+/* Drawn to the real proportions of a pitch, and sized off whatever height is
+   left over so it fills the screen top to bottom without ever pushing the
+   page sideways. */
+.match-pitch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 100 / 150;
+
+  border: 2px solid rgba(255, 248, 221, 0.9);
+  border-radius: 0;
+  background-color: #2f8f56;
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 50%, transparent 50%),
+    repeating-linear-gradient(90deg, transparent 0 9%, rgba(255, 255, 255, 0.035) 9% 18%);
+  background-size: 20% 100%, 100% 100%;
+  touch-action: none;
+  user-select: none;
+}
+
+/* The goals are drawn outside the goal line, so nothing here may clip. */
+.match-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* A dark panel behind the mesh, so the net reads as depth and a ball sitting
+   in it is plainly in rather than merely near. */
+.goal-back {
+  fill: rgba(16, 24, 19, 0.55);
+}
+
+.goal-mesh {
+  fill: none;
+  stroke: rgba(255, 248, 221, 0.55);
+  stroke-width: 0.24;
+}
+
+
+.goal-net-panel {
+  fill: url(#goal-net);
+}
+
+.goal-frame {
+  fill: none;
+  stroke: rgba(255, 248, 221, 0.95);
+  stroke-width: 0.7;
+}
+
+.match-marker {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: clamp(13px, 1.75vw, 20px);
+  height: clamp(13px, 1.75vw, 20px);
+  border-radius: 50%;
+  font-family: var(--app-font-mono);
+  font-size: clamp(0.4rem, 0.68vw, 0.54rem);
+  font-weight: 700;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+}
+
+/* Everything that moves on the pitch is carried by one of these.
+
+   A slot is the full size of the pitch and is moved by a percentage transform,
+   so the percentages are of the pitch rather than of the little circle inside
+   it — and because it is a transform, a move is a compositor job instead of
+   twenty-two layout recalculations every frame. Animating left/top directly is
+   what made the play stutter.
+
+   The transform is set inline as a concrete value rather than assembled from
+   custom properties: a transform built out of an unregistered var() does not
+   interpolate, so the players teleported instead of running. */
+.match-slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* A plain ease-in-out spreads the movement across the whole duration. An
+     aggressive curve put its second control point at x=0.24, so the players
+     stood still and then snapped — which is what read as choppy. */
+  transition: transform var(--travel, 0.9s) cubic-bezier(0.42, 0, 0.58, 1);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.match-slot > * {
+  pointer-events: auto;
+}
+
+.match-marker.is-home {
+  border: 1.5px solid rgba(255, 248, 221, 0.96);
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.match-marker.is-away {
+  border: 1.5px solid rgba(255, 248, 221, 0.6);
+  background: hsl(220 12% 24%);
+  color: rgba(255, 248, 221, 0.92);
+}
+
+/* The phase has stopped to hand you a decision, and it matters. */
+.match-choices.is-urgent {
+  padding: 0.6rem;
+  border: 1px solid hsl(var(--destructive) / 0.5);
+  border-radius: 0.6rem;
+  background: hsl(var(--destructive) / 0.06);
+}
+
+.match-choices.is-urgent .match-choices-title {
+  color: hsl(var(--destructive));
+}
+
+/* What happened, beat by beat, while their passage of play runs out. The most
+   recent line is the loudest; the ones before it fade back so the list reads
+   as a passage rather than a wall. */
+.match-phase-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.match-phase-log li {
+  padding-left: 0.7rem;
+  border-left: 2px solid hsl(var(--border));
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+.match-phase-log li:last-child {
+  border-left-color: hsl(var(--primary));
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+/* The clock and the forfeit sit together at the right of the top bar. */
+.match-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.match-forfeit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.34rem 0.62rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  background: transparent;
+  font-family: var(--app-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.match-forfeit:hover {
+  border-color: hsl(var(--destructive) / 0.6);
+  color: hsl(var(--destructive));
+}
+
+/* A run timed to the pass is a plan, not a position, so it is drawn hollow
+   until the ball is played. */
+.match-run.is-waiting {
+  stroke-dasharray: 2.6 2.2;
+  opacity: 0.72;
+}
+
+/* A drawn arrow that has become a shot reads as a chance, not a risk. */
+.match-hint.is-shot-read {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+/* The real player's name, when the side is somebody's actual eleven. Sits
+   under the circle and never takes the pointer, so it cannot get between a
+   drag and the man it belongs to. */
+.match-marker-name {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 50%;
+  max-width: 9ch;
+  overflow: hidden;
+  font-family: var(--app-font-sans);
+  font-size: clamp(0.3rem, 0.5vw, 0.42rem);
+  font-weight: 600;
+  line-height: 1.1;
+  color: rgba(255, 248, 221, 0.82);
+  text-shadow: 0 1px 2px rgba(12, 14, 12, 0.9);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.match-marker.is-home .match-marker-name {
+  color: rgba(255, 252, 236, 0.95);
+}
+
+.match-ball {
+  position: absolute;
+  z-index: 3;
+  width: clamp(13px, 1.7vw, 20px);
+  height: clamp(13px, 1.7vw, 20px);
+  border: 1.5px solid rgba(0, 0, 0, 0.55);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 28%, #ffffff 0 45%, #e8e4d8 70%, #c6c1b0 100%);
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+}
+
+/* The ball travels a shade faster than the players and starts moving at once,
+   so a pass reads as the ball being played rather than everyone sliding. */
+.match-slot.is-ball {
+  z-index: 3;
+  transition: transform var(--ball-travel, 0.7s) cubic-bezier(0.3, 0.5, 0.35, 1);
+}
+
+.match-pitch.is-celebrating {
+  animation: match-goal 0.7s ease-out;
+}
+
+@keyframes match-goal {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+  }
+  40% {
+    box-shadow: 0 0 0 10px hsl(var(--primary) / 0.5);
+  }
+}
+
+.match-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-height: 0;
+  max-height: 100%;
+  /* Wide enough for a full sentence, capped so the lines stay readable. */
+  width: 100%;
+  max-width: 540px;
+  justify-self: start;
+
+  padding: 15px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 18px;
+  background: hsl(var(--card));
+  /* If a long list of options does overflow, it scrolls inside the panel
+     rather than pushing the board off the screen. */
+  overflow-y: auto;
+}
+
+.match-commentary {
+  margin: 0;
+  min-height: 40px;
+  font-family: var(--app-font-serif);
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+/* The player on the ball, and the ones he can reach. */
+.match-marker.is-carrier {
+  box-shadow:
+    0 0 0 3px hsl(var(--accent)),
+    0 0 0 7px hsl(var(--accent) / 0.28);
+}
+
+.match-marker.is-option {
+  padding: 0;
+  font-family: var(--app-font-mono);
+  cursor: pointer;
+}
+
+.match-marker.is-option.is-safe {
+  box-shadow: 0 0 0 3px hsl(var(--tone-safe));
+}
+
+.match-marker.is-option.is-tight {
+  box-shadow: 0 0 0 3px hsl(var(--tone-tight));
+}
+
+.match-marker.is-option.is-risky {
+  box-shadow: 0 0 0 3px hsl(var(--tone-risky));
+}
+
+.match-marker.is-option:hover {
+  transform: translate(-50%, -50%) scale(1.16);
+}
+
+.match-styles {
+  display: grid;
+  gap: 6px;
+}
+
+.match-style-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.match-style {
+  min-height: 32px;
+  padding: 0 6px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 9px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 0.66rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.match-style.is-active {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+/* A coloured edge on each pass option, matching the ring on the pitch. */
+.match-choice.is-safe {
+  border-left: 5px solid hsl(var(--tone-safe));
+}
+
+.match-choice.is-tight {
+  border-left: 5px solid hsl(var(--tone-tight));
+}
+
+.match-choice.is-risky {
+  border-left: 5px solid hsl(var(--tone-risky));
+}
+
+.match-choice.is-shot {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1);
+}
+
+/* Flagged before it is played, on easy. On hard you have to see it yourself. */
+.match-choice.is-offside {
+  border-left-color: hsl(var(--destructive));
+  background: hsl(var(--destructive) / 0.07);
+}
+
+.match-choice.is-offside span {
+  color: hsl(var(--destructive));
+}
+
+/* The moves that are off, and why. This is the part that teaches. */
+.match-blocked {
+  display: grid;
+  gap: 5px;
+  margin-top: 4px;
+  padding-top: 9px;
+  border-top: 1px dashed hsl(var(--border));
+}
+
+.match-blocked-item {
+  display: grid;
+  gap: 1px;
+  opacity: 0.62;
+}
+
+.match-blocked-item strong {
+  font-size: 0.76rem;
+  text-decoration: line-through;
+}
+
+.match-blocked-item span {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.match-hint.is-read {
+  color: hsl(var(--primary));
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* Where the ball is going, so a move can be followed while it happens. */
+.match-marker.is-target {
+  box-shadow: 0 0 0 3px hsl(var(--tone-tight));
+}
+
+/* The arrows the user draws. Above the players so an instruction is never
+   hidden behind one, and transparent to the pointer so the drag keeps going. */
+.match-arrows {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.match-run {
+  fill: none;
+  stroke: hsl(var(--accent));
+  stroke-width: 0.9;
+  stroke-dasharray: 3 2.2;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+.run-head {
+  fill: hsl(var(--accent));
+}
+
+.match-drag {
+  fill: none;
+  stroke: rgba(255, 248, 221, 0.95);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+}
+
+.drag-head {
+  fill: rgba(255, 248, 221, 0.95);
+}
+
+/* A ball in the air is drawn as an arc, and dashed, so it plainly goes over
+   whoever is standing in the way rather than through them. */
+.match-drag.is-lofted {
+  fill: none;
+  stroke-dasharray: 3.2 2.4;
+}
+
+
+/* A player carrying a drawn instruction, so it is obvious who is on a run. */
+.match-marker.is-running {
+  outline: 2px dashed hsl(var(--accent));
+  outline-offset: 2px;
+}
+
+.match-draw {
+  display: grid;
+  gap: 6px;
+  padding-top: 9px;
+  border-top: 1px dashed hsl(var(--border));
+}
+
+.match-draw .match-secondary {
+  justify-self: start;
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: 0.62rem;
+}
+
+
+
+.match-choice strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.match-choice span {
+  text-transform: none;
+}
+
+
+.match-setup {
+  display: grid;
+  gap: 11px;
+}
+
+.match-field {
+  display: grid;
+  gap: 5px;
+}
+
+.match-field > span {
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.match-field select {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 9px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 9px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.match-hint {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.73rem;
+  font-style: italic;
+}
+
+.match-choices {
+  display: grid;
+  gap: 8px;
+}
+
+.match-choices-title {
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Big targets: the clock is running while these are being read. */
+.match-choice {
+  display: grid;
+  gap: 2px;
+  padding: 11px 13px;
+  border: 2px solid hsl(var(--border));
+  border-radius: 13px;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  text-align: left;
+  cursor: pointer;
+}
+
+.match-choice:hover {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.08);
+}
+
+.match-choice strong {
+  font-size: 0.88rem;
+}
+
+.match-choice span {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.71rem;
+  line-height: 1.4;
+}
+
+.match-primary,
+.match-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 11px;
+  font-family: var(--app-font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.match-primary {
+  border: 2px solid hsl(var(--primary));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.match-secondary {
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  color: hsl(var(--foreground));
+}
+
+.match-waiting {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.match-fulltime {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 14px;
+  border: 2px solid hsl(var(--primary));
+  border-radius: 14px;
+  color: hsl(var(--primary));
+}
+
+.match-fulltime strong {
+  font-family: var(--app-font-serif);
+  font-size: 1.4rem;
+  color: hsl(var(--foreground));
+}
+
+.match-fulltime span {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.78rem;
+}
+
+.match-fulltime button {
+  width: 100%;
+}
+
+.match-live-shapes {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 11px;
+  border-top: 1px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.match-live-shapes strong {
+  color: hsl(var(--foreground));
+}
+
+/* On a narrow screen the board keeps the top of the page and the controls go
+   underneath it, which is what the arrival scroll is aiming at. */
+/* Two columns for as long as they will fit. Below that the board goes on top
+   and is capped at just under half the screen, so the instructions under it
+   are still on screen without scrolling to them. */
+@media (max-width: 820px) {
+  .match-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .match-pitch {
+    width: min(100%, calc(46dvh / 1.5));
+  }
+
+  .match-topbar {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 12px;
+  }
+}
+
 @media (max-width: 1120px) {
   .workspace {
     grid-template-columns: minmax(240px, 272px) minmax(420px, 1fr);
   }
+
 
   /* The guide reads across the full width once the third column is gone. */
   .guide-panel {
@@ -2479,4 +3387,374 @@ input:focus-visible {
   .pitch-caption {
     font-size: 0.74rem;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   How to play — the controls reference.
+
+   A reading page rather than a working surface, so it gets the one thing the
+   match screen cannot have: room. Scrolls normally, one column, capped at a
+   comfortable measure.
+   --------------------------------------------------------------------------- */
+
+.howto-shell {
+  min-height: 100dvh;
+  background: hsl(var(--background));
+}
+
+.howto-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px clamp(12px, 2vw, 24px);
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+}
+
+.match-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.howto-body {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: clamp(1.6rem, 4vw, 3rem) clamp(1rem, 3vw, 1.6rem) 4rem;
+}
+
+.howto-eyebrow {
+  margin: 0 0 0.3rem;
+  color: hsl(var(--primary));
+  font-family: var(--app-font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.howto-intro h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.03;
+  letter-spacing: -0.02em;
+}
+
+.howto-lede {
+  margin: 0.7rem 0 0;
+  max-width: 34rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 1.02rem;
+  line-height: 1.55;
+}
+
+.howto-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.3rem;
+}
+
+.howto-primary,
+.howto-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0.7rem 1.1rem;
+  border: 2px solid hsl(var(--foreground));
+  border-radius: 0;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.howto-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: 4px 4px 0 hsl(var(--foreground));
+}
+
+.howto-primary:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 3px 3px 0 hsl(var(--foreground));
+}
+
+.howto-secondary {
+  background: transparent;
+  color: hsl(var(--foreground));
+}
+
+.howto-secondary:hover {
+  background: hsl(var(--muted));
+}
+
+/* A jump list rather than a sidebar: this page is short enough that a reader
+   wants the whole map at once, not a rail following them down it. */
+.howto-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 2.4rem 0 0;
+  padding: 0.9rem 0;
+  border-top: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.howto-jump {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.howto-jump:hover {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+.howto-section {
+  margin-top: 2.6rem;
+  scroll-margin-top: 1.5rem;
+}
+
+.howto-section h2 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
+  letter-spacing: -0.01em;
+}
+
+.howto-blurb {
+  margin: 0.4rem 0 1.1rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+/* Action on the left, what it does on the right — the shape a reader scans
+   when they are hunting for one specific control. */
+.howto-controls {
+  margin: 0;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.howto-control {
+  display: grid;
+  grid-template-columns: minmax(0, 13rem) minmax(0, 1fr);
+  gap: 0.4rem 1.2rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.howto-control dt {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.howto-control dd {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.howto-note {
+  display: block;
+  margin-top: 0.35rem;
+  padding-left: 0.7rem;
+  border-left: 2px solid hsl(var(--primary) / 0.5);
+  color: hsl(var(--muted-foreground));
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.howto-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.howto-points li {
+  position: relative;
+  padding: 0.4rem 0 0.4rem 1.1rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.howto-points li::before {
+  position: absolute;
+  left: 0;
+  color: hsl(var(--primary));
+  content: '—';
+  font-weight: 800;
+}
+
+.howto-footer {
+  margin-top: 3rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid hsl(var(--border));
+}
+
+@media (max-width: 620px) {
+  .howto-control {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The tutorial coach.
+
+   Sits at the top of the panel because it is the one thing on screen the
+   reader is being asked to act on. Loud enough to find, quiet enough to sit
+   above a working panel for twelve steps without becoming wallpaper.
+   --------------------------------------------------------------------------- */
+
+.match-coach {
+  position: relative;
+  margin-bottom: 0.7rem;
+  padding: 0.75rem 0.85rem 0.9rem;
+  border: 2px solid hsl(var(--foreground));
+  background: hsl(var(--card));
+  box-shadow: 4px 4px 0 hsl(var(--primary));
+}
+
+.match-coach-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 0.3rem;
+}
+
+.match-coach-chapter,
+.match-coach-count {
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* The chapter takes the slack so the count and the way out sit together on
+   the right, rather than being spread across the width. */
+.match-coach-chapter {
+  margin-right: auto;
+  color: hsl(var(--primary));
+}
+
+/* Skipping is offered in the corner from the first step on. The tutorial
+   starts itself now, so the exit has to be visible without reading anything. */
+.match-coach-out {
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  gap: 3px;
+  padding: 0.12rem 0.32rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.match-coach-out:hover {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+.match-coach-count {
+  color: hsl(var(--muted-foreground));
+}
+
+.match-coach strong {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.match-coach-ask {
+  margin: 0.4rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.match-coach-why {
+  margin: 0.4rem 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.79rem;
+  line-height: 1.5;
+}
+
+.match-coach-feet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.match-coach-skip {
+  padding: 0.28rem 0.55rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.match-coach-skip:hover {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+}
+
+/* How far through you are, without a number shouting at you. */
+.match-coach-bar {
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  left: 0;
+  height: 3px;
+  background: hsl(var(--border));
+}
+
+.match-coach-bar::after {
+  display: block;
+  width: var(--done, 0%);
+  height: 100%;
+  background: hsl(var(--primary));
+  content: '';
+  transition: width 0.25s ease-out;
+}
+
+/* The step you are on cannot be done until the ball changes hands. */
+.match-coach-wait {
+  margin: 0.4rem 0 0;
+  padding: 0.3rem 0.5rem;
+  border-left: 3px solid hsl(var(--tone-tight, 36 88% 46%));
+  background: hsl(36 88% 46% / 0.1);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+/* The way in for somebody who has not played it before. Beside the main call
+   to action, not competing with it. */
+.match-cta.is-quiet {
+  background: transparent;
+  color: hsl(var(--primary));
+  box-shadow: none;
+}
+
+.match-cta.is-quiet:hover {
+  background: hsl(var(--primary) / 0.1);
 }

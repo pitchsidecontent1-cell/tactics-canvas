@@ -16,6 +16,7 @@ import {
   Crosshair,
   Download,
   Eraser,
+  Gamepad2,
   Goal,
   GraduationCap,
   Grip,
@@ -44,6 +45,11 @@ import {
   MANAGER_PLAYSTYLES,
 } from './formation-content';
 import { GUIDE_ENTRY_SECTION, GUIDE_SECTIONS, GUIDE_TERMS } from './guide-content';
+import { FORMATIONS, type Formation } from './formations';
+import { MANAGERS, type Era } from './managers';
+import MatchGame from './match-game';
+import HowToPlay from './how-to-play';
+import { isNewVisit, rememberReturn } from './first-visit';
 import { MANAGER_PHOTOS, managerPhotoUrl } from './manager-photos';
 import { PLAYER_PHOTOS, playerPhotoUrl, type PlayerPhoto } from './player-photos';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -62,39 +68,6 @@ type Player = Position & {
   number: number;
   role: string;
   name?: string;
-};
-
-type Formation = {
-  name: string;
-  subtitle: string;
-  shape: number[];
-};
-
-type Era = {
-  id: string;
-  club: string;
-  years: string;
-  formation: string;
-  shape: number[];
-  summary: string;
-  points: string[];
-  xi: string[];
-  // Real jersey numbers worn most often under this manager, parallel to xi.
-  // Shown in brackets after the player's name on the pitch.
-  numbers: number[];
-};
-
-type Manager = {
-  name: string;
-  /** The name the dugout list files under: the surname as it is commonly
-   *  spoken, particles included. So 'ten Hag' sorts under T and 'van Gaal'
-   *  under V, rather than under H and G as a last-word rule would give.
-   *  Luis Enrique, who has no surname in the usual sense, files under E. */
-  sortName: string;
-  /** Whether they are still coaching a team. Anyone out of the dugout is
-   *  listed as retired, including those now in a front-office role. */
-  status: 'current' | 'retired';
-  eras: Era[];
 };
 
 type ArrowStyle = 'solid' | 'dashed' | 'curved';
@@ -197,38 +170,6 @@ const ROLE_NAMES: Record<string, string> = {
 const shirtNumber = (player: Player) => SHIRT_NUMBERS[player.role] ?? player.number;
 const roleName = (role: string) => ROLE_NAMES[role] ?? role;
 
-const FORMATIONS: Formation[] = [
-  { name: '4-4-2', subtitle: 'Balanced classic', shape: [4, 4, 2] },
-  { name: '4-3-3', subtitle: 'Width + pressure', shape: [4, 3, 3] },
-  { name: '4-2-3-1', subtitle: 'Control the middle', shape: [4, 2, 3, 1] },
-  { name: '4-1-4-1', subtitle: 'Compact block', shape: [4, 1, 4, 1] },
-  { name: '4-4-1-1', subtitle: 'Second striker link', shape: [4, 4, 1, 1] },
-  { name: '4-5-1', subtitle: 'Midfield overload', shape: [4, 5, 1] },
-  { name: '4-2-2-2', subtitle: 'Box midfield', shape: [4, 2, 2, 2] },
-  { name: '4-3-1-2', subtitle: 'Narrow diamond', shape: [4, 3, 1, 2] },
-  { name: '4-3-2-1', subtitle: 'Christmas tree', shape: [4, 3, 2, 1] },
-  { name: '4-3-3 Attack', subtitle: 'Aggressive front three', shape: [4, 3, 3] },
-  { name: '3-4-3', subtitle: 'High and wide', shape: [3, 4, 3] },
-  { name: '3-4-1-2', subtitle: 'Playmaker behind two', shape: [3, 4, 1, 2] },
-  { name: '3-4-2-1', subtitle: 'Two between lines', shape: [3, 4, 2, 1] },
-  { name: '3-5-2', subtitle: 'Extra central body', shape: [3, 5, 2] },
-  { name: '3-1-4-2', subtitle: 'Single pivot', shape: [3, 1, 4, 2] },
-  { name: '5-3-2', subtitle: 'Wing-back security', shape: [5, 3, 2] },
-  { name: '5-4-1', subtitle: 'Deep and patient', shape: [5, 4, 1] },
-  { name: '5-2-3', subtitle: 'Counter-punch', shape: [5, 2, 3] },
-  { name: '5-3-1-1', subtitle: 'Low-block diamond', shape: [5, 3, 1, 1] },
-  { name: '4-2-4', subtitle: 'Full send', shape: [4, 2, 4] },
-  { name: '4-1-2-1-2', subtitle: 'Midfield diamond', shape: [4, 1, 2, 1, 2] },
-  { name: '4-2-1-3', subtitle: 'Three-lane attack', shape: [4, 2, 1, 3] },
-  { name: '4-4-2 Diamond', subtitle: 'Narrow midfield', shape: [4, 4, 2] },
-  { name: '3-4-3 Diamond', subtitle: 'Diamond behind a front three', shape: [3, 4, 3] },
-  { name: '3-2-4-1', subtitle: 'Modern build-up', shape: [3, 2, 4, 1] },
-  { name: '4-1-3-2', subtitle: 'Anchor and three', shape: [4, 1, 3, 2] },
-  { name: '5-2-1-2', subtitle: 'Wing-back diamond', shape: [5, 2, 1, 2] },
-  { name: '3-3-3-1', subtitle: 'Three lines of three', shape: [3, 3, 3, 1] },
-  { name: '3-5-1-1', subtitle: 'Deep block, two up', shape: [3, 5, 1, 1] },
-];
-
 // The user-built shape, listed above the presets. Only its `shape` changes as
 // the lines are edited; roles, shirt numbers, the thumbnail and the pitch are
 // all derived from it by the same code every preset formation uses, so a
@@ -314,1353 +255,6 @@ function lineLabel(row: number, totalRows: number): string {
   if (middleIndex === middleCount - 1) return 'Attacking midfield';
   return 'Midfield';
 }
-
-const MANAGERS: Manager[] = [
-  {
-    name: 'Alex Ferguson',
-    sortName: 'Ferguson',
-    status: 'retired',
-    eras: [
-      {
-        id: 'fergie-99',
-        club: 'Manchester United',
-        years: '1998-99',
-        formation: '4-4-2',
-        shape: [4, 4, 2],
-        summary:
-          'The Treble machine. Two genuine wingers, a warrior midfield, and a strike pair that never stopped moving.',
-        points: [
-          'Beckham and Giggs stretch the pitch and deliver early crosses',
-          'Keane and Scholes dominate the middle with steel and passing range',
-          'Fergie time: relentless late pressure until the final whistle',
-        ],
-        xi: [
-          'Schmeichel',
-          'Irwin',
-          'Johnsen',
-          'Stam',
-          'G. Neville',
-          'Giggs',
-          'Keane',
-          'Scholes',
-          'Beckham',
-          'Yorke',
-          'Cole',
-        ],
-        numbers: [1, 3, 5, 6, 2, 11, 16, 18, 7, 19, 9],
-      },
-      {
-        id: 'fergie-08',
-        club: 'Manchester United',
-        years: '2007-08',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'Champions League winners with a fluid, interchanging front three that defenders could never pin down.',
-        points: [
-          'Ronaldo, Rooney and Tévez rotate freely across the front line',
-          'Carrick dictates tempo while Hargreaves screens the back four',
-          'Vidić and Ferdinand form one of the great centre-back pairings',
-        ],
-        xi: [
-          'Van der Sar',
-          'Evra',
-          'Vidić',
-          'Ferdinand',
-          'Brown',
-          'Scholes',
-          'Carrick',
-          'Hargreaves',
-          'Rooney',
-          'Tévez',
-          'Ronaldo',
-        ],
-        numbers: [1, 3, 15, 5, 6, 18, 16, 4, 10, 32, 7],
-      },
-      {
-        id: 'fergie-13',
-        club: 'Manchester United',
-        years: '2012-13',
-        formation: '4-2-3-1',
-        shape: [4, 2, 3, 1],
-        summary:
-          'The farewell title. A pragmatic double pivot behind Rooney, all built to feed Van Persie in the box.',
-        points: [
-          'Van Persie is the focal point: 26 league goals in the title run',
-          'Carrick quietly controls games from deep',
-          'Wide players tuck in so full-backs supply the width',
-        ],
-        xi: [
-          'De Gea',
-          'Evra',
-          'Vidić',
-          'Ferdinand',
-          'Rafael',
-          'Carrick',
-          'Cleverley',
-          'Kagawa',
-          'Rooney',
-          'Valencia',
-          'Van Persie',
-        ],
-        numbers: [1, 3, 15, 5, 21, 16, 23, 26, 10, 25, 20],
-      },
-    ],
-  },
-  {
-    name: 'Pep Guardiola',
-    sortName: 'Guardiola',
-    status: 'current',
-    eras: [
-      {
-        id: 'pep-barca',
-        club: 'Barcelona',
-        years: '2008-11',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'Tiki-taka at its peak. Messi as a false nine, endless triangles, and a six-second press to win the ball back.',
-        points: [
-          'Messi drops from the nine into midfield, dragging defenders into chaos',
-          'Xavi and Iniesta play one-touch keep-ball in tight spaces',
-          'Lose the ball, win it back within six seconds — the press as a weapon',
-        ],
-        xi: [
-          'Valdés',
-          'Abidal',
-          'Puyol',
-          'Piqué',
-          'Alves',
-          'Iniesta',
-          'Busquets',
-          'Xavi',
-          'Villa',
-          'Messi',
-          'Pedro',
-        ],
-        numbers: [1, 22, 5, 3, 2, 8, 16, 6, 7, 10, 17],
-      },
-      {
-        id: 'pep-bayern',
-        club: 'Bayern Munich',
-        years: '2013-16',
-        formation: '4-1-4-1',
-        shape: [4, 1, 4, 1],
-        summary:
-          'The laboratory years. Inverted full-backs, positional play, and half-space overloads drilled to perfection.',
-        points: [
-          'Lahm and Alaba step into midfield when Bayern have the ball',
-          'Xabi Alonso recycles possession as the lone pivot',
-          'Robben and Ribéry isolate defenders one-v-one out wide',
-        ],
-        xi: [
-          'Neuer',
-          'Alaba',
-          'Boateng',
-          'Martínez',
-          'Lahm',
-          'Xabi Alonso',
-          'Ribéry',
-          'Thiago',
-          'Müller',
-          'Robben',
-          'Lewandowski',
-        ],
-        numbers: [1, 27, 17, 8, 21, 3, 7, 6, 25, 10, 9],
-      },
-      {
-        id: 'pep-city',
-        club: 'Manchester City',
-        years: '2017-19',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'The Centurions. 100 points, rondo control in the final third, and a high line that suffocated the league.',
-        points: [
-          'De Bruyne and Silva operate as twin free eights in the half-spaces',
-          'Fernandinho covers the entire width behind the ball',
-          'Sterling and Sané attack the back post on every cutback',
-        ],
-        xi: [
-          'Ederson',
-          'Delph',
-          'Otamendi',
-          'Stones',
-          'Walker',
-          'D. Silva',
-          'Fernandinho',
-          'De Bruyne',
-          'Sané',
-          'Agüero',
-          'Sterling',
-        ],
-        numbers: [31, 18, 30, 5, 2, 21, 25, 17, 19, 10, 7],
-      },
-    ],
-  },
-  {
-    name: 'José Mourinho',
-    sortName: 'Mourinho',
-    status: 'current',
-    eras: [
-      {
-        id: 'mou-porto',
-        club: 'FC Porto',
-        years: '2002-04',
-        formation: '4-1-2-1-2',
-        shape: [4, 1, 2, 1, 2],
-        summary:
-          'The arrival. A narrow diamond that won the UEFA Cup and Champions League back to back with ruthless organisation.',
-        points: [
-          'Deco is the free man between the lines, feeding two strikers',
-          'Costinha destroys attacks in front of a disciplined back four',
-          'Compact without the ball, direct and vertical with it',
-        ],
-        xi: [
-          'Vítor Baía',
-          'Valente',
-          'Carvalho',
-          'Jorge Costa',
-          'P. Ferreira',
-          'Costinha',
-          'Maniche',
-          'Mendes',
-          'Deco',
-          'Derlei',
-          'C. Alberto',
-        ],
-        numbers: [99, 8, 4, 2, 22, 6, 18, 23, 10, 11, 19],
-      },
-      {
-        id: 'mou-chelsea',
-        club: 'Chelsea',
-        years: '2004-06',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'Back-to-back titles built on the meanest defence in Premier League history: 15 goals conceded in a season.',
-        points: [
-          'Makélélé redefines the holding role in front of Terry and Carvalho',
-          'Drogba wins everything in the air and holds the ball up alone',
-          'Robben and Duff break at speed the moment the ball turns over',
-        ],
-        xi: [
-          'Čech',
-          'Gallas',
-          'Terry',
-          'Carvalho',
-          'P. Ferreira',
-          'Lampard',
-          'Makélélé',
-          'Tiago',
-          'Duff',
-          'Drogba',
-          'Robben',
-        ],
-        numbers: [1, 13, 26, 6, 20, 8, 4, 30, 11, 15, 16],
-      },
-      {
-        id: 'mou-inter',
-        club: 'Inter Milan',
-        years: '2009-10',
-        formation: '4-2-3-1',
-        shape: [4, 2, 3, 1],
-        summary:
-          'The Treble. A masterclass in defensive structure, capped by the 10-man siege of the Camp Nou.',
-        points: [
-          'Sneijder holds the only creative licence — everyone else has a job',
-          'Cambiasso and Zanetti shield the back four without the ball',
-          'Milito converts the few chances that matter: both goals in the final',
-        ],
-        xi: [
-          'Júlio César',
-          'Chivu',
-          'Samuel',
-          'Lúcio',
-          'Maicon',
-          'Cambiasso',
-          'Zanetti',
-          'Pandev',
-          'Sneijder',
-          "Eto'o",
-          'Milito',
-        ],
-        numbers: [12, 26, 25, 6, 13, 19, 4, 27, 10, 9, 22],
-      },
-    ],
-  },
-  {
-    name: 'Carlo Ancelotti',
-    sortName: 'Ancelotti',
-    status: 'current',
-    eras: [
-      {
-        id: 'carlo-milan',
-        club: 'AC Milan',
-        years: '2002-07',
-        formation: '4-3-2-1',
-        shape: [4, 3, 2, 1],
-        summary:
-          'The Christmas tree. Pirlo reinvented as a deep playmaker, with Kaká and Seedorf floating between the lines.',
-        points: [
-          'Pirlo drops in front of the defence and launches everything',
-          'Kaká attacks the space between midfield and defence at full speed',
-          'Gattuso does the running so the artists can paint',
-        ],
-        xi: [
-          'Dida',
-          'Jankulovski',
-          'Maldini',
-          'Nesta',
-          'Oddo',
-          'Gattuso',
-          'Pirlo',
-          'Ambrosini',
-          'Kaká',
-          'Seedorf',
-          'Inzaghi',
-        ],
-        numbers: [1, 18, 3, 13, 44, 8, 21, 23, 22, 20, 9],
-      },
-      {
-        id: 'carlo-chelsea',
-        club: 'Chelsea',
-        years: '2009-10',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'The double, with 103 league goals. Ancelotti let a veteran squad off the leash and Drogba led the stampede.',
-        points: [
-          'Drogba spearheads everything: 29 league goals that season',
-          'Lampard arrives late in the box, again and again',
-          'Powerful, direct wing play from Malouda and Anelka',
-        ],
-        xi: [
-          'Čech',
-          'A. Cole',
-          'Terry',
-          'Alex',
-          'Ivanović',
-          'Lampard',
-          'Mikel',
-          'Ballack',
-          'Malouda',
-          'Drogba',
-          'Anelka',
-        ],
-        numbers: [1, 3, 26, 33, 2, 8, 12, 13, 15, 11, 39],
-      },
-      {
-        id: 'carlo-decima',
-        club: 'Real Madrid',
-        years: '2013-14',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'La Décima. Ancelotti balanced a galaxy of stars into a lethal counter-attacking unit — and won it in minute 93.',
-        points: [
-          'Bale, Benzema and Ronaldo break at terrifying speed',
-          'Di María carries the ball through midfield to launch transitions',
-          'Ramos in minute 93 of the final: never stop believing',
-        ],
-        xi: [
-          'Casillas',
-          'Coentrão',
-          'Ramos',
-          'Pepe',
-          'Carvajal',
-          'Di María',
-          'Xabi Alonso',
-          'Modrić',
-          'Ronaldo',
-          'Benzema',
-          'Bale',
-        ],
-        numbers: [1, 5, 4, 3, 15, 22, 14, 19, 7, 9, 11],
-      },
-    ],
-  },
-  {
-    name: 'Johan Cruyff',
-    sortName: 'Cruyff',
-    status: 'retired',
-    eras: [
-      {
-        id: 'cruyff-barca',
-        club: 'Barcelona',
-        years: '1993-94',
-        formation: '3-4-3',
-        shape: [3, 4, 3],
-        summary:
-          'The Dream Team. Cruyff’s 3-4-3 with Koeman stepping out of defence, Guardiola conducting, and Romário finishing everything.',
-        points: [
-          'Koeman starts attacks from the back and arrives for every free kick',
-          'Guardiola, a Cruyff invention, is the pivot the whole system spins around',
-          'Romário and Stoichkov terrorise the last line with runs in behind',
-        ],
-        xi: [
-          'Zubizarreta',
-          'Ferrer',
-          'Koeman',
-          'Nadal',
-          'Sergi',
-          'Guardiola',
-          'Bakero',
-          'Amor',
-          'Stoichkov',
-          'Romário',
-          'Beguiristain',
-        ],
-        numbers: [1, 2, 4, 5, 7, 3, 6, 9, 8, 10, 11],
-      },
-    ],
-  },
-  {
-    name: 'Arsène Wenger',
-    sortName: 'Wenger',
-    status: 'retired',
-    eras: [
-      {
-        id: 'wenger-invincibles',
-        club: 'Arsenal',
-        years: '2003-04',
-        formation: '4-4-2',
-        shape: [4, 4, 2],
-        summary:
-          'The Invincibles. 38 league games, zero defeats — pace, power and one-touch football on the break.',
-        points: [
-          'Henry drifts left and attacks the space behind the right-back',
-          'Vieira and Gilberto win the ball and release the counter in seconds',
-          'Bergkamp drops between the lines to thread the final pass',
-        ],
-        xi: [
-          'Lehmann',
-          'A. Cole',
-          'Campbell',
-          'Touré',
-          'Lauren',
-          'Pires',
-          'Vieira',
-          'Gilberto',
-          'Ljungberg',
-          'Henry',
-          'Bergkamp',
-        ],
-        numbers: [1, 3, 23, 28, 12, 7, 4, 19, 8, 14, 10],
-      },
-    ],
-  },
-  {
-    name: 'Luis Enrique',
-    sortName: 'Enrique',
-    status: 'current',
-    eras: [
-      {
-        id: 'lucho-barca',
-        club: 'Barcelona',
-        years: '2014-15',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'The MSN treble. Messi, Suárez and Neymar scored 122 goals as Barcelona swept La Liga, the Copa and the Champions League.',
-        points: [
-          'Messi, Suárez and Neymar interchange freely and settle games alone',
-          'Busquets and Iniesta keep the ball; Rakitić does the running',
-          'More direct than Guardiola’s Barça — quicker to release the front three',
-        ],
-        xi: [
-          'Ter Stegen',
-          'Alba',
-          'Piqué',
-          'Mascherano',
-          'Alves',
-          'Iniesta',
-          'Busquets',
-          'Rakitić',
-          'Neymar',
-          'Suárez',
-          'Messi',
-        ],
-        numbers: [1, 18, 3, 14, 22, 8, 5, 4, 11, 9, 10],
-      },
-      {
-        id: 'lucho-psg',
-        club: 'Paris Saint-Germain',
-        years: '2024-26',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'The first European Cup. Luis Enrique moved on from the galácticos, trusted Europe’s youngest side, and demolished Inter 5-0 in the final.',
-        points: [
-          'Dembélé reinvented as a false nine — and Ballon d’Or winner',
-          'Vitinha dictates everything as the smallest player on the pitch',
-          'The whole team presses: Doué and Kvaratskhelia defend from the front',
-        ],
-        xi: [
-          'Donnarumma',
-          'Nuno Mendes',
-          'Pacho',
-          'Marquinhos',
-          'Hakimi',
-          'Vitinha',
-          'Neves',
-          'Ruiz',
-          'Kvaratskhelia',
-          'Dembélé',
-          'Doué',
-        ],
-        numbers: [99, 25, 51, 5, 2, 17, 87, 8, 7, 10, 14],
-      },
-    ],
-  },
-  {
-    name: 'Jürgen Klopp',
-    sortName: 'Klopp',
-    status: 'current',
-    eras: [
-      {
-        id: 'klopp-liverpool',
-        club: 'Liverpool',
-        years: '2018-20',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'Heavy metal football perfected. Champions of Europe in 2019, then a first league title in 30 years.',
-        points: [
-          'The front three press as the first line of defence',
-          'Alexander-Arnold and Robertson supply the creativity from full-back',
-          'Van Dijk lets the line squeeze high so everything compresses forward',
-        ],
-        xi: [
-          'Alisson',
-          'Robertson',
-          'Van Dijk',
-          'Matip',
-          'Alexander-Arnold',
-          'Wijnaldum',
-          'Fabinho',
-          'Henderson',
-          'Mané',
-          'Firmino',
-          'Salah',
-        ],
-        numbers: [1, 26, 4, 32, 66, 5, 3, 14, 10, 9, 11],
-      },
-    ],
-  },
-  {
-    name: 'Zinédine Zidane',
-    sortName: 'Zidane',
-    status: 'current',
-    eras: [
-      {
-        id: 'zidane-undecima',
-        club: 'Real Madrid',
-        years: '2015-16',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'La Undécima. Appointed in January, Zidane restored the BBC and won the Champions League five months into his first job.',
-        points: [
-          'The BBC — Bale, Benzema, Cristiano — stay high and finish everything',
-          'Promoting Casemiro was Zidane’s first big call, and it balanced the team',
-          'Ramos scores against Atlético in a final. Again.',
-        ],
-        xi: [
-          'Navas',
-          'Marcelo',
-          'Ramos',
-          'Pepe',
-          'Carvajal',
-          'Kroos',
-          'Casemiro',
-          'Modrić',
-          'Ronaldo',
-          'Benzema',
-          'Bale',
-        ],
-        numbers: [1, 12, 4, 3, 15, 8, 14, 19, 7, 9, 11],
-      },
-      {
-        id: 'zidane-madrid',
-        club: 'Real Madrid',
-        years: '2016-18',
-        formation: '4-3-1-2',
-        shape: [4, 3, 1, 2],
-        summary:
-          'The three-peat core. Zidane’s diamond won the 2017 double, retained the Champions League, then made it three in a row in Kyiv.',
-        points: [
-          'Isco in the hole unlocked the best football of the era',
-          'Kroos and Modrić control both tempo and territory',
-          'A rested Ronaldo saves his goals for the knockout rounds',
-        ],
-        xi: [
-          'Navas',
-          'Marcelo',
-          'Ramos',
-          'Varane',
-          'Carvajal',
-          'Kroos',
-          'Casemiro',
-          'Modrić',
-          'Isco',
-          'Ronaldo',
-          'Benzema',
-        ],
-        numbers: [1, 12, 4, 5, 2, 8, 14, 19, 22, 7, 9],
-      },
-    ],
-  },
-  {
-    name: 'Mikel Arteta',
-    sortName: 'Arteta',
-    status: 'current',
-    eras: [
-      {
-        id: 'arteta-arsenal-24',
-        club: 'Arsenal',
-        years: '2023-24',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'A title race taken to the final day on the back of the meanest defence in the league and a heavily rehearsed attack.',
-        points: [
-          'The left-back steps into midfield in build-up, making a back three and a crowded centre',
-          'Saka and Martinelli hold the touchlines until the moment the pass is on',
-          'Set pieces treated as a weapon in their own right, with a specialist coach behind them',
-        ],
-        xi: [
-          'Raya',
-          'Zinchenko',
-          'Gabriel',
-          'Saliba',
-          'White',
-          'Rice',
-          'Jorginho',
-          'Ødegaard',
-          'Martinelli',
-          'Havertz',
-          'Saka',
-        ],
-        numbers: [22, 35, 6, 2, 4, 41, 20, 8, 11, 29, 7],
-      },
-    ],
-  },
-  {
-    name: 'Unai Emery',
-    sortName: 'Emery',
-    status: 'current',
-    eras: [
-      {
-        id: 'emery-sevilla-16',
-        club: 'Sevilla',
-        years: '2015-16',
-        formation: '4-2-3-1',
-        shape: [4, 2, 3, 1],
-        summary:
-          'The third of three straight Europa League titles, built on a double pivot, obsessive opponent-specific planning and relentless wide play.',
-        points: [
-          'Two holding midfielders screen the defence so the full-backs can go',
-          'The team presses in bursts, choosing its moments rather than pressing constantly',
-          'Every match plan is tailored to the specific opponent, down to individual habits',
-        ],
-        xi: [
-          'Sergio Rico',
-          'Escudero',
-          'Rami',
-          'Carriço',
-          'Mariano',
-          'Krychowiak',
-          'N’Zonzi',
-          'Vitolo',
-          'Banega',
-          'Konoplyanka',
-          'Gameiro',
-        ],
-        numbers: [25, 3, 5, 16, 23, 4, 15, 20, 10, 11, 7],
-      },
-      {
-        id: 'emery-villa-24',
-        club: 'Aston Villa',
-        years: '2023-24',
-        formation: '4-4-2',
-        shape: [4, 4, 2],
-        summary:
-          'Champions League qualification earned with an extreme high line, an aggressive offside trap and fast, direct transitions.',
-        points: [
-          'The defensive line pushes up near halfway and steps out together to catch runners offside',
-          'Once the ball is won, the first pass goes forward at once',
-          'Watkins leads the line alone in build-up and is joined the instant the team breaks',
-        ],
-        xi: [
-          'Martínez',
-          'Digne',
-          'Pau Torres',
-          'Konsa',
-          'Cash',
-          'Bailey',
-          'Kamara',
-          'McGinn',
-          'Tielemans',
-          'Watkins',
-          'Diaby',
-        ],
-        numbers: [1, 27, 14, 4, 2, 31, 44, 7, 8, 11, 19],
-      },
-    ],
-  },
-  {
-    name: 'Xabi Alonso',
-    sortName: 'Alonso',
-    status: 'current',
-    eras: [
-      {
-        id: 'xabi-leverkusen-24',
-        club: 'Bayer Leverkusen',
-        years: '2023-24',
-        formation: '3-4-2-1',
-        shape: [3, 4, 2, 1],
-        summary:
-          'An unbeaten Bundesliga season — the first in the league’s history — with a back three, flying wing-backs and a habit of scoring impossibly late.',
-        points: [
-          'Three centre-backs who all carry the ball forward rather than just clearing it',
-          'Grimaldo and Frimpong provide the entire width, pushing on almost as forwards',
-          'Wirtz roams between the lines with licence to appear anywhere across the front',
-        ],
-        xi: [
-          'Hrádecký',
-          'Hincapié',
-          'Tah',
-          'Tapsoba',
-          'Grimaldo',
-          'Xhaka',
-          'Palacios',
-          'Frimpong',
-          'Wirtz',
-          'Hofmann',
-          'Boniface',
-        ],
-        numbers: [1, 3, 4, 12, 20, 34, 25, 30, 10, 7, 17],
-      },
-    ],
-  },
-  {
-    name: 'Rúben Amorim',
-    sortName: 'Amorim',
-    status: 'current',
-    eras: [
-      {
-        id: 'amorim-sporting-24',
-        club: 'Sporting CP',
-        years: '2023-24',
-        formation: '3-4-3',
-        shape: [3, 4, 3],
-        summary:
-          'A league title won with an unusually rigid 3-4-3 that the whole club played, from the first team down through the academy.',
-        points: [
-          'The shape barely changes: the same three at the back and the same wing-backs, every week',
-          'Gyökeres leads the line alone and runs in behind the moment possession is won',
-          'The two wide forwards tuck inside, leaving the flanks entirely to the wing-backs',
-        ],
-        xi: [
-          'Adán',
-          'Matheus Reis',
-          'Coates',
-          'Diomande',
-          'Nuno Santos',
-          'Hjulmand',
-          'Morita',
-          'Catamo',
-          'Trincão',
-          'Gyökeres',
-          'Paulinho',
-        ],
-        numbers: [1, 14, 4, 25, 19, 42, 5, 11, 17, 9, 21],
-      },
-    ],
-  },
-  {
-    name: 'Hansi Flick',
-    sortName: 'Flick',
-    status: 'current',
-    eras: [
-      {
-        id: 'flick-bayern-20',
-        club: 'Bayern Munich',
-        years: '2019-20',
-        formation: '4-2-3-1',
-        shape: [4, 2, 3, 1],
-        summary:
-          'A treble won by a team that pressed higher and defended further from its own goal than almost any side before it.',
-        points: [
-          'An extremely high defensive line, with the goalkeeper acting as the last defender',
-          'The press starts from the striker and arrives in numbers within seconds',
-          'Davies and Kimmich turn defence into attack faster than opponents can reset',
-        ],
-        xi: [
-          'Neuer',
-          'Davies',
-          'Alaba',
-          'Boateng',
-          'Pavard',
-          'Kimmich',
-          'Goretzka',
-          'Gnabry',
-          'Müller',
-          'Coman',
-          'Lewandowski',
-        ],
-        numbers: [1, 19, 27, 17, 5, 32, 18, 22, 25, 29, 9],
-      },
-    ],
-  },
-  {
-    name: 'Diego Simeone',
-    sortName: 'Simeone',
-    status: 'current',
-    eras: [
-      {
-        id: 'simeone-atleti-14',
-        club: 'Atlético Madrid',
-        years: '2013-14',
-        formation: '4-4-2',
-        shape: [4, 4, 2],
-        summary:
-          'A La Liga title taken from Barcelona and Real Madrid with two banks of four, ferocious commitment and almost no possession.',
-        points: [
-          'Two lines of four sit narrow and deep, refusing to be pulled apart',
-          'The team concedes the ball happily and attacks the moment it wins it back',
-          'Set pieces and second balls are treated as a primary route to goal',
-        ],
-        xi: [
-          'Courtois',
-          'Filipe Luís',
-          'Godín',
-          'Miranda',
-          'Juanfran',
-          'Koke',
-          'Gabi',
-          'Tiago',
-          'Arda Turan',
-          'Diego Costa',
-          'Villa',
-        ],
-        numbers: [13, 3, 2, 23, 20, 6, 14, 5, 10, 19, 7],
-      },
-      {
-        id: 'simeone-atleti-21',
-        club: 'Atlético Madrid',
-        years: '2020-21',
-        formation: '3-5-2',
-        shape: [3, 5, 2],
-        summary:
-          'A second title, won with a back three, wing-backs pushed high and a striker signed from a rival who scored the goals that decided it.',
-        points: [
-          'The back three lets both wing-backs attack without leaving the middle short',
-          'Llorente covers enormous ground from midfield, arriving late in the box',
-          'Suárez provides what the previous side lacked: a finisher for the chances created',
-        ],
-        xi: [
-          'Oblak',
-          'Hermoso',
-          'Giménez',
-          'Savić',
-          'Carrasco',
-          'Saúl',
-          'Koke',
-          'Llorente',
-          'Trippier',
-          'Suárez',
-          'João Félix',
-        ],
-        numbers: [13, 22, 2, 15, 21, 8, 6, 14, 23, 9, 7],
-      },
-    ],
-  },
-  {
-    name: 'Vincent Kompany',
-    sortName: 'Kompany',
-    status: 'current',
-    eras: [
-      {
-        id: 'kompany-bayern-25',
-        club: 'Bayern Munich',
-        years: '2024-25',
-        formation: '4-2-3-1',
-        shape: [4, 2, 3, 1],
-        summary:
-          'The Bundesliga reclaimed in his first season, with a high line, quick vertical passing and Kane leading the attack.',
-        points: [
-          'Possession is used to pin opponents in, not to slow the game down',
-          'Musiala and Olise are given freedom to drift and swap all across the front',
-          'The defensive line stays high so the pitch stays short and compact',
-        ],
-        xi: [
-          'Neuer',
-          'Davies',
-          'Kim',
-          'Upamecano',
-          'Laimer',
-          'Kimmich',
-          'Pavlović',
-          'Gnabry',
-          'Musiala',
-          'Olise',
-          'Kane',
-        ],
-        numbers: [1, 19, 3, 2, 27, 6, 45, 7, 42, 17, 9],
-      },
-    ],
-  },
-  {
-    name: 'Thomas Tuchel',
-    sortName: 'Tuchel',
-    status: 'current',
-    eras: [
-      {
-        id: 'tuchel-psg-20',
-        club: 'Paris Saint-Germain',
-        years: '2019-20',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'A domestic clean sweep and the club’s first Champions League final, with the front three given freedom and the midfield built to protect them.',
-        points: [
-          'Marquinhos drops from defence into midfield to give the back line an extra passer',
-          'Neymar and Mbappé are freed from defensive duty and kept high for the counter',
-          'The midfield three do the running so the front three do not have to',
-        ],
-        xi: [
-          'Navas',
-          'Bernat',
-          'Kimpembe',
-          'Thiago Silva',
-          'Kehrer',
-          'Herrera',
-          'Marquinhos',
-          'Gueye',
-          'Neymar',
-          'Mbappé',
-          'Di María',
-        ],
-        numbers: [1, 14, 3, 2, 4, 21, 5, 27, 10, 7, 11],
-      },
-      {
-        id: 'tuchel-chelsea-21',
-        club: 'Chelsea',
-        years: '2020-21',
-        formation: '3-4-2-1',
-        shape: [3, 4, 2, 1],
-        summary:
-          'A Champions League won in four months from mid-season, on the back of a back three that barely conceded anything at all.',
-        points: [
-          'Three centre-backs and two holding midfielders make the centre almost impossible to play through',
-          'The wing-backs supply the width, so the two forwards can stay narrow and central',
-          'Attacks are patient until the moment a runner can go beyond the last defender',
-        ],
-        xi: [
-          'Mendy',
-          'Rüdiger',
-          'Thiago Silva',
-          'Azpilicueta',
-          'Chilwell',
-          'Kanté',
-          'Jorginho',
-          'James',
-          'Mount',
-          'Havertz',
-          'Werner',
-        ],
-        numbers: [16, 2, 6, 28, 21, 7, 5, 24, 19, 29, 11],
-      },
-    ],
-  },
-  {
-    name: 'Luis Aragonés',
-    sortName: 'Aragonés',
-    status: 'retired',
-    eras: [
-      {
-        id: 'aragones-spain-08',
-        club: 'Spain',
-        years: '2008',
-        formation: '4-1-4-1',
-        shape: [4, 1, 4, 1],
-        summary:
-          'The European Championship that ended forty-four years without a trophy, won by dropping the big striker and trusting the smallest technicians on the pitch.',
-        points: [
-          'Senna alone screens the back four so four creators can play ahead of him',
-          'Short passing used to keep the ball rather than to advance with it',
-          'Torres runs the channels alone, stretching defences for the passers behind',
-        ],
-        xi: [
-          'Casillas',
-          'Capdevila',
-          'Marchena',
-          'Puyol',
-          'Ramos',
-          'Senna',
-          'Iniesta',
-          'Xavi',
-          'Fàbregas',
-          'Silva',
-          'Torres',
-        ],
-        numbers: [1, 11, 4, 5, 15, 19, 6, 8, 10, 21, 9],
-      },
-    ],
-  },
-  {
-    name: 'Rafael Benítez',
-    sortName: 'Benítez',
-    status: 'retired',
-    eras: [
-      {
-        id: 'benitez-liverpool-05',
-        club: 'Liverpool',
-        years: '2004-05',
-        formation: '4-4-2',
-        shape: [4, 4, 2],
-        summary:
-          'The Istanbul side: three goals down at half-time in the Champions League final, level within six minutes, and champions of Europe by the end.',
-        points: [
-          'Zonal marking at set pieces, unusual in England at the time and heavily criticised',
-          'The shape changes repeatedly within a match rather than between them',
-          'Gerrard is pushed forward when the game demands it, and the midfield rebuilt around him',
-        ],
-        xi: [
-          'Dudek',
-          'Traoré',
-          'Hyypiä',
-          'Carragher',
-          'Finnan',
-          'Riise',
-          'Xabi Alonso',
-          'Gerrard',
-          'Luis García',
-          'Baroš',
-          'Kewell',
-        ],
-        numbers: [1, 27, 4, 23, 3, 6, 14, 8, 10, 5, 7],
-      },
-    ],
-  },
-  {
-    name: 'Fabio Capello',
-    sortName: 'Capello',
-    status: 'retired',
-    eras: [
-      {
-        id: 'capello-milan-94',
-        club: 'AC Milan',
-        years: '1993-94',
-        formation: '4-4-2',
-        shape: [4, 4, 2],
-        summary:
-          'A side that conceded fifteen goals in an entire league season and then dismantled Barcelona 4-0 in the European Cup final.',
-        points: [
-          'The back four defends as a unit and steps up together to catch runners offside',
-          'Attacks are patient, waiting for the opponent to commit before breaking',
-          'Two forwards interchange constantly rather than holding fixed positions',
-        ],
-        xi: [
-          'Rossi',
-          'Maldini',
-          'Galli',
-          'Costacurta',
-          'Tassotti',
-          'Boban',
-          'Desailly',
-          'Albertini',
-          'Donadoni',
-          'Massaro',
-          'Savićević',
-        ],
-        numbers: [1, 3, 5, 6, 2, 11, 8, 4, 7, 9, 10],
-      },
-    ],
-  },
-  {
-    name: 'Kenny Dalglish',
-    sortName: 'Dalglish',
-    status: 'retired',
-    eras: [
-      {
-        id: 'dalglish-liverpool-88',
-        club: 'Liverpool',
-        years: '1987-88',
-        formation: '4-4-1-1',
-        shape: [4, 4, 1, 1],
-        summary:
-          'Widely called the finest Liverpool team ever assembled: a title won at a canter with football fast enough to embarrass the rest of the league.',
-        points: [
-          'Barnes and Houghton attack from wide with total freedom to swap sides',
-          'Beardsley plays between midfield and attack, linking everything',
-          'The ball moves forward first time wherever possible rather than being held',
-        ],
-        xi: [
-          'Grobbelaar',
-          'Ablett',
-          'Hansen',
-          'Nicol',
-          'Gillespie',
-          'Barnes',
-          'McMahon',
-          'Whelan',
-          'Houghton',
-          'Beardsley',
-          'Aldridge',
-        ],
-        numbers: [1, 3, 6, 4, 2, 10, 11, 5, 7, 8, 9],
-      },
-    ],
-  },
-  {
-    name: 'Vicente del Bosque',
-    sortName: 'del Bosque',
-    status: 'retired',
-    eras: [
-      {
-        id: 'delbosque-spain-10',
-        club: 'Spain',
-        years: '2010',
-        formation: '4-2-3-1',
-        shape: [4, 2, 3, 1],
-        summary:
-          'A first World Cup, won by keeping the ball for longer than anyone could stand and scoring exactly as often as necessary.',
-        points: [
-          'Two holding midfielders let the front four play without covering behind',
-          'Possession itself is the defence: the opponent cannot score without the ball',
-          'Every knockout match was won 1-0, with control valued over spectacle',
-        ],
-        xi: [
-          'Casillas',
-          'Capdevila',
-          'Piqué',
-          'Puyol',
-          'Ramos',
-          'Busquets',
-          'Xabi Alonso',
-          'Iniesta',
-          'Xavi',
-          'Pedro',
-          'Villa',
-        ],
-        numbers: [1, 11, 3, 5, 15, 16, 14, 6, 8, 18, 7],
-      },
-    ],
-  },
-  {
-    name: 'Jupp Heynckes',
-    sortName: 'Heynckes',
-    status: 'retired',
-    eras: [
-      {
-        id: 'heynckes-bayern-13',
-        club: 'Bayern Munich',
-        years: '2012-13',
-        formation: '4-2-3-1',
-        shape: [4, 2, 3, 1],
-        summary:
-          'A treble in his final season, with two of the best wingers in the world attacking from either side and a midfield that never let the game escape.',
-        points: [
-          'Robben and Ribéry attack one-against-one from opposite flanks all match',
-          'Two holding midfielders control the tempo and win the ball back immediately',
-          'The full-backs push high, knowing the double pivot covers behind them',
-        ],
-        xi: [
-          'Neuer',
-          'Alaba',
-          'Dante',
-          'Boateng',
-          'Lahm',
-          'Schweinsteiger',
-          'Javi Martínez',
-          'Ribéry',
-          'Müller',
-          'Robben',
-          'Mandžukić',
-        ],
-        numbers: [1, 27, 4, 17, 21, 31, 8, 7, 25, 10, 9],
-      },
-    ],
-  },
-  {
-    name: 'Marcello Lippi',
-    sortName: 'Lippi',
-    status: 'retired',
-    eras: [
-      {
-        id: 'lippi-italy-06',
-        club: 'Italy',
-        years: '2006',
-        formation: '4-4-2',
-        shape: [4, 4, 2],
-        summary:
-          'A World Cup won with two goals conceded in seven matches, one of them an own goal, and a squad that closed ranks around a scandal at home.',
-        points: [
-          'The back four is the foundation, and everything is built to protect it',
-          'Pirlo dictates from deep while Gattuso does the running around him',
-          'Full-backs supply the width, allowing the midfield to stay narrow and compact',
-        ],
-        xi: [
-          'Buffon',
-          'Grosso',
-          'Cannavaro',
-          'Materazzi',
-          'Zambrotta',
-          'Perrotta',
-          'Pirlo',
-          'Gattuso',
-          'Camoranesi',
-          'Totti',
-          'Toni',
-        ],
-        numbers: [1, 3, 5, 23, 19, 20, 21, 8, 16, 10, 9],
-      },
-    ],
-  },
-  {
-    name: 'Rinus Michels',
-    sortName: 'Michels',
-    status: 'retired',
-    eras: [
-      {
-        id: 'michels-netherlands-74',
-        club: 'Netherlands',
-        years: '1974',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'Total Football at the World Cup: a team in which every outfield player could take any position, and constantly did.',
-        points: [
-          'Any player who leaves a position is immediately replaced by a team-mate',
-          'The defence pushes to halfway and squeezes the pitch into a small area',
-          'Cruyff drops deep from centre-forward, dragging defenders out of shape',
-        ],
-        xi: [
-          'Jongbloed',
-          'Krol',
-          'Haan',
-          'Rijsbergen',
-          'Suurbier',
-          'van Hanegem',
-          'Jansen',
-          'Neeskens',
-          'Rensenbrink',
-          'Cruyff',
-          'Rep',
-        ],
-        numbers: [8, 12, 3, 17, 20, 10, 6, 13, 15, 14, 16],
-      },
-    ],
-  },
-  {
-    name: 'Bob Paisley',
-    sortName: 'Paisley',
-    status: 'retired',
-    eras: [
-      {
-        id: 'paisley-liverpool-77',
-        club: 'Liverpool',
-        years: '1976-77',
-        formation: '4-3-3',
-        shape: [4, 3, 3],
-        summary:
-          'The league and a first European Cup in the same season, from a manager who never wanted the job and won more of them than anyone.',
-        points: [
-          'Pass and move: the ball is given early and the passer runs to support it',
-          'The defence holds a disciplined line and rarely commits to a tackle',
-          'Attacks are built patiently, then finished quickly once the opening appears',
-        ],
-        xi: [
-          'Clemence',
-          'Jones',
-          'Hughes',
-          'Smith',
-          'Neal',
-          'Kennedy',
-          'Callaghan',
-          'Case',
-          'Heighway',
-          'Keegan',
-          'McDermott',
-        ],
-        numbers: [1, 3, 6, 4, 2, 5, 7, 8, 9, 10, 11],
-      },
-    ],
-  },
-  {
-    name: 'Arrigo Sacchi',
-    sortName: 'Sacchi',
-    status: 'retired',
-    eras: [
-      {
-        id: 'sacchi-milan-89',
-        club: 'AC Milan',
-        years: '1988-90',
-        formation: '4-4-2',
-        shape: [4, 4, 2],
-        summary:
-          'Back-to-back European Cups from a team that defended barely twenty-five metres from front to back and pressed the moment the ball was lost.',
-        points: [
-          'The whole team stays within twenty-five metres, squeezing the pitch flat',
-          'The offside trap is sprung as a unit, on a signal, dozens of times a match',
-          'The press starts the instant possession is lost, wherever on the pitch that is',
-        ],
-        xi: [
-          'Galli',
-          'Maldini',
-          'Baresi',
-          'Costacurta',
-          'Tassotti',
-          'Donadoni',
-          'Rijkaard',
-          'Ancelotti',
-          'Colombo',
-          'Van Basten',
-          'Gullit',
-        ],
-        numbers: [1, 3, 6, 5, 2, 7, 11, 8, 4, 9, 10],
-      },
-    ],
-  },
-  {
-    name: 'Bill Shankly',
-    sortName: 'Shankly',
-    status: 'retired',
-    eras: [
-      {
-        id: 'shankly-liverpool-66',
-        club: 'Liverpool',
-        years: '1965-66',
-        formation: '4-4-2',
-        shape: [4, 4, 2],
-        summary:
-          'The side that turned a second-division club into a power: a title won using only fourteen players across the whole league season.',
-        points: [
-          'Simple football done faultlessly: pass to the nearest red shirt and move',
-          'Wingers hold the touchlines and deliver early into two attacking forwards',
-          'The same eleven play almost every week, so the understanding is automatic',
-        ],
-        xi: [
-          'Lawrence',
-          'Byrne',
-          'Yeats',
-          'Smith',
-          'Lawler',
-          'Thompson',
-          'Stevenson',
-          'Milne',
-          'Callaghan',
-          'St John',
-          'Hunt',
-        ],
-        numbers: [1, 3, 5, 10, 2, 11, 6, 4, 7, 9, 8],
-      },
-    ],
-  },
-];
 
 // The dugout list is split by whether the manager is still coaching, so the
 // people you can watch this weekend are not buried among the greats.
@@ -2162,7 +756,7 @@ function FormationThumb({ shape, isDiamond = false }: { shape: number[]; isDiamo
   const dots = makePlayers(shape, isDiamond);
   return (
     <svg className="formation-thumb" viewBox="0 0 100 122" aria-hidden="true">
-      <rect className="formation-thumb-pitch" x="1" y="1" width="98" height="120" rx="6" />
+      <rect className="formation-thumb-pitch" x="1" y="1" width="98" height="120" />
       <line className="formation-thumb-line" x1="1" y1="61" x2="99" y2="61" />
       {dots.map((dot) => (
         <circle
@@ -2268,11 +862,16 @@ function ArrowLayer({
                 }
               }}
             />
+            {/* The selected look is a glow traced along the arrow's own path
+                rather than a box or a fattened line, so what lights up is the
+                shape the user actually drew. */}
+            {isSelected && <path className="arrow-halo" d={geometry.d} />}
             <path
               className={`arrow-path ${arrow.style === 'dashed' ? 'is-dashed' : ''} ${isSelected ? 'is-selected' : ''}`}
               d={geometry.d}
               markerEnd={isSelected ? 'url(#arrowhead-selected)' : 'url(#arrowhead)'}
             />
+
           </g>
         );
       })}
@@ -2283,7 +882,7 @@ function ArrowLayer({
 function PitchLines() {
   return (
     <svg className="pitch-lines" viewBox={PITCH_VIEWBOX} aria-hidden="true">
-      <rect className="pitch-line" x="1" y="1" width="98" height="120" rx="1.2" />
+      <rect className="pitch-line" x="1" y="1" width="98" height="120" />
       <line className="pitch-line" x1="1" y1="61" x2="99" y2="61" />
       <circle className="pitch-line" cx="50" cy="61" r="9.15" />
       <circle className="pitch-dot" cx="50" cy="61" r="0.7" />
@@ -2461,7 +1060,7 @@ function GuideArticle({
 }
 
 function Home() {
-
+  const [, navigate] = useLocation();
   const [panelTab, setPanelTab] = useState<'shapes' | 'managers' | 'guide'>('shapes');
   // The tab the Guide was opened from, so the back button returns there.
   const [guideReturn, setGuideReturn] = useState<'shapes' | 'managers'>('shapes');
@@ -2916,7 +1515,6 @@ function Home() {
     setMessage('Opponent added. Drag it anywhere, or tap it and press delete.');
   };
 
-
   const playCustomClip = () => {
     if (clipFrames.length < 2 || animRunning) return;
     stopTactic(false);
@@ -3178,8 +1776,6 @@ function Home() {
     if (!node || !(node as HTMLDetailsElement).open) return;
     if (!node.parentElement?.closest('details')?.open) return;
 
-
-
     // Jumped to instantly, and then again once the layout has settled. A
     // smooth scroll aims at an offset measured before the portraits above it
     // have loaded, so it lands a few hundred pixels short of the entry.
@@ -3195,7 +1791,6 @@ function Home() {
       window.clearTimeout(flash);
     };
   }, [panelTab, guideEntryId, guideNonce]);
-
 
   const boardLabel = activeEra
     ? `${activeEra.club} ${activeEra.years} / ${activeEra.formation}`
@@ -3216,7 +1811,6 @@ function Home() {
   // it, and playback swaps the whole list out from underneath.
   const selectedOpponentSpot =
     opponentsDraggable && selectedOpponent !== null ? visibleOpponents[selectedOpponent] : undefined;
-
 
   // Where the selected arrow's delete badge goes: halfway along its own line.
   const selectedArrow = arrows.find((arrow) => arrow.id === selectedArrowId);
@@ -3521,7 +2115,31 @@ function Home() {
           <div className="pitch-header">
             <div>
               <div className="eyebrow">Live board / {boardLabel}</div>
-              <h1 className="pitch-title">{activeEra ? 'Study the idea.' : 'Move the idea.'}</h1>
+              <div className="pitch-title-row">
+                <h1 className="pitch-title">{activeEra ? 'Study the idea.' : 'Move the idea.'}</h1>
+                {/* The way into match mode, deliberately next to the headline
+                    rather than buried in the toolbar. */}
+                <button
+                  className="match-cta"
+                  data-testid="button-play-match"
+                  onClick={() => navigate('/match')}
+                  type="button"
+                >
+                  <Gamepad2 size={15} />
+                  Play a match
+                </button>
+                {/* Every control on one page. The tutorial has its own door
+                    there, and starts itself for anyone arriving anyway. */}
+                <button
+                  className="match-cta is-quiet"
+                  data-testid="button-how-to-play"
+                  onClick={() => navigate('/how-to-play')}
+                  type="button"
+                >
+                  <BookOpen size={15} />
+                  How to play
+                </button>
+              </div>
               <p className="pitch-caption">
                 {activeEra
                   ? `${activeEra.summary}`
@@ -4319,13 +2937,47 @@ function Home() {
   );
 }
 
+/** Sends anyone arriving at the site into the tutorial before anything else,
+ *  once per visit, and remembers where they were going so skipping it puts
+ *  them back on their way. Land on the tutorial yourself and it steps aside.
+ *
+ *  The decision is taken on the first render and never revisited: once the
+ *  redirect has happened this component is inert, or leaving the tutorial
+ *  would bounce you straight back into it. */
+function FirstVisitTutorial({ children }: { children: ReactNode }) {
+  const [location, navigate] = useLocation();
+  const sendingRef = useRef(isNewVisit && location !== '/learn');
+  useEffect(() => {
+    if (!sendingRef.current) return;
+    rememberReturn(location);
+    // replace, so Back goes wherever they came from rather than round again.
+    navigate('/learn', { replace: true });
+    sendingRef.current = false;
+    // Deliberately once, on mount: this is about how the visit started.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Nothing is drawn for the one frame before the redirect, so the board never
+  // flashes up behind it.
+  if (sendingRef.current) return null;
+  return <>{children}</>;
+}
+
 function Router() {
   return (
     <RoutedErrorBoundary>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route component={NotFound} />
-      </Switch>
+      <FirstVisitTutorial>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/match">
+            <MatchGame />
+          </Route>
+          <Route path="/learn">
+            <MatchGame tutorial />
+          </Route>
+          <Route path="/how-to-play" component={HowToPlay} />
+          <Route component={NotFound} />
+        </Switch>
+      </FirstVisitTutorial>
     </RoutedErrorBoundary>
   );
 }

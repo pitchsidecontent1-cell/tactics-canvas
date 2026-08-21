@@ -104,7 +104,7 @@ export default defineConfig({
           // often than the app code around it. Its own chunk means a wording
           // change does not invalidate the app chunk in everyone's cache, and
           // the two download in parallel rather than one after the other.
-          if (/[\\/]src[\\/](?:formation-content|guide-content)\.ts$/.test(id)) {
+          if (/[\\/]src[\\/](?:formation-content|guide-content|managers)\.ts$/.test(id)) {
             return 'editorial';
           }
           if (!id.includes('node_modules')) return undefined;

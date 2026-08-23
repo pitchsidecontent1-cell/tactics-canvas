@@ -2,7 +2,10 @@
   type CSSProperties,
   type PointerEvent,
   type ReactNode,
+  memo,
+  useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -20,6 +23,7 @@ import {
   Goal,
   GraduationCap,
   Grip,
+  Info,
   LayoutGrid,
   Lightbulb,
   ListFilter,
@@ -32,7 +36,6 @@ import {
   Search,
   X,
   Shield,
-  Sparkles,
   Spline,
   Trash2,
   Trophy,
@@ -44,7 +47,14 @@ import {
   GLOSSARY,
   MANAGER_PLAYSTYLES,
 } from './formation-content';
-import { GUIDE_ENTRY_SECTION, GUIDE_SECTIONS, GUIDE_TERMS } from './guide-content';
+import {
+  GUIDE_ENTRY_SECTION,
+  GUIDE_SECTIONS,
+  GUIDE_TERMS,
+  playerRoleLine,
+  positionBrief,
+} from './guide-content';
+import { squadForEra } from './squad';
 import { FORMATIONS, type Formation } from './formations';
 import { MANAGERS, type Era } from './managers';
 import MatchGame from './match-game';
@@ -104,6 +114,40 @@ function arrowStart(arrow: Arrow, players: Player[]): Position | null {
 // Drag-path bends smaller than this (viewBox units) are treated as a
 // straight-line drag, keeping the historical default curve direction.
 const CURVE_BEND_THRESHOLD = 2;
+
+// ---------------------------------------------------------------------------
+// Telling a tap from a drag.
+//
+// Every piece on the board is draggable, so the same press has to serve both
+// "move this" and "what is this". Neither reading is committed to on
+// pointerdown: the pointer has to travel further than the slop, or be held
+// longer than TAP_MS, before it counts as a drag.
+//
+// The slop is larger for touch because a finger on glass always moves a few
+// pixels, and swallowing taps is the more annoying half of getting this wrong.
+// ---------------------------------------------------------------------------
+const MOUSE_SLOP = 5;
+const TOUCH_SLOP = 10;
+const TAP_MS = 500;
+
+// How much can go on one board. Both numbers are enforced in the data model,
+// not just in the UI, so a pasted or restored board cannot exceed them either.
+//
+// Forty arrows is the cap because a set-piece routine — the busiest thing
+// anyone actually draws — runs to about twenty-five: ten or eleven runs, a
+// handful of passes, and the decoy movement. Forty leaves room to work above
+// that and still stops the board becoming unreadable, which happens well
+// before it becomes slow.
+const MAX_ARROWS = 40;
+// The count starts showing itself with this many left, so the limit is met
+// with warning rather than as a wall.
+const ARROWS_NEARLY_FULL = 8;
+
+// A drag samples the pointer path to work out which way an arrow bows. Samples
+// closer together than this (in pitch percent) tell us nothing the last one
+// did not, so a slow drag no longer files hundreds of them in the same spot.
+const SAMPLE_GAP = 0.6;
+const MAX_SAMPLES = 120;
 
 // The pitch viewBox is 100 units wide by this many tall, and the CSS
 // aspect-ratio of .pitch must stay equal to 100 / PITCH_VIEWBOX_HEIGHT so
@@ -197,6 +241,8 @@ type ClipFrame = {
 };
 
 const CLIP_STORAGE_KEY = 'tactics-canvas:custom-clip';
+/** Keyed to this one note, so remembering it says nothing about any other. */
+const NUMBERS_NOTE_KEY = 'tactics-canvas:numbers-note-seen';
 const CLIP_SPEEDS: { label: string; seconds: number }[] = [
   { label: 'Slow', seconds: 1.7 },
   { label: 'Normal', seconds: 1.1 },
@@ -879,7 +925,225 @@ function ArrowLayer({
   );
 }
 
-function PitchLines() {
+// ---------------------------------------------------------------------------
+// A card that opens next to whatever opened it.
+//
+// Both small popups on this page use it — the position brief on the pitch and
+// the note about the shirt numbers — so a popup appears where you just clicked
+// in both cases, and the edge-clamping is written once rather than twice.
+// ---------------------------------------------------------------------------
+
+/** Where the card is pointed at, in client (viewport) pixels. */
+type Anchor = {
+  x: number;
+  y: number;
+  /** Half-height of the thing anchored to, so the card clears it. */
+  radius: number;
+  /** A finger covers what it taps, so touch gets a wider berth. */
+  touch: boolean;
+};
+
+/** Distance from the anchor, and the least gap allowed to the viewport edge. */
+const ANCHOR_GAP = 10;
+const VIEWPORT_EDGE = 10;
+
+function AnchoredCard({
+  anchor,
+  ariaLabel,
+  className = '',
+  onDismiss,
+  testId,
+  children,
+}: {
+  anchor: Anchor;
+  ariaLabel: string;
+  className?: string;
+  onDismiss: () => void;
+  testId?: string;
+  children: ReactNode;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [placed, setPlaced] = useState<{ left: number; top: number; above: boolean } | null>(null);
+
+  // Measured before paint, so the card never shows in the wrong place first.
+  useLayoutEffect(() => {
+    const place = () => {
+      const card = cardRef.current;
+      if (!card) return;
+      const { width, height } = card.getBoundingClientRect();
+      const clear = anchor.radius + ANCHOR_GAP + (anchor.touch ? 18 : 0);
+      const roomBelow = window.innerHeight - (anchor.y + clear);
+      // Below by preference; above only when below genuinely will not fit and
+      // above will, so the card does not flap about near the middle.
+      const above = roomBelow < height && anchor.y - clear > height;
+      const top = above ? anchor.y - clear - height : anchor.y + clear;
+      const left = anchor.x - width / 2;
+      setPlaced({
+        left: Math.max(
+          VIEWPORT_EDGE,
+          Math.min(left, window.innerWidth - width - VIEWPORT_EDGE),
+        ),
+        top: Math.max(
+          VIEWPORT_EDGE,
+          Math.min(top, window.innerHeight - height - VIEWPORT_EDGE),
+        ),
+        above,
+      });
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [anchor.x, anchor.y, anchor.radius, anchor.touch]);
+
+  // Focus goes into the card so a screen reader reads it out, and Escape hands
+  // focus back to whatever opened it — which the caller restores.
+  //
+  // Waits for the card to have been placed: until then it is hidden, and a
+  // hidden element cannot take focus, so doing this on mount quietly did
+  // nothing at all.
+  const focusedRef = useRef(false);
+  useEffect(() => {
+    if (!placed || focusedRef.current) return;
+    focusedRef.current = true;
+    cardRef.current?.focus({ preventScroll: true });
+  }, [placed]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        onDismiss();
+      }
+    };
+    // Pointerdown rather than click: the board commits its own gestures on
+    // pointerdown, so waiting for a click would leave the card up for a frame.
+    const onOutside = (event: globalThis.PointerEvent) => {
+      if (!cardRef.current?.contains(event.target as Node)) onDismiss();
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onOutside, true);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerdown', onOutside, true);
+    };
+  }, [onDismiss]);
+
+  return (
+    <div
+      ref={cardRef}
+      className={`anchored-card ${placed?.above ? 'is-above' : 'is-below'} ${className}`}
+      data-testid={testId}
+      role="dialog"
+      aria-label={ariaLabel}
+      tabIndex={-1}
+      style={{
+        left: placed ? `${placed.left}px` : '0px',
+        top: placed ? `${placed.top}px` : '0px',
+        visibility: placed ? 'visible' : 'hidden',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Who the circle actually is, when the board is showing a manager's side. */
+type PopoverPerson = {
+  name: string;
+  number: number;
+  /** How he played the position, or null if nothing is recorded about him. */
+  line: string | null;
+};
+
+/** The quick reference that opens on tapping a circle.
+ *
+ *  On a plain shape it says what the position is. On a manager's side the
+ *  circle is a real footballer, so it says how *he* played it instead — being
+ *  told what a right-back does is no use to somebody looking at Cafu. */
+function PositionPopover({
+  anchor,
+  role,
+  name,
+  person,
+  onDismiss,
+  onOpenGuide,
+}: {
+  anchor: Anchor;
+  role: string;
+  name?: string;
+  person?: PopoverPerson | null;
+  onDismiss: () => void;
+  onOpenGuide: (entryId: string) => void;
+}) {
+  const brief = positionBrief(role);
+  const position = brief?.name ?? roleName(role);
+  const heading = person ? person.name : position;
+  // Whatever we know about the man himself, then the position's own job as the
+  // fallback — never nothing.
+  const personal = person?.line;
+  const spoken = personal ?? (brief ? `${brief.role} ${brief.used}` : '');
+  return (
+    <AnchoredCard
+      anchor={anchor}
+      ariaLabel={`${heading}${person ? `, ${position}` : ''}. ${spoken}`}
+      className="position-popover"
+      onDismiss={onDismiss}
+      testId="popover-position"
+    >
+      <div className="position-popover-head">
+        <span className="position-popover-code">{person ? `#${person.number}` : role}</span>
+        <strong className="position-popover-name">{heading}</strong>
+      </div>
+      {person ? (
+        <>
+          <div className="position-popover-player">
+            {position}
+            <span className="position-popover-slot"> · {role}</span>
+          </div>
+          {personal ? (
+            <p className="position-popover-role">{personal}</p>
+          ) : (
+            // Nobody wrote down what he was famous for, so the position's own
+            // job stands in rather than an invented line about him.
+            <>
+              <p className="position-popover-role">{brief?.role}</p>
+              <p className="position-popover-used">{brief?.used}</p>
+            </>
+          )}
+        </>
+      ) : brief ? (
+        <>
+          {name && <div className="position-popover-player">{name}</div>}
+          <p className="position-popover-role">{brief.role}</p>
+          <p className="position-popover-used">{brief.used}</p>
+        </>
+      ) : (
+        <p className="position-popover-role">
+          A position of your own. There is no guide entry for this code.
+        </p>
+      )}
+      {/* No write-up, no link. A position code is free text, so this is a case
+          that really happens rather than a theoretical one. */}
+      {brief?.entry && (
+        <button
+          className="position-popover-link"
+          data-testid="button-position-guide"
+          type="button"
+          onClick={() => onOpenGuide(brief.entry!)}
+        >
+          {person ? `More on playing ${position.toLowerCase()}` : 'Read the full guide'}
+          <ChevronRight size={13} />
+        </button>
+      )}
+    </AnchoredCard>
+  );
+}
+
+function PitchLinesRaw() {
   return (
     <svg className="pitch-lines" viewBox={PITCH_VIEWBOX} aria-hidden="true">
       <rect className="pitch-line" x="1" y="1" width="98" height="120" />
@@ -898,6 +1162,11 @@ function PitchLines() {
     </svg>
   );
 }
+
+// The markings never change, so they are drawn once and then left alone. Every
+// re-render of the board — a message, a selection, the end of a drag — used to
+// rebuild all twenty-odd of these nodes for nothing.
+const PitchLines = memo(PitchLinesRaw);
 
 // ---------------------------------------------------------------------------
 // The Guide. The library panel holds the index; the right-hand column holds
@@ -1007,8 +1276,7 @@ function GuideIndex({
   return (
     <>
       <div className="panel-heading">
-        <div className="eyebrow">The guide</div>
-        <h2 className="panel-title">Learn the game</h2>
+        <h2 className="panel-title">Guide</h2>
         <p className="panel-copy">
           Every position with its number, the jargon behind the write-ups, and the rules that
           decide what you are watching.
@@ -1162,20 +1430,42 @@ function Home() {
   const [selectedId, setSelectedId] = useState('p1');
   const [query, setQuery] = useState('');
   const [message, setMessage] = useState('Ready for a shape change.');
-  const [arrows, setArrows] = useState<Arrow[]>([]);
+  const [arrows, setArrowsState] = useState<Arrow[]>([]);
   const [arrowMode, setArrowMode] = useState(false);
   const [arrowStyle, setArrowStyle] = useState<ArrowStyle>('solid');
   const [selectedArrowId, setSelectedArrowId] = useState<string | null>(null);
   const [selectedOpponent, setSelectedOpponent] = useState<number | null>(null);
   const [arrowDraft, setArrowDraft] = useState<Arrow | null>(null);
   const [ball, setBall] = useState<Position | null>(null);
-  const [showNumbersNote, setShowNumbersNote] = useState(false);
+  // The note about the shirt numbers. It is worth saying once and irritating
+  // to be told every time, so the dismissal is remembered. Reads and writes are
+  // both wrapped: a browser set to block site data throws here, and the page
+  // must not go down over a note.
+  const [numbersNote, setNumbersNote] = useState<Anchor | null>(null);
+  const [numbersNoteSeen, setNumbersNoteSeen] = useState(() => {
+    try {
+      return window.localStorage.getItem(NUMBERS_NOTE_KEY) === 'seen';
+    } catch {
+      return false;
+    }
+  });
   const [factIndex, setFactIndex] = useState(0);
   const [opponents, setOpponents] = useState<Position[]>([]);
   // Opponents placed by hand while building a clip. Kept apart from
   // `opponents`, which is playback-owned and gets cleared whenever a clip
   // stops — this set has to outlive that.
   const [clipOpponents, setClipOpponents] = useState<Position[]>([]);
+  /**
+   * The shape you are setting yours against, if you have picked one.
+   *
+   * Dropping opposition markers one at a time answers "what if somebody stood
+   * here", which is a question about a player. The question a tactics board is
+   * really for is "what does my shape look like against theirs" — where the
+   * space is, who is free, which of their lines my midfield sits between — and
+   * that is a question about a whole team. So you choose their formation and
+   * the eleven of them arrive at once, in it.
+   */
+  const [opponentShape, setOpponentShape] = useState<Formation | null>(null);
   const [clipFrames, setClipFrames] = useState<ClipFrame[]>(() => loadStoredClip().frames);
   const [clipSpeed, setClipSpeed] = useState<number>(() => loadStoredClip().speed);
   const clipCounter = useRef(0);
@@ -1189,10 +1479,69 @@ function Home() {
   const animVariantRef = useRef<Record<string, number>>({});
   const arrowCounter = useRef(0);
   const pitchRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ id: string } | null>(null);
+
+  // ---------------------------------------------------------------------
+  // The pointer pipeline.
+  //
+  // A press does not decide what it is straight away. `trackRef` holds what
+  // is being pressed and where the press began; `movedRef` flips the moment
+  // the pointer travels past the slop, and only then does it count as a drag.
+  // Everything the handlers do is write to a ref — the position update and
+  // the redraw happen once per animation frame, reading whatever the latest
+  // coordinates are, so however many events arrive between two frames they
+  // cost one update rather than one each.
+  // ---------------------------------------------------------------------
+  const trackRef = useRef<{
+    id: string;
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startedAt: number;
+    slop: number;
+    touch: boolean;
+    /** Pitch-space spot the piece was at when the press began. */
+    from: Position | null;
+    /** Whether this piece was already the selected one, so a tap can toggle. */
+    wasSelected: boolean;
+    /** Who the popup was showing when the press began. Read at pointerdown
+     *  because the card's own dismiss-on-outside-press fires first, and by the
+     *  release there would be nothing left to compare against. */
+    popoverFor: string | null;
+  } | null>(null);
+  const movedRef = useRef(false);
+  const latestRef = useRef<{ x: number; y: number } | null>(null);
+  const frameRef = useRef<number | null>(null);
+  // The pitch's box on screen, read once per press instead of once per move:
+  // getBoundingClientRect in a move handler forces a layout on every event.
+  const rectRef = useRef<DOMRect | null>(null);
+  // Where the piece has been dragged to but not yet written to state. React is
+  // kept out of the drag entirely; the node is nudged with the `translate`
+  // property, which composes with the centring transform the CSS applies.
+  const liveSpotRef = useRef<Position | null>(null);
   // Sampled drag-path points (viewBox coords) for the arrow being drawn,
-  // used to decide which way a curved arrow should bow.
+  // used to decide which way a curved arrow should bow. `bestRef` carries the
+  // running winner, so a move no longer rescans every sample taken so far.
   const draftSamplesRef = useRef<Position[]>([]);
+  // The draft as the last frame computed it. React state lags a frame behind
+  // by design, and the commit must not read the lagging copy — a drag finished
+  // inside a single frame would otherwise file an arrow of zero length.
+  const liveDraftRef = useRef<Arrow | null>(null);
+
+  const [positionPopover, setPositionPopover] = useState<
+    { playerId: string; anchor: Anchor } | null
+  >(null);
+  const [arrowLimitHit, setArrowLimitHit] = useState(false);
+
+  // The frame callback runs outside React's render, so it reads these rather
+  // than closing over values that were current when the press started.
+  const arrowDraftRef = useRef<Arrow | null>(arrowDraft);
+  arrowDraftRef.current = arrowDraft;
+  const playersRef = useRef<Player[]>(players);
+  playersRef.current = players;
+  const positionPopoverRef = useRef(positionPopover);
+  positionPopoverRef.current = positionPopover;
+  const arrowsRef = useRef<Arrow[]>(arrows);
+  arrowsRef.current = arrows;
 
   const matchesQuery = (name: string, subtitle: string) =>
     `${name} ${subtitle}`.toLowerCase().includes(query.toLowerCase().trim());
@@ -1406,10 +1755,50 @@ function Home() {
         .map((player) => player.id)
     : [];
 
+  // The only way arrows are written. Drawing, restoring a board, pasting one
+  // in — everything goes through here, so the cap belongs to the board itself
+  // rather than to the button that happens to be in front of it.
+  //
+  // The count is mirrored into a ref and updated as it is written, because
+  // several arrows can be filed before React re-renders once, and a check
+  // against the render's copy would let the cap be passed and then silently
+  // trim the overflow — the exact thing that is worse than saying no.
+  const setArrows: typeof setArrowsState = (next) => {
+    const wanted = typeof next === 'function' ? next(arrowsRef.current) : next;
+    const capped = wanted.length > MAX_ARROWS ? wanted.slice(0, MAX_ARROWS) : wanted;
+    arrowsRef.current = capped;
+    setArrowsState(capped);
+  };
+
+  const arrowsLeft = MAX_ARROWS - arrows.length;
+  const arrowsFull = arrowsLeft <= 0;
+
+  /** Points the numbers note at whatever opened it. */
+  const openNumbersNote = (from: HTMLElement) => {
+    const box = from.getBoundingClientRect();
+    setNumbersNote({
+      x: box.left + box.width / 2,
+      y: box.top + box.height / 2,
+      radius: box.height / 2,
+      touch: false,
+    });
+  };
+
+  const dismissNumbersNote = () => {
+    setNumbersNote(null);
+    setNumbersNoteSeen(true);
+    try {
+      window.localStorage.setItem(NUMBERS_NOTE_KEY, 'seen');
+    } catch {
+      // Site data blocked. The note simply comes back next time.
+    }
+  };
+
   const clearArrows = () => {
     setArrows([]);
     setSelectedArrowId(null);
     setArrowDraft(null);
+    setArrowLimitHit(false);
   };
 
   // Arrows and hand-placed opponents share a single selection, so the delete
@@ -1432,6 +1821,8 @@ function Home() {
   const deleteArrow = (id: string) => {
     setArrows((current) => current.filter((arrow) => arrow.id !== id));
     setSelectedArrowId((current) => (current === id ? null : current));
+    // Room again the moment one goes, so the warning never outstays the cause.
+    setArrowLimitHit(false);
     setMessage('Arrow deleted.');
   };
 
@@ -1621,6 +2012,33 @@ function Home() {
     setClipOpponents(frame.opponents.map((opponent) => ({ ...opponent })));
   };
 
+  /**
+   * Put a whole opposition shape on the board, facing yours.
+   *
+   * makePlayers() lays a side out attacking up the pitch — keeper on the high
+   * numbers, forwards on the low ones. Theirs is the same shape seen from the
+   * other end, so it is that mirrored about the halfway line.
+   */
+  const setOpposition = (next: Formation | null) => {
+    if (animRunning) return;
+    setOpponentShape(next);
+    clearSelection();
+    if (!next) {
+      setClipOpponents([]);
+      setMessage('Opposition cleared. The board is yours alone again.');
+      return;
+    }
+    setClipOpponents(
+      formationPlayers(next).map((player) => ({
+        x: player.x,
+        y: 100 - player.y,
+      })),
+    );
+    setMessage(
+      `Up against ${next.name}. Drag any of them, or tap one and press delete.`,
+    );
+  };
+
   const addOpponent = () => {
     if (animRunning) return;
     setClipOpponents((current) => {
@@ -1781,89 +2199,320 @@ function Home() {
     );
   };
 
-  const pitchPoint = (event: PointerEvent<HTMLDivElement>) => {
-    const pitch = pitchRef.current;
-    if (!pitch) return null;
-    const bounds = pitch.getBoundingClientRect();
+  /** Client pixels to pitch percentages, off the cached box. The full pitch is
+   *  reachable, so a piece can sit right on a touchline or goal line rather
+   *  than stopping short of it. */
+  const toPitch = (clientX: number, clientY: number): Position | null => {
+    const bounds = rectRef.current;
+    if (!bounds || !bounds.width || !bounds.height) return null;
     return {
-      // Clamped here as well as at the drop, so the pointer position can
-      // reach the goal lines and touchlines rather than stopping short.
-      x: Math.max(MIN_POS, Math.min(MAX_POS, ((event.clientX - bounds.left) / bounds.width) * 100)),
-      y: Math.max(MIN_POS, Math.min(MAX_POS, ((event.clientY - bounds.top) / bounds.height) * 100)),
+      x: Math.max(MIN_POS, Math.min(MAX_POS, ((clientX - bounds.left) / bounds.width) * 100)),
+      y: Math.max(MIN_POS, Math.min(MAX_POS, ((clientY - bounds.top) / bounds.height) * 100)),
     };
   };
 
-  const updatePosition = (event: PointerEvent<HTMLDivElement>) => {
-    const point = pitchPoint(event);
+  /** Reads the pitch box. Called on pointerdown and on resize/scroll — never
+   *  inside a move handler, where it would force a layout per event. */
+  const measurePitch = useCallback(() => {
+    const pitch = pitchRef.current;
+    if (pitch) rectRef.current = pitch.getBoundingClientRect();
+  }, []);
+
+  useEffect(() => {
+    measurePitch();
+    window.addEventListener('resize', measurePitch);
+    window.addEventListener('scroll', measurePitch, true);
+    return () => {
+      window.removeEventListener('resize', measurePitch);
+      window.removeEventListener('scroll', measurePitch, true);
+    };
+  }, [measurePitch]);
+
+  /** The node a drag is nudging, found once per frame rather than held across
+   *  renders — React owns these elements and may replace them. */
+  const draggedNode = (id: string): HTMLElement | null => {
+    const pitch = pitchRef.current;
+    if (!pitch) return null;
+    const testId =
+      id === 'ball'
+        ? 'ball-marker'
+        : id.startsWith('opp-')
+          ? `opponent-marker-${id.slice(4)}`
+          : `button-player-${id}`;
+    return pitch.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+  };
+
+  // The one place a drag is turned into pixels on screen. Runs at most once per
+  // displayed frame, whatever the pointer event rate.
+  const drawFrame = () => {
+    frameRef.current = null;
+    const track = trackRef.current;
+    const latest = latestRef.current;
+    if (!track || !latest || !movedRef.current) return;
+    const point = toPitch(latest.x, latest.y);
     if (!point) return;
-    if (arrowDraft) {
-      let bend = arrowDraft.bend;
-      const start = arrowStart(arrowDraft, players);
+
+    // Drawing an arrow. The ref is the authority for the whole gesture and
+    // React state is only what draws it: a press and a release inside one
+    // frame would otherwise find state that had not committed yet, and the
+    // arrow would be treated as a dragged piece instead.
+    const inFlight = liveDraftRef.current ?? arrowDraftRef.current;
+    if (inFlight) {
+      const draft = inFlight;
+      const start = arrowStart(draft, playersRef.current);
+      let bend = draft.bend;
       if (start) {
-        if (draftSamplesRef.current.length < 400) {
-          draftSamplesRef.current.push({ x: point.x, y: point.y * PITCH_Y_SCALE });
-        }
         const sx = start.x;
         const sy = start.y * PITCH_Y_SCALE;
-        const dx = point.x - sx;
-        const dy = point.y * PITCH_Y_SCALE - sy;
+        const px = point.x;
+        const py = point.y * PITCH_Y_SCALE;
+        const samples = draftSamplesRef.current;
+        const last = samples[samples.length - 1];
+        // Only record a sample that is somewhere new. A slow drag used to file
+        // hundreds inside the same few pixels, all saying the same thing.
+        if (
+          samples.length < MAX_SAMPLES &&
+          (!last || Math.hypot(px - last.x, py - last.y) >= SAMPLE_GAP)
+        ) {
+          samples.push({ x: px, y: py });
+        }
+        const dx = px - sx;
+        const dy = py - sy;
         const length = Math.hypot(dx, dy);
         if (length > 1) {
-          // Signed distance of each sample from the start-end line; the
-          // furthest one decides the curve's side and depth (live).
+          // Signed distance of each sample from the start-end line; the one
+          // furthest off it decides the curve's side and depth. The line moves
+          // as the drag does, so this is still a scan — but of at most
+          // MAX_SAMPLES points, once a frame, rather than 400 per event.
           let best = 0;
-          for (const sample of draftSamplesRef.current) {
+          for (const sample of samples) {
             const signed = (-dy * (sample.x - sx) + dx * (sample.y - sy)) / length;
             if (Math.abs(signed) > Math.abs(best)) best = signed;
           }
-          // The quadratic's apex sits halfway to the control point, so double
-          // the deviation to make the curve pass near the sampled path.
+          // The quadratic sits halfway to its control point, so double the
+          // deviation to make the curve pass near the sampled path.
           bend = best * 2;
         }
       }
-      setArrowDraft({ ...arrowDraft, endX: point.x, endY: point.y, bend });
+      const next = { ...draft, endX: point.x, endY: point.y, bend };
+      liveDraftRef.current = next;
+      setArrowDraft((current) => (current && current.id === draft.id ? next : current));
       return;
     }
-    const drag = dragRef.current;
-    if (!drag) return;
-    // The full pitch is reachable: a piece can sit right on a touchline or
-    // goal line rather than stopping short of it.
-    const x = Math.max(MIN_POS, Math.min(MAX_POS, point.x));
-    const y = Math.max(MIN_POS, Math.min(MAX_POS, point.y));
-    if (drag.id === 'ball') {
-      setBall({ x, y });
+
+    // Moving a piece: state is left alone until the drop. Writing it here
+    // would re-render the whole board on every frame of every drag.
+    liveSpotRef.current = point;
+    const node = draggedNode(track.id);
+    if (node && track.from) {
+      const bounds = rectRef.current;
+      if (bounds) {
+        const dx = ((point.x - track.from.x) / 100) * bounds.width;
+        const dy = ((point.y - track.from.y) / 100) * bounds.height;
+        node.style.translate = `${dx}px ${dy}px`;
+      }
+    }
+  };
+
+  const requestFrame = () => {
+    if (frameRef.current !== null) return;
+    frameRef.current = window.requestAnimationFrame(drawFrame);
+  };
+
+  const cancelFrame = () => {
+    if (frameRef.current === null) return;
+    window.cancelAnimationFrame(frameRef.current);
+    frameRef.current = null;
+  };
+
+  /** Nothing but "remember where the pointer is". Everything else waits for
+   *  the frame. */
+  const onPitchPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const track = trackRef.current;
+    if (!track || event.pointerId !== track.pointerId) return;
+    latestRef.current = { x: event.clientX, y: event.clientY };
+    if (!movedRef.current) {
+      const travelled = Math.hypot(event.clientX - track.startX, event.clientY - track.startY);
+      if (travelled < track.slop) return;
+      movedRef.current = true;
+      // A drag has begun, so whatever the last tap put up is in the way.
+      setPositionPopover(null);
+    }
+    requestFrame();
+  };
+
+  /** Starts tracking a press without deciding yet whether it is a tap or a
+   *  drag. `id` is 'pitch' for bare grass, otherwise the piece being pressed. */
+  const beginPress = (
+    event: PointerEvent<HTMLElement>,
+    id: string,
+    from: Position | null,
+    wasSelected = false,
+  ) => {
+    measurePitch();
+    const touch = event.pointerType !== 'mouse';
+    trackRef.current = {
+      id,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startedAt: performance.now(),
+      slop: touch ? TOUCH_SLOP : MOUSE_SLOP,
+      touch,
+      from,
+      wasSelected,
+      popoverFor: positionPopoverRef.current?.playerId ?? null,
+    };
+    movedRef.current = false;
+    latestRef.current = { x: event.clientX, y: event.clientY };
+    liveSpotRef.current = null;
+    // Captured on the pitch rather than the circle, so a fast drag that leaves
+    // the piece — or the board — behind still delivers its moves and its up.
+    try {
+      pitchRef.current?.setPointerCapture(event.pointerId);
+    } catch {
+      // Throws if the pointer has already gone. There is nothing to recover.
+    }
+  };
+
+  /** Writes the drag's final spot into state and hands the node back to React. */
+  const commitDrag = (id: string) => {
+    const spot = liveSpotRef.current;
+    const node = draggedNode(id);
+    if (node) node.style.translate = '';
+    if (!spot) return;
+    if (id === 'ball') {
+      setBall(spot);
       return;
     }
-    if (drag.id.startsWith('opp-')) {
-      const index = Number(drag.id.slice(4));
+    if (id.startsWith('opp-')) {
+      const index = Number(id.slice(4));
       setClipOpponents((current) =>
-        current.map((opponent, i) => (i === index ? { x, y } : opponent)),
+        current.map((opponent, i) => (i === index ? spot : opponent)),
       );
       return;
     }
     setPlayers((current) =>
-      current.map((player) => (player.id === drag.id ? { ...player, x, y } : player)),
+      current.map((player) => (player.id === id ? { ...player, ...spot } : player)),
     );
   };
 
+  /** A press that never became a drag. Only players open anything; bare grass
+   *  puts the board down, which is the one gesture the page had been missing. */
+  const handleTap = (track: NonNullable<typeof trackRef.current>) => {
+    if (track.id === 'pitch') {
+      setSelectedId('');
+      clearSelection();
+      setPositionPopover(null);
+      return;
+    }
+    if (track.id === 'ball' || track.id.startsWith('opp-')) return;
+    const node = draggedNode(track.id);
+    if (!node) return;
+    // Tapping the piece that is already up puts it away again, so a tap is
+    // always its own undo.
+    if (track.wasSelected && track.popoverFor === track.id) {
+      setSelectedId('');
+      setPositionPopover(null);
+      return;
+    }
+    const box = node.getBoundingClientRect();
+    setSelectedId(track.id);
+    setPositionPopover({
+      playerId: track.id,
+      anchor: {
+        x: box.left + box.width / 2,
+        y: box.top + box.height / 2,
+        radius: box.height / 2,
+        touch: track.touch,
+      },
+    });
+  };
+
+  /** The end of a press, however it ends. */
+  const finishPress = (cancelled = false) => {
+    const track = trackRef.current;
+    // A drag quick enough to finish inside one frame has a frame still pending
+    // and nothing written down yet. Run it now, or the move is simply lost.
+    if (!cancelled && track && movedRef.current && frameRef.current !== null) {
+      cancelFrame();
+      drawFrame();
+    }
+    cancelFrame();
+    trackRef.current = null;
+    latestRef.current = null;
+    if (!track) {
+      // A draft can outlive its track if the press began before a re-render.
+      commitArrowDraftRef.current();
+      return;
+    }
+    try {
+      pitchRef.current?.releasePointerCapture(track.pointerId);
+    } catch {
+      // Already released. Nothing to do.
+    }
+    if (cancelled) {
+      // A cancelled drag must put the piece back under React's control, or it
+      // stays stuck to where the pointer was when the system took over.
+      const node = draggedNode(track.id);
+      if (node) node.style.translate = '';
+      liveSpotRef.current = null;
+      movedRef.current = false;
+      setArrowDraft(null);
+      draftSamplesRef.current = [];
+      liveDraftRef.current = null;
+      return;
+    }
+    if (movedRef.current) {
+      if (arrowDraftRef.current || liveDraftRef.current) commitArrowDraftRef.current();
+      else commitDrag(track.id);
+    } else if (performance.now() - track.startedAt < TAP_MS) {
+      // Under the slop and under the half-second: a tap, not a drag.
+      setArrowDraft(null);
+      draftSamplesRef.current = [];
+      liveDraftRef.current = null;
+      handleTap(track);
+    } else {
+      // Held still, then released. Neither gesture — leave everything alone.
+      setArrowDraft(null);
+      draftSamplesRef.current = [];
+      liveDraftRef.current = null;
+    }
+    movedRef.current = false;
+    liveSpotRef.current = null;
+  };
+
   const commitArrowDraft = () => {
-    if (!arrowDraft) return;
-    const start = arrowStart(arrowDraft, players);
+    // The frame's copy wins over React's, being at worst equally fresh.
+    const draft = liveDraftRef.current ?? arrowDraft;
+    liveDraftRef.current = null;
+    if (!draft) return;
+    const start = arrowStart(draft, players);
     if (start) {
-      const length = Math.hypot(arrowDraft.endX - start.x, arrowDraft.endY - start.y);
+      const length = Math.hypot(draft.endX - start.x, draft.endY - start.y);
       if (length > 4) {
-        // A real pointerup fires both the pitch handler and the window one,
-        // and both land in the same React batch reading the same draft, so
-        // appending blindly filed every arrow twice.
-        setArrows((current) =>
-          current.some((arrow) => arrow.id === arrowDraft.id) ? current : [...current, arrowDraft],
-        );
-        setSelectedArrowId(arrowDraft.id);
-        setMessage('Arrow added. Click an arrow and press Delete to remove it.');
+        if (arrowsRef.current.length >= MAX_ARROWS) {
+          // Say so. Quietly swallowing an arrow somebody has just drawn is
+          // far worse than telling them why it did not take.
+          setArrowLimitHit(true);
+          setMessage(
+            `That is ${MAX_ARROWS} arrows — the most one board holds. Delete one, or clear them all, to draw again.`,
+          );
+        } else {
+          // A real pointerup fires both the pitch handler and the window one,
+          // and both land in the same React batch reading the same draft, so
+          // appending blindly filed every arrow twice.
+          setArrows((current) =>
+            current.some((arrow) => arrow.id === draft.id) ? current : [...current, draft],
+          );
+          setSelectedArrowId(draft.id);
+          setMessage('Arrow added. Click an arrow and press Delete to remove it.');
+        }
       }
     }
     setArrowDraft(null);
     draftSamplesRef.current = [];
+    liveDraftRef.current = null;
   };
 
   // Any pointer release — even outside the pitch — must end the drag and
@@ -1871,16 +2520,22 @@ function Home() {
   const commitArrowDraftRef = useRef(commitArrowDraft);
   commitArrowDraftRef.current = commitArrowDraft;
 
+  // Pointer capture means the pitch sees the release itself in the ordinary
+  // case. These are the backstop for the cases it does not: a release over
+  // browser chrome, or the system taking the pointer away mid-drag — which on
+  // a phone happens far more often than it sounds like it should, and used to
+  // leave the piece glued to the finger.
+  const finishPressRef = useRef(finishPress);
+  finishPressRef.current = finishPress;
+
   useEffect(() => {
-    const finishDrag = () => {
-      dragRef.current = null;
-      commitArrowDraftRef.current();
-    };
-    window.addEventListener('pointerup', finishDrag);
-    window.addEventListener('pointercancel', finishDrag);
+    const onUp = () => finishPressRef.current(false);
+    const onCancel = () => finishPressRef.current(true);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onCancel);
     return () => {
-      window.removeEventListener('pointerup', finishDrag);
-      window.removeEventListener('pointercancel', finishDrag);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onCancel);
     };
   }, []);
 
@@ -1896,6 +2551,33 @@ function Home() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selectedArrowId, selectedOpponent]);
+
+  // Escape puts everything down: the popup if one is up, otherwise whatever is
+  // selected. Focus goes back to the circle that opened the popup, so a
+  // keyboard user is not dropped at the top of the page.
+  useEffect(() => {
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+      const openFor = positionPopoverRef.current?.playerId;
+      if (openFor) {
+        // Cleared here as well as in state: two Escapes in quick succession
+        // land before React re-renders, and the second must fall through to
+        // the deselect rather than close the popup a second time.
+        positionPopoverRef.current = null;
+        setPositionPopover(null);
+        pitchRef.current
+          ?.querySelector<HTMLElement>(`[data-testid="button-player-${openFor}"]`)
+          ?.focus();
+        return;
+      }
+      setSelectedId('');
+      clearSelection();
+    };
+    window.addEventListener('keydown', onEscape);
+    return () => window.removeEventListener('keydown', onEscape);
+  }, []);
 
   // The article has to be on the page before it can be scrolled, which is why
   // the jump lives in an effect rather than inside openGuide.
@@ -1944,6 +2626,34 @@ function Home() {
   const selectedOpponentSpot =
     opponentsDraggable && selectedOpponent !== null ? visibleOpponents[selectedOpponent] : undefined;
 
+  // The popup belongs to a player, not to an index, so a shape change or a
+  // cleared board takes it away with the circle it was pointing at.
+  const popoverPlayer = positionPopover
+    ? players.find((player) => player.id === positionPopover.playerId)
+    : undefined;
+
+  // On a manager's side, who the circle is and what he was known for. Looked
+  // up by slot index like the portraits and the jersey numbers, so renaming a
+  // circle cannot break it.
+  const popoverPerson = useMemo(() => {
+    if (!activeEra || !popoverPlayer) return null;
+    const slot = Number(popoverPlayer.id.slice(1)) - 1;
+    const entry = squadForEra(activeEra)[slot];
+    if (!entry) return null;
+    // Two sources, in order of how well they answer "how did he play this
+    // position": what he was famous for, turned into the language of the role;
+    // then, for the players nobody recorded a standout quality for, the era's
+    // own note on him. Only if neither exists does the card fall back to the
+    // plain position brief.
+    const fromStandout = playerRoleLine(popoverPlayer.role, entry.standout);
+    const fromEra = eraContent?.playerFacts[entry.name]?.[0];
+    return {
+      name: entry.name,
+      number: entry.number,
+      line: fromStandout ?? fromEra ?? null,
+    };
+  }, [activeEra, popoverPlayer, eraContent]);
+
   // Where the selected arrow's delete badge goes: halfway along its own line.
   const selectedArrow = arrows.find((arrow) => arrow.id === selectedArrowId);
   const selectedArrowGeometry =
@@ -1961,20 +2671,21 @@ function Home() {
             <div className="brand-subtitle">Football tactics board</div>
           </div>
         </div>
-        <div className="topbar-note">
-          <Sparkles size={15} />
-          Experiment first. Explain later.
-        </div>
       </header>
 
-      {showNumbersNote && (
-        <div className="numbers-note" role="dialog" aria-label="About the numbers on the pitch">
+      {numbersNote && (
+        <AnchoredCard
+          anchor={numbersNote}
+          ariaLabel="About the numbers on the pitch"
+          onDismiss={dismissNumbersNote}
+          testId="note-numbers"
+        >
           <button
-            className="numbers-note-close"
+            className="anchored-card-close"
             data-testid="button-close-numbers-note"
             type="button"
             aria-label="Close"
-            onClick={() => setShowNumbersNote(false)}
+            onClick={dismissNumbersNote}
           >
             <X size={15} />
           </button>
@@ -1984,7 +2695,7 @@ function Home() {
             goalkeeper, 9 for the striker, and so on — not their real jersey numbers. Each player’s
             actual jersey number is shown in brackets after their name.
           </p>
-        </div>
+        </AnchoredCard>
       )}
 
       <div className="workspace">
@@ -2007,9 +2718,11 @@ function Home() {
               type="button"
               role="tab"
               aria-selected={panelTab === 'managers'}
-              onClick={() => {
+              onClick={(event) => {
                 setPanelTab('managers');
-                setShowNumbersNote(true);
+                // Once, not every time — and pinned to the tab that opened it
+                // rather than dropped in the middle of the screen.
+                if (!numbersNoteSeen) openNumbersNote(event.currentTarget);
               }}
             >
               <BookOpen size={14} />
@@ -2043,9 +2756,10 @@ function Home() {
           ) : panelTab === 'shapes' ? (
             <>
               <div className="panel-heading">
-                <div className="eyebrow">The library</div>
-                <h2 className="panel-title">Find a shape</h2>
-                <p className="panel-copy">Start with a structure, then move the pieces until the idea clicks.</p>
+                <h2 className="panel-title">Shapes</h2>
+                <p className="panel-copy">
+                  Pick a formation to load it onto the board, or build your own.
+                </p>
                 <label className="search-wrap">
                   <Search size={16} aria-hidden="true" />
                   <input
@@ -2180,10 +2894,22 @@ function Home() {
           ) : (
             <>
               <div className="panel-heading">
-                <div className="eyebrow">The dugout</div>
-                <h2 className="panel-title">Steal a blueprint</h2>
+                <div className="panel-title-row">
+                  <h2 className="panel-title">Managers</h2>
+                  {/* The way back to the note about the numbers, once it has
+                      been dismissed for good. */}
+                  <button
+                    className="panel-info"
+                    data-testid="button-numbers-note"
+                    type="button"
+                    aria-label="About the numbers on the pitch"
+                    onClick={(event) => openNumbersNote(event.currentTarget)}
+                  >
+                    <Info size={15} />
+                  </button>
+                </div>
                 <p className="panel-copy">
-                  Seventeen serial winners, each frozen at a defining moment of their career.
+                  Pick a side to load its real starting eleven onto the board.
                 </p>
               </div>
               <div className="panel-tabs manager-tabs" role="tablist" aria-label="Dugout sections">
@@ -2246,9 +2972,11 @@ function Home() {
         <section className="pitch-column" aria-label="Interactive tactics pitch">
           <div className="pitch-header">
             <div>
-              <div className="eyebrow">Live board / {boardLabel}</div>
+              <div className="eyebrow">Live board</div>
               <div className="pitch-title-row">
-                <h1 className="pitch-title">{activeEra ? 'Study the idea.' : 'Move the idea.'}</h1>
+                {/* The heading says what is on the board. It used to say "Move
+                    the idea.", which said nothing about anything. */}
+                <h1 className="pitch-title">{boardLabel}</h1>
                 {/* The one way into match mode, deliberately next to the
                     headline rather than buried in the toolbar. It lands on the
                     rules rather than a cold match — nobody should be dropped
@@ -2264,17 +2992,19 @@ function Home() {
                   Play a match
                 </button>
               </div>
-              <p className="pitch-caption">
-                {activeEra
-                  ? `${activeEra.summary}`
-                  : 'A clean starting point for messy thinking. Pull any player into space and see the shape change.'}
-              </p>
+              {/* Only an era has anything to say here. The shapes used to get a
+                  line about messy thinking, which told nobody anything. */}
+              {activeEra && <p className="pitch-caption">{activeEra.summary}</p>}
             </div>
           </div>
 
-          <div className="pitch-toolbar" role="toolbar" aria-label="Arrow tools">
+          {/* Three kinds of thing, so three groups: the mode toggle, the tools
+              you use while working, and the two that take something away. The
+              destructive pair is pushed to the far end and styled down, because
+              they are the ones you want to reach for least often. */}
+          <div className="pitch-toolbar" role="toolbar" aria-label="Board tools">
             <button
-              className={`tool-button arrow-toggle ${arrowMode ? 'is-active' : ''}`}
+              className={`mode-toggle ${arrowMode ? 'is-active' : ''}`}
               data-testid="button-arrow-mode"
               type="button"
               aria-pressed={arrowMode}
@@ -2289,100 +3019,157 @@ function Home() {
               }}
             >
               <MoveUpRight size={14} />
-              {arrowMode ? 'Drawing arrows' : 'Draw arrows'}
+              {arrowMode ? 'Interacting with the board' : 'Interact with the board'}
             </button>
-            {arrowMode && (
-            <div className="tool-group is-revealed" role="group" aria-label="Arrow style">
+            {/* Kept mounted and folded away rather than unmounted, so closing
+                animates the same way opening does. `visibility` is part of the
+                transition, which is also what takes the buttons out of the tab
+                order once they are shut. */}
+            <div
+              className={`tool-reveal ${arrowMode ? 'is-open' : ''}`}
+              data-testid="group-arrow-tools"
+            >
+              <div className="tool-group" role="group" aria-label="Arrow type">
+                <button
+                  className={`tool-button ${arrowStyle === 'solid' ? 'is-active' : ''}`}
+                  data-testid="button-arrow-solid"
+                  type="button"
+                  aria-pressed={arrowStyle === 'solid'}
+                  title="Run with the ball"
+                  onClick={() => setArrowStyle('solid')}
+                >
+                  <Minus size={14} />
+                  Run
+                </button>
+                <button
+                  className={`tool-button ${arrowStyle === 'dashed' ? 'is-active' : ''}`}
+                  data-testid="button-arrow-dashed"
+                  type="button"
+                  aria-pressed={arrowStyle === 'dashed'}
+                  title="Pass"
+                  onClick={() => setArrowStyle('dashed')}
+                >
+                  <Grip size={14} />
+                  Pass
+                </button>
+                <button
+                  className={`tool-button ${arrowStyle === 'curved' ? 'is-active' : ''}`}
+                  data-testid="button-arrow-curved"
+                  type="button"
+                  aria-pressed={arrowStyle === 'curved'}
+                  title="Off-ball movement"
+                  onClick={() => setArrowStyle('curved')}
+                >
+                  <Spline size={14} />
+                  Move
+                </button>
+              </div>
+              {/* Dropping a single marker is still worth having — it answers
+                  "what if one of them stood just there" — but it is a detail
+                  you reach for while working on the board, not the way you set
+                  an opposition up. So it lives in here with the other things
+                  you do by hand, and choosing their shape sits outside. */}
               <button
-                className={`tool-button ${arrowStyle === 'solid' ? 'is-active' : ''}`}
-                data-testid="button-arrow-solid"
+                className="tool-button"
+                data-testid="button-add-opponent-pitch"
                 type="button"
-                aria-pressed={arrowStyle === 'solid'}
-                title="Run with the ball"
-                onClick={() => setArrowStyle('solid')}
+                disabled={animRunning}
+                title="Drop a single opposition marker on the pitch"
+                onClick={addOpponent}
               >
-                <Minus size={14} />
-                Run
+                <Shield size={14} />
+                Add one opponent
               </button>
-              <button
-                className={`tool-button ${arrowStyle === 'dashed' ? 'is-active' : ''}`}
-                data-testid="button-arrow-dashed"
-                type="button"
-                aria-pressed={arrowStyle === 'dashed'}
-                title="Pass"
-                onClick={() => setArrowStyle('dashed')}
-              >
-                <Grip size={14} />
-                Pass
-              </button>
-              <button
-                className={`tool-button ${arrowStyle === 'curved' ? 'is-active' : ''}`}
-                data-testid="button-arrow-curved"
-                type="button"
-                aria-pressed={arrowStyle === 'curved'}
-                title="Off-ball movement"
-                onClick={() => setArrowStyle('curved')}
-              >
-                <Spline size={14} />
-                Move
-              </button>
+              {/* Only shown once the board is filling up. A counter sitting
+                  there from the first arrow would be noise. */}
+              {arrowsLeft <= ARROWS_NEARLY_FULL && (
+                <span
+                  className={`arrow-tally ${arrowsFull ? 'is-full' : ''} ${arrowLimitHit ? 'is-shouting' : ''}`}
+                  data-testid="text-arrow-tally"
+                  role="status"
+                >
+                  {arrowsFull
+                    ? `${MAX_ARROWS} arrows — full`
+                    : `${arrowsLeft} arrow${arrowsLeft === 1 ? '' : 's'} left`}
+                </span>
+              )}
             </div>
-            )}
-            <button
-              className={`tool-button ${ball ? 'is-active' : ''}`}
-              data-testid="button-toggle-ball"
-              type="button"
-              aria-pressed={ball !== null}
-              title={ball ? 'Remove the ball from the pitch' : 'Place a ball on the centre spot'}
-              onClick={() => {
-                if (ball) {
-                  setBall(null);
-                  setMessage('Ball removed.');
-                } else {
-                  setBall({ x: 50, y: 50 });
-                  setMessage('Ball on the centre spot. Drag it anywhere.');
-                }
-              }}
-            >
-              <CircleDot size={14} />
-              {ball ? 'Remove ball' : 'Add ball'}
-            </button>
-            <button
-              className="tool-button"
-              data-testid="button-add-opponent-pitch"
-              type="button"
-              disabled={animRunning}
-              title="Drop an opposition marker on the pitch"
-              onClick={addOpponent}
-            >
-              <Shield size={14} />
-              Add opponent
-            </button>
-            {(selectedArrowGeometry || selectedOpponentSpot) && (
+
+            <div className="tool-group" role="group" aria-label="Pieces on the pitch">
+              <button
+                className={`tool-button ${ball ? 'is-active' : ''}`}
+                data-testid="button-toggle-ball"
+                type="button"
+                aria-pressed={ball !== null}
+                title={ball ? 'Remove the ball from the pitch' : 'Place a ball on the centre spot'}
+                onClick={() => {
+                  if (ball) {
+                    setBall(null);
+                    setMessage('Ball removed.');
+                  } else {
+                    setBall({ x: 50, y: 50 });
+                    setMessage('Ball on the centre spot. Drag it anywhere.');
+                  }
+                }}
+              >
+                <CircleDot size={14} />
+                {ball ? 'Remove ball' : 'Add ball'}
+              </button>
+              <label className="tool-select" title="Set your shape against theirs">
+                <Shield size={14} />
+                <span className="tool-select-label">Against</span>
+                <select
+                  data-testid="select-opponent-formation"
+                  disabled={animRunning}
+                  onChange={(event) => {
+                    const picked = FORMATIONS.find(
+                      (entry) => entry.name === event.target.value,
+                    );
+                    setOpposition(picked ?? null);
+                  }}
+                  value={opponentShape?.name ?? ''}
+                >
+                  <option value="">No opposition</option>
+                  {FORMATIONS.map((entry) => (
+                    <option key={entry.name} value={entry.name}>
+                      {entry.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {/* Always here, disabled when there is nothing to act on. They used
+                to appear only once you had drawn something, which shifted the
+                whole row and meant you could not find them until after you had
+                already done the thing they undo. */}
+            <div className="tool-group is-destructive" role="group" aria-label="Remove">
               <button
                 className="tool-button danger-tool"
                 data-testid="button-delete-selected"
                 type="button"
+                disabled={!selectedArrowGeometry && !selectedOpponentSpot}
+                title="Delete whatever is selected on the pitch"
                 onClick={deleteSelection}
               >
                 <Trash2 size={14} />
-                Delete {selectedArrowId ? 'arrow' : 'opponent'}
+                Delete {selectedOpponentSpot && !selectedArrowId ? 'opponent' : 'arrow'}
               </button>
-            )}
-            {arrows.length > 0 && (
               <button
-                className="tool-button"
+                className="tool-button danger-tool"
                 data-testid="button-clear-arrows"
                 type="button"
+                disabled={arrows.length === 0}
+                title="Remove every arrow on the pitch"
                 onClick={() => {
                   clearArrows();
                   setMessage('All arrows cleared.');
                 }}
               >
                 <Eraser size={14} />
-                Clear all arrows
+                Clear arrows
               </button>
-            )}
+            </div>
           </div>
 
           <div className="pitch-frame">
@@ -2399,34 +3186,42 @@ function Home() {
               style={{ '--anim-dur': `${animStepDuration}s` } as CSSProperties}
               data-testid="pitch-board"
               onPointerDown={(event) => {
-                // A press on bare grass drops the current selection, so the
-                // delete control never acts on something the user has already
-                // moved on from.
-                if (!animRunning) clearSelection();
+                if (animRunning) return;
+                // Bare grass. Whether this puts the board down or starts an
+                // arrow is not settled until the pointer is released — see
+                // finishPress. All that happens now is that it starts being
+                // watched.
+                beginPress(event, 'pitch', null);
+                if (!arrowMode) return;
                 // Arrow mode: pressing open grass starts an arrow from that
                 // spot, so runs and passes can be drawn anywhere, not just
                 // from a player circle.
-                if (!arrowMode || animRunning) return;
-                const point = pitchPoint(event);
+                if (arrowsRef.current.length >= MAX_ARROWS) {
+                  setArrowLimitHit(true);
+                  setMessage(
+                    `That is ${MAX_ARROWS} arrows — the most one board holds. Delete one, or clear them all, to draw again.`,
+                  );
+                  return;
+                }
+                const point = toPitch(event.clientX, event.clientY);
                 if (!point) return;
                 event.preventDefault();
                 setSelectedArrowId(null);
                 arrowCounter.current += 1;
                 draftSamplesRef.current = [];
-                setArrowDraft({
+                const draft: Arrow = {
                   id: `a${arrowCounter.current}`,
                   startX: point.x,
                   startY: point.y,
                   endX: point.x,
                   endY: point.y,
                   style: arrowStyle,
-                });
+                };
+                liveDraftRef.current = draft;
+                setArrowDraft(draft);
               }}
-              onPointerMove={updatePosition}
-              onPointerUp={() => {
-                dragRef.current = null;
-                commitArrowDraft();
-              }}
+              onPointerMove={onPitchPointerMove}
+              onPointerCancel={() => finishPress(true)}
             >
               <PitchLines />
               <ArrowLayer
@@ -2448,25 +3243,62 @@ function Home() {
                     if (animRunning) return;
                     event.preventDefault();
                     event.stopPropagation();
+                    // Whether this is a drag or a tap is still undecided; both
+                    // want the circle picked out, so that much happens now and
+                    // the release settles the rest.
+                    beginPress(
+                      event,
+                      player.id,
+                      { x: player.x, y: player.y },
+                      selectedId === player.id,
+                    );
                     // Picking up a player is a different intent, so it drops
                     // any arrow or opponent that was picked out before.
                     clearSelection();
                     setSelectedId(player.id);
-                    if (arrowMode) {
+                    if (arrowMode && arrowsRef.current.length < MAX_ARROWS) {
                       arrowCounter.current += 1;
                       draftSamplesRef.current = [];
-                      setArrowDraft({
+                      const draft: Arrow = {
                         id: `a${arrowCounter.current}`,
                         playerId: player.id,
                         endX: player.x,
                         endY: player.y,
                         style: arrowStyle,
-                      });
-                    } else {
-                      dragRef.current = { id: player.id };
+                      };
+                      liveDraftRef.current = draft;
+                      setArrowDraft(draft);
+                    } else if (arrowMode) {
+                      setArrowLimitHit(true);
+                      setMessage(
+                        `That is ${MAX_ARROWS} arrows — the most one board holds. Delete one, or clear them all, to draw again.`,
+                      );
                     }
                   }}
-                  onClick={() => setSelectedId(player.id)}
+                  onKeyDown={(event) => {
+                    // A keyboard reaches the same popup the tap does. Enter and
+                    // Space would otherwise fire the button's click and do
+                    // nothing visible at all.
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    if (positionPopover?.playerId === player.id) {
+                      setPositionPopover(null);
+                      return;
+                    }
+                    const box = event.currentTarget.getBoundingClientRect();
+                    setSelectedId(player.id);
+                    setPositionPopover({
+                      playerId: player.id,
+                      anchor: {
+                        x: box.left + box.width / 2,
+                        y: box.top + box.height / 2,
+                        radius: box.height / 2,
+                        touch: false,
+                      },
+                    });
+                  }}
+                  aria-haspopup="dialog"
+                  aria-expanded={positionPopover?.playerId === player.id}
                   aria-label={`${shirtNumber(player)} ${player.name ?? roleName(player.role)}, ${roleName(player.role)}`}
                 >
                   {photoFor(player) && (
@@ -2511,9 +3343,9 @@ function Home() {
                     event.preventDefault();
                     event.stopPropagation();
                     clearSelection();
-                    dragRef.current = { id: 'ball' };
+                    setPositionPopover(null);
+                    beginPress(event, 'ball', { x: ball.x, y: ball.y });
                   }}
-
                 />
               )}
               {visibleOpponents.map((opponent, index) => (
@@ -2536,7 +3368,11 @@ function Home() {
                           event.preventDefault();
                           event.stopPropagation();
                           selectOpponent(index);
-                          dragRef.current = { id: `opp-${index}` };
+                          setPositionPopover(null);
+                          beginPress(event, `opp-${index}`, {
+                            x: opponent.x,
+                            y: opponent.y,
+                          });
                         },
                       }
                     : { 'aria-hidden': true as const })}
@@ -2587,10 +3423,27 @@ function Home() {
             </div>
           </div>
 
+          {/* Tied to a player that is still on the board, so clearing it or
+              loading another shape takes the popup with it. */}
+          {popoverPlayer && positionPopover && (
+            <PositionPopover
+              anchor={positionPopover.anchor}
+              key={popoverPlayer.id}
+              name={popoverPlayer.name}
+              person={popoverPerson}
+              onDismiss={() => setPositionPopover(null)}
+              onOpenGuide={(entryId) => {
+                setPositionPopover(null);
+                openGuide(entryId);
+              }}
+              role={popoverPlayer.role}
+            />
+          )}
+
           <div className="pitch-footer">
             <div className="drag-note" data-testid="text-drag-guidance">
               <Grip size={17} />
-              Drag circles directly on the pitch. Touch works too.
+              Drag a circle to move it. Tap one to read the position.
             </div>
             <div className="actions">
               <button className="action-button" data-testid="button-clear-board" type="button" onClick={clearBoard}>
@@ -2685,7 +3538,9 @@ function Home() {
                   <span className="inspector-role-name">{roleName(selectedPlayer.role)}</span>
                 </>
               ) : (
-                'Board is empty'
+                // Until a circle could be put down again, "nothing selected"
+                // and "no players" were the same state. They are not now.
+                players.length === 0 ? 'Board is empty' : 'Nothing selected'
               )}
             </div>
             {selectedPlayerPhoto && (
@@ -2896,7 +3751,7 @@ function Home() {
                     className="action-button"
                     data-testid="button-clear-opponents"
                     disabled={animRunning}
-                    onClick={() => setClipOpponents([])}
+                    onClick={() => setOpposition(null)}
                     type="button"
                   >
                     <Eraser size={14} />
@@ -2990,7 +3845,24 @@ function Home() {
                 <ManagerPhoto manager={activeManager.name} size="large" />
                 <strong>How {activeManager.name} plays</strong>
               </div>
-              <p className="fact-text">{glossify(MANAGER_PLAYSTYLES[activeManager.name])}</p>
+              {/* Only the write-up folds away. The clips below it stay where
+                  they are — they are what most people open this panel for, and
+                  hiding them behind a second tap would be a step backwards.
+                  Keyed to the manager so switching era re-collapses it. */}
+              <details
+                className="collapsible-box playstyle-note"
+                data-testid="details-playstyle"
+                key={activeManager.name}
+              >
+                <summary>
+                  The idea
+                  <span className="summary-hint">tap to show</span>
+                </summary>
+                <p className="fact-text">{glossify(MANAGER_PLAYSTYLES[activeManager.name])}</p>
+                {/* The glossary belongs with the words it explains, so it folds
+                    away with them rather than listing terms for hidden text. */}
+                <GlossFooter terms={playstyleGlossTerms} />
+              </details>
               {/* Every era has clips, so these render unconditionally — checking
                   ERA_ANIMATIONS here would pull in the lazy chunk on load. */}
               <div className="tactic-buttons">
@@ -3019,7 +3891,6 @@ function Home() {
                 These clips are deliberate oversimplifications — quick sketches of the attacking
                 and defensive ideas behind the shape, not full tactical recreations.
               </p>
-              <GlossFooter terms={playstyleGlossTerms} />
               <ManagerPhotoCredit manager={activeManager.name} />
             </div>
           )}

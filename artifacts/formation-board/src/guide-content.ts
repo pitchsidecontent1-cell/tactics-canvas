@@ -1086,3 +1086,311 @@ export const GUIDE_ENTRY_SECTION: Record<string, string> = Object.fromEntries(
   GUIDE_SECTIONS.flatMap((section) => section.entries.map((entry) => [entry.id, section.id])),
 );
 
+// ---------------------------------------------------------------------------
+// Position briefs — the quick reference behind the popup that opens when a
+// circle on the board is tapped. One entry per position code the board can put
+// on a circle, so the popup never has to improvise.
+//
+// This lives here rather than in App.tsx because it is the same reference
+// material as GUIDE_SECTIONS above, only shorter: `entry` points at the full
+// write-up so the popup's link and the Guide index can never drift apart.
+//
+// `entry` is deliberately optional. The position field on the board is free
+// text — a coach can type any four letters into it — so a code with no
+// write-up gets a popup with no link, rather than a link that goes nowhere.
+// ---------------------------------------------------------------------------
+
+export type PositionBrief = {
+  /** Full name of the position, e.g. 'Left centre-back'. */
+  name: string;
+  /** What the position is. One or two sentences. */
+  role: string;
+  /** What it is asked to do once play starts. */
+  used: string;
+  /** Guide entry holding the full write-up. Absent means there isn't one. */
+  entry?: string;
+};
+
+export const POSITION_BRIEFS: Record<string, PositionBrief> = {
+  GK: {
+    name: 'Goalkeeper',
+    role: 'The only player allowed to handle the ball, and only inside their own penalty area.',
+    used: 'Stops shots and claims crosses, then starts the attack as the first passer of the team.',
+    entry: 'goalkeeper',
+  },
+  RB: {
+    name: 'Right-back',
+    role: 'The wide defender on the right of a back four.',
+    used: 'Defends the flank against the winger, then overlaps outside to give the attack width.',
+    entry: 'full-back',
+  },
+  LB: {
+    name: 'Left-back',
+    role: 'The wide defender on the left of a back four.',
+    used: 'Defends the flank against the winger, then overlaps outside to give the attack width.',
+    entry: 'full-back',
+  },
+  RWB: {
+    name: 'Right wing-back',
+    role: 'The wide player on the right of a back three, holding that flank on their own.',
+    used: 'Covers the whole touchline: a fifth defender when the ball is lost, a winger when it is won.',
+    entry: 'wing-back',
+  },
+  LWB: {
+    name: 'Left wing-back',
+    role: 'The wide player on the left of a back three, holding that flank on their own.',
+    used: 'Covers the whole touchline: a fifth defender when the ball is lost, a winger when it is won.',
+    entry: 'wing-back',
+  },
+  CB: {
+    name: 'Centre-back',
+    role: 'A central defender, playing directly in front of the goalkeeper.',
+    used: 'Defends the middle of the goal, keeps the defensive line straight, and plays out under pressure.',
+    entry: 'centre-back',
+  },
+  LCB: {
+    name: 'Left centre-back',
+    role: 'The left-sided of the two central defenders.',
+    used: 'Defends the middle with their partner, and is usually the one who carries the ball out on that side.',
+    entry: 'centre-back',
+  },
+  RCB: {
+    name: 'Right centre-back',
+    role: 'The right-sided of the two central defenders.',
+    used: 'Defends the middle with their partner, and is usually the one who carries the ball out on that side.',
+    entry: 'centre-back',
+  },
+  DEF: {
+    name: 'Defender',
+    role: 'A defender without a fixed side or slot on the line.',
+    used: 'Marks whoever the shape gives them, holds the line, and stays goal-side of the ball.',
+    entry: 'centre-back',
+  },
+  DM: {
+    name: 'Defensive midfielder',
+    role: 'The midfielder who sits in front of the back line.',
+    used: 'Screens the space between midfield and defence, kills counter-attacks, and restarts the attack.',
+    entry: 'defensive-midfielder',
+  },
+  CM: {
+    name: 'Central midfielder',
+    role: 'The middle of the pitch, between the defensive line and the attack.',
+    used: 'Links the two ends — receives, turns, and finds the forwards. Covers more ground than anyone.',
+    entry: 'central-midfielder',
+  },
+  LCM: {
+    name: 'Left central midfielder',
+    role: 'The left-sided of a central midfield pair or three.',
+    used: 'Links defence to attack down the left, and covers the space the left-back leaves behind.',
+    entry: 'central-midfielder',
+  },
+  RCM: {
+    name: 'Right central midfielder',
+    role: 'The right-sided of a central midfield pair or three.',
+    used: 'Links defence to attack down the right, and covers the space the right-back leaves behind.',
+    entry: 'central-midfielder',
+  },
+  MID: {
+    name: 'Midfielder',
+    role: 'A midfielder without a fixed side or slot in the line.',
+    used: 'Takes whichever midfield job the shape needs — screening, linking, or arriving in the box.',
+    entry: 'central-midfielder',
+  },
+  AM: {
+    name: 'Attacking midfielder',
+    role: 'The highest midfielder, playing between the opposition midfield and their defence.',
+    used: 'Receives between the lines, turns, and plays the pass that puts a forward through.',
+    entry: 'attacking-midfielder',
+  },
+  SS: {
+    name: 'Second striker',
+    role: 'The deeper of two forwards, playing off the main striker.',
+    used: 'Drops off their marker to collect the ball, then runs beyond the striker to finish.',
+    entry: 'second-striker',
+  },
+  LM: {
+    name: 'Left midfielder',
+    role: 'The wide midfielder on the left of a midfield four.',
+    used: 'Holds the touchline in attack and tucks in to make a flat bank of four when the ball is lost.',
+    entry: 'wide-midfielder',
+  },
+  RM: {
+    name: 'Right midfielder',
+    role: 'The wide midfielder on the right of a midfield four.',
+    used: 'Holds the touchline in attack and tucks in to make a flat bank of four when the ball is lost.',
+    entry: 'wide-midfielder',
+  },
+  LW: {
+    name: 'Left winger',
+    role: 'The wide forward on the left, with little defensive duty.',
+    used: 'Takes the full-back on one against one, then cuts inside to shoot or goes outside to cross.',
+    entry: 'winger',
+  },
+  RW: {
+    name: 'Right winger',
+    role: 'The wide forward on the right, with little defensive duty.',
+    used: 'Takes the full-back on one against one, then cuts inside to shoot or goes outside to cross.',
+    entry: 'winger',
+  },
+  ST: {
+    name: 'Striker',
+    role: 'The furthest player forward, whose work ends in the penalty area.',
+    used: 'Occupies the centre-backs, runs in behind the line, and finishes what the team creates.',
+    entry: 'striker',
+  },
+  CF: {
+    name: 'Centre-forward',
+    role: 'The central forward, as often with their back to goal as facing it.',
+    used: 'Holds the ball up until midfield arrives, and drags centre-backs out of the middle.',
+    entry: 'centre-forward',
+  },
+  FWD: {
+    name: 'Forward',
+    role: 'A forward without a fixed slot in the front line.',
+    used: 'Attacks the goal and the space around it, wherever the shape puts them.',
+    entry: 'striker',
+  },
+};
+
+/** The brief for a position code, or null for a code nobody has written up. */
+export const positionBrief = (code: string): PositionBrief | null =>
+  POSITION_BRIEFS[code.trim().toUpperCase()] ?? null;
+
+// ---------------------------------------------------------------------------
+// The same position, as one particular player played it.
+//
+// On a manager's side every circle is a real footballer, and telling somebody
+// looking at Cafu that a right-back defends the flank is telling them nothing
+// they wanted to know. What they want is what *he* did with the job.
+//
+// The material for that already exists: squad.ts keeps a curated table of what
+// each player was famous for, expressed as the one or two attributes that were
+// genuinely the first thing anyone said about him. This turns that back into
+// words — the position's job, in the terms that player was known for.
+//
+// Nothing here is invented about a player. If squad.ts has nothing on him, this
+// returns null and the caller falls back to the plain position brief.
+// ---------------------------------------------------------------------------
+
+/** Mirrors squad.ts's Attributes without importing it, since only the keys are
+ *  needed and a value import would drag the whole squad table into this file. */
+type AttributeKey = 'passing' | 'pace' | 'touch' | 'tackling' | 'finishing';
+
+/** Positions that ask the same thing of a player share a set of clauses. */
+const CLAUSE_GROUP: Record<string, string> = {
+  GK: 'GK',
+  CB: 'CB',
+  LCB: 'CB',
+  RCB: 'CB',
+  DEF: 'CB',
+  RB: 'FB',
+  LB: 'FB',
+  RWB: 'FB',
+  LWB: 'FB',
+  DM: 'DM',
+  CM: 'CM',
+  LCM: 'CM',
+  RCM: 'CM',
+  MID: 'CM',
+  AM: 'AM',
+  SS: 'AM',
+  LM: 'WIDE',
+  RM: 'WIDE',
+  LW: 'WIDE',
+  RW: 'WIDE',
+  ST: 'ST',
+  CF: 'ST',
+  FWD: 'ST',
+};
+
+/** What being exceptional at each quality means in each position. Written as
+ *  verb phrases, so they read on from "A right-back who …". */
+const CLAUSES: Record<string, Partial<Record<AttributeKey, string>>> = {
+  GK: {
+    // For a keeper, squad.ts stores shot-stopping as tackling and distribution
+    // as passing — see the note on the Attributes type.
+    tackling: 'stops shots, which is what he is remembered for',
+    passing: 'starts the attack himself; the first pass out of defence is his',
+    pace: 'sweeps up outside his box behind a high line',
+    touch: 'stays calm on the ball when the press comes for him',
+    finishing: 'goes up for the late corners',
+  },
+  CB: {
+    tackling: 'wins his duels and defends the box',
+    passing: 'carries and passes it out rather than clearing it',
+    pace: 'has the recovery pace that lets the line sit high',
+    touch: 'takes it under pressure without panicking',
+    finishing: 'is a real threat at the other end from set pieces',
+  },
+  FB: {
+    passing: 'is picked for his delivery — the cross is the end product',
+    pace: 'gets up and back all match',
+    touch: 'steps inside and plays as an extra midfielder',
+    tackling: 'defends first and attacks second',
+    finishing: 'arrives in the box himself',
+  },
+  DM: {
+    tackling: 'wins the ball back in front of the defence',
+    passing: 'sits deep and sets the tempo from there',
+    touch: 'takes it with a man on him and turns out of it',
+    pace: 'covers the whole width in front of the back line',
+    finishing: 'strikes from distance',
+  },
+  CM: {
+    passing: 'sets the tempo — the side plays through him',
+    touch: 'keeps it under pressure and turns out of trouble',
+    pace: 'gets box to box',
+    tackling: 'does the running and the winning back',
+    finishing: 'arrives late in the box',
+  },
+  AM: {
+    passing: 'plays the final ball',
+    touch: 'receives between the lines and turns',
+    finishing: 'gets into the box and scores himself',
+    pace: 'runs beyond the striker',
+    tackling: 'starts the press from the front',
+  },
+  WIDE: {
+    pace: 'beats his man for pace',
+    touch: 'beats him with the ball instead of the legs',
+    finishing: 'cuts inside to shoot',
+    passing: 'goes outside and crosses',
+    tackling: 'tracks his full-back all the way back',
+  },
+  ST: {
+    finishing: 'finishes — the chances go in',
+    pace: 'runs in behind the line',
+    touch: 'holds it up until the midfield arrives',
+    passing: 'drops off and links the play',
+    tackling: 'leads the press',
+  },
+};
+
+/** Only genuinely exceptional qualities get a mention: squad.ts treats 12 as an
+ *  ordinary starter, so this is comfortably above that. */
+const NOTABLE = 14;
+
+/**
+ * How this player played this position, or null if nothing is recorded about
+ * him. At most two qualities, strongest first — a list of five says nothing.
+ */
+export function playerRoleLine(
+  code: string,
+  standout: Partial<Record<AttributeKey, number>>,
+): string | null {
+  const role = code.trim().toUpperCase();
+  const clauses = CLAUSES[CLAUSE_GROUP[role] ?? ''];
+  if (!clauses) return null;
+  const picked = (Object.entries(standout) as Array<[AttributeKey, number]>)
+    .filter(([key, value]) => value >= NOTABLE && clauses[key])
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([key]) => clauses[key] as string);
+  if (!picked.length) return null;
+  const name = (POSITION_BRIEFS[role]?.name ?? role).toLowerCase();
+  const article = /^[aeiou]/.test(name) ? 'An' : 'A';
+  return picked.length === 1
+    ? `${article} ${name} who ${picked[0]}.`
+    : `${article} ${name} who ${picked[0]}, and ${picked[1]}.`;
+}
+

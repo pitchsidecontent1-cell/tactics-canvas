@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=DM+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+/* Editorial sports: a back-page headline face, a proper reading face under it,
+   and a mono for the small-caps labels.
+   Archivo Black ships one weight only — see font-synthesis-weight below, which
+   is what stops the 800s and 900s already in this file being faked. */
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -141,9 +145,9 @@
   --chart-4: 38 73% 55%;
   --chart-5: 200 47% 46%;
 
-  --app-font-sans: 'Inter', sans-serif;
-  --app-font-serif: Georgia, serif;
-  --app-font-mono: Menlo, monospace;
+  --app-font-sans: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --app-font-serif: 'Archivo Black', 'Arial Black', Impact, sans-serif;
+  --app-font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
   --radius: 0.5rem; /* 8px */
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
@@ -469,14 +473,35 @@
   --chart-3: 74 69% 60%;
   --chart-4: 38 73% 55%;
   --chart-5: 200 47% 46%;
-  --app-font-sans: 'DM Sans', sans-serif;
-  --app-font-serif: 'Bricolage Grotesque', sans-serif;
-  --app-font-mono: 'Space Mono', monospace;
+  /* --app-font-serif is the display face despite the name: it is what the
+     headings, the board title and the panel titles are set in. */
+  --app-font-sans: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --app-font-serif: 'Archivo Black', 'Arial Black', Impact, sans-serif;
+  --app-font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
   --radius: 0.85rem;
   --shadow-2xs: 0 1px 0 hsl(157 30% 16% / 0.04);
   --shadow-xs: 0 2px 0 hsl(157 30% 16% / 0.05);
   --shadow-sm: 0 4px 0 hsl(157 30% 16% / 0.05), 0 10px 24px hsl(157 30% 16% / 0.06);
   --shadow: 0 8px 0 hsl(157 30% 16% / 0.06), 0 18px 40px hsl(157 30% 16% / 0.08);
+
+  /* -------------------------------------------------------------------
+     Stacking order on the board, declared once.
+     Nothing on the pitch may write a bare z-index: it picks from this
+     scale instead. The rule the scale exists to enforce is that a
+     control never floats above something its own element sits under —
+     which is how an arrow's close button ended up on top of the players
+     its arrow was drawn beneath.
+     ------------------------------------------------------------------- */
+  --layer-pitch: 0;
+  --layer-opponent: 1;
+  --layer-opponent-control: 2;
+  --layer-arrow: 3;
+  --layer-arrow-control: 4;
+  --layer-player: 5;
+  --layer-player-selected: 6;
+  --layer-ball: 7;
+  --layer-caption: 8;
+  --layer-popover: 60;
 }
 
 html {
@@ -490,6 +515,79 @@ body {
     radial-gradient(circle at 12% 8%, hsl(74 69% 60% / 0.14), transparent 23rem),
     hsl(var(--background));
   color: hsl(var(--foreground));
+  /* Makes body a stacking context, so the chalk layer below — which is a
+     negative-z-index child — resolves against body and paints above body's
+     own background. Without this it resolves against the root instead and
+     the cream paints straight over it. */
+  isolation: isolate;
+}
+
+/* Chalk markings behind the page.
+   Drawn much larger than the window and anchored off the top-left, so what you
+   actually see is an arc of the centre circle and a length of the halfway line
+   — a corner of a big diagram, not a second pitch competing with the real one
+   in the middle of the screen. Fixed, so it does not slide as the page scrolls.
+   A pseudo-element rather than background-attachment: fixed, which repaints the
+   whole background on every scroll frame. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='420' viewBox='0 0 560 420'%3E%3Cg fill='none' stroke='%231D3A2E' stroke-width='2.4'%3E%3Cline x1='0' y1='210' x2='560' y2='210'/%3E%3Ccircle cx='280' cy='210' r='84'/%3E%3Crect x='170' y='2' width='220' height='72'/%3E%3Crect x='170' y='346' width='220' height='72'/%3E%3Cpath d='M225 74 A56 56 0 0 0 335 74'/%3E%3Cpath d='M225 346 A56 56 0 0 1 335 346'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: -14vw -22vh;
+  background-size: 128vw auto;
+  opacity: 0.06;
+}
+
+@media (max-width: 900px) {
+  /* On a phone the board fills the screen and the motif has nowhere to sit
+     without ending up directly behind it. */
+  body::before {
+    background-position: -40vw -8vh;
+    background-size: 190vw auto;
+    opacity: 0.05;
+  }
+}
+
+/* Archivo Black has exactly one weight. Every font-weight: 800 and 900 in this
+   file would otherwise be smeared into a faux bold by the browser; with
+   synthesis off it simply draws the real face. Italics are synthesised the same
+   way and Archivo Black has no italic either, so both axes are turned off. */
+* {
+  font-synthesis-weight: none;
+  font-synthesis-style: none;
+}
+
+body {
+  font-size: 1.02rem;
+}
+
+/* The editorial division of labour: the display face for headlines, the
+   reading face for prose, and the mono for the furniture.
+   Newsreader is a text face drawn for 14px and up. This interface sets its
+   control labels at ten and eleven pixels in bold, which is a job it was never
+   drawn for and looks like it — so the controls go to the mono, which is what
+   the small-caps labels beside them already use. */
+.tool-button,
+.mode-toggle,
+.tool-select,
+.panel-tab,
+.action-button,
+.match-cta,
+.fact-nav-button,
+.formation-item-name {
+  font-family: var(--app-font-mono);
+  letter-spacing: 0.01em;
+}
+
+/* Running text, on the other hand, was set small for a sans. A serif at the
+   same pixel size reads smaller, so the smallest copy comes up a step. */
+.panel-copy,
+.drag-note {
+  font-size: 0.86rem;
 }
 
 button,
@@ -497,8 +595,17 @@ input {
   font: inherit;
 }
 
+/* Keyboard focus only.
+   `input:focus-visible` used to be in here alongside the buttons, and it is a
+   trap: a text field always matches :focus-visible, mouse or not, so every
+   click on the name box drew a 3px ring offset 2px outward — which had nowhere
+   to go and ran straight into the position row beneath it. Buttons match
+   :focus-visible the way you would expect, so they keep the ring; text fields
+   get a treatment that fits inside their own box (see .inspector-name-field). */
 button:focus-visible,
-input:focus-visible {
+a:focus-visible,
+select:focus-visible,
+[role='button']:focus-visible {
   outline: 3px solid hsl(var(--primary) / 0.35);
   outline-offset: 2px;
 }
@@ -538,11 +645,13 @@ input:focus-visible {
   box-shadow: 4px 4px 0 hsl(var(--foreground));
 }
 
+/* The tracking through this file was cut tight for a light grotesque. Archivo
+   Black is already narrow and heavy, so the same values close the counters up;
+   everything set in the display face is loosened to suit it. */
 .brand-name {
   font-family: var(--app-font-serif);
-  font-size: 1.2rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-size: 1.14rem;
+  letter-spacing: -0.015em;
   line-height: 1;
 }
 
@@ -553,23 +662,6 @@ input:focus-visible {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: hsl(var(--muted-foreground));
-}
-
-.topbar-note {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 13px;
-  border: 1px solid hsl(var(--border));
-  border-radius: 999px;
-  background: hsl(var(--card));
-  color: hsl(var(--muted-foreground));
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.topbar-note svg {
-  color: hsl(var(--primary));
 }
 
 .workspace {
@@ -589,11 +681,16 @@ input:focus-visible {
   flex: 1;
 }
 
+/* The one genuinely soft shadow on the page was here: --shadow-sm carries a
+   24px blur, and it sat on all three panels at once. Panels do not float above
+   anything — they are the page's furniture — so they get the crisp border they
+   already had and a tight offset, and the blur goes. Elevation is now spent
+   only on things that really are above the page: the two popups. */
 .panel {
   border: 1px solid hsl(var(--border));
   border-radius: 18px;
   background: hsl(var(--card));
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 0 hsl(157 30% 16% / 0.05);
 }
 
 .library-panel {
@@ -618,9 +715,34 @@ input:focus-visible {
 
 .panel-title {
   font-family: var(--app-font-serif);
-  font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: -0.045em;
+  font-size: 1.22rem;
+  letter-spacing: -0.015em;
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* The way back to a note that has been dismissed for good. */
+.panel-info {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+}
+
+.panel-info:hover {
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
 }
 
 .panel-copy {
@@ -964,10 +1086,9 @@ input:focus-visible {
 
 .pitch-title {
   font-family: var(--app-font-serif);
-  font-size: clamp(2rem, 4vw, 3.3rem);
-  font-weight: 900;
-  letter-spacing: -0.065em;
-  line-height: 0.95;
+  font-size: clamp(1.8rem, 3.5vw, 2.9rem);
+  letter-spacing: -0.02em;
+  line-height: 0.98;
 }
 
 .pitch-caption {
@@ -1025,7 +1146,7 @@ input:focus-visible {
 
 .player-marker {
   position: absolute;
-  z-index: 2;
+  z-index: var(--layer-player);
   width: clamp(28px, 3.6vw, 38px);
   height: clamp(28px, 3.6vw, 38px);
   display: flex;
@@ -1047,6 +1168,7 @@ input:focus-visible {
 }
 
 .player-marker.is-selected {
+  z-index: var(--layer-player-selected);
   border-color: hsl(var(--accent));
   outline: 3px solid hsl(var(--foreground));
   outline-offset: 3px;
@@ -1159,52 +1281,24 @@ input:focus-visible {
   white-space: nowrap;
 }
 
-.numbers-note {
-  position: fixed;
-  top: 84px;
-  left: 50%;
-  z-index: 40;
-  width: min(460px, calc(100vw - 32px));
-  padding: 16px 44px 16px 18px;
-  border: 1.5px solid hsl(var(--primary));
-  border-radius: 14px;
-  background: hsl(var(--card));
-  box-shadow: 6px 6px 0 hsl(var(--primary) / 0.35);
-  transform: translateX(-50%);
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-
-.numbers-note strong {
+/* The numbers note is an .anchored-card now — same as the position popup —
+   so it no longer needs a fixed slab of its own at the top of the screen.
+   Only the type inside it is still its business. */
+.anchored-card strong {
   display: block;
   margin-bottom: 4px;
+  padding-right: 26px;
   font-family: var(--app-font-serif);
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 
-.numbers-note-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border: 1px solid hsl(var(--border));
-  border-radius: 8px;
-  background: hsl(var(--card));
-  color: hsl(var(--foreground));
-  cursor: pointer;
-}
-
-.numbers-note-close:hover {
-  border-color: hsl(var(--foreground));
+.anchored-card p {
+  margin: 0;
 }
 
 .ball-marker {
   position: absolute;
-  z-index: 3;
+  z-index: var(--layer-ball);
   width: clamp(20px, 2.2vw, 26px);
   height: clamp(20px, 2.2vw, 26px);
   border: 1.5px solid rgba(0, 0, 0, 0.55);
@@ -1248,7 +1342,7 @@ input:focus-visible {
 
 .opponent-marker {
   position: absolute;
-  z-index: 1;
+  z-index: var(--layer-opponent);
   width: clamp(24px, 3vw, 32px);
   height: clamp(24px, 3vw, 32px);
   border: 2.5px solid rgba(255, 248, 221, 0.65);
@@ -1305,6 +1399,17 @@ input:focus-visible {
 }
 
 /* Nudge shown only while the panel is closed. */
+/* The manager's write-up folds away inside a box that already has a heading of
+   its own, so its summary sits a size down from a top-level one and does not
+   compete with "How Pep Guardiola plays" above it. */
+.playstyle-note {
+  margin: 2px 0 12px;
+}
+
+.playstyle-note > summary {
+  font-size: 0.95rem;
+}
+
 .summary-hint {
   color: hsl(var(--primary));
   font-family: var(--app-font-mono);
@@ -1502,7 +1607,7 @@ input:focus-visible {
   position: absolute;
   top: 10px;
   left: 50%;
-  z-index: 5;
+  z-index: var(--layer-caption);
   transition: top 0.45s ease;
   max-width: 88%;
   padding: 7px 14px;
@@ -1721,11 +1826,18 @@ input:focus-visible {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-bottom: 2px;
+  /* Room for the focus underline to sit in, so it never has to borrow the
+     position row's space the way the old outline did. */
+  margin-bottom: 6px;
+  padding-bottom: 1px;
   border-bottom: 1.5px solid hsl(var(--border));
 }
 
+/* Thickened from the border that is already there, rather than a ring drawn
+   around the outside. It cannot clip, because there is nothing to clip. */
 .inspector-name-field:focus-within {
+  padding-bottom: 0;
+  border-bottom-width: 2.5px;
   border-bottom-color: hsl(var(--primary));
 }
 
@@ -1741,9 +1853,8 @@ input:focus-visible {
   border: none;
   color: hsl(var(--foreground));
   font-family: var(--app-font-serif);
-  font-size: 1.35rem;
-  font-weight: 900;
-  letter-spacing: -0.04em;
+  font-size: 1.22rem;
+  letter-spacing: -0.015em;
   outline: none;
 }
 
@@ -1776,10 +1887,14 @@ input:focus-visible {
   border-color: hsl(var(--primary));
 }
 
+/* The same mistake as the name field, in smaller print: an outline offset
+   outward from a text input that always matches :focus-visible. Turned into an
+   inset ring, which stays inside the field's own box. */
 .inspector-role-input:focus-visible {
   border-style: solid;
-  outline: 2px solid hsl(var(--primary) / 0.55);
-  outline-offset: 1px;
+  border-color: hsl(var(--primary));
+  outline: none;
+  box-shadow: inset 0 0 0 2px hsl(var(--primary) / 0.35);
 }
 
 .inspector-role-name {
@@ -1853,34 +1968,105 @@ input:focus-visible {
   border-radius: 10px;
 }
 
-/* The arrow toggle gates the style options, so it is deliberately the biggest
-   control in the toolbar — easy to spot, hard to walk past. */
-.tool-button.arrow-toggle {
+/* The mode toggle is not one of the tools — it decides whether the tools are
+   there at all — so it does not pretend to be a button like the rest. It is
+   its own thing on purpose: taller, heavier border, and it fills in when on.
+   The old version was a .tool-button with the sizes overridden, which is what
+   made it read as an oddly grown member of the row rather than a switch. */
+.mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   min-height: 40px;
   padding: 0 18px;
-  border-width: 2px;
-  border-color: hsl(var(--primary));
+  border: 2px solid hsl(var(--primary));
   border-radius: 11px;
+  background: hsl(var(--card));
   color: hsl(var(--primary));
   font-size: 0.8rem;
+  font-weight: 800;
   letter-spacing: 0.01em;
+  cursor: pointer;
 }
 
-.tool-button.arrow-toggle.is-active {
-  border-color: hsl(var(--primary));
+.mode-toggle.is-active {
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
-  box-shadow: 3px 3px 0 hsl(var(--primary) / 0.3);
+  box-shadow: 2px 2px 0 hsl(var(--primary) / 0.3);
 }
 
-/* Style options only exist once drawing is switched on. */
-.tool-group.is-revealed {
-  animation: tool-reveal 0.18s ease-out;
+/* The drawing tools fold away rather than being torn out, so shutting them
+   takes exactly as long, and eases exactly the same way, as opening them.
+   `visibility` is in the transition twice over: instant on the way in, delayed
+   to the end on the way out. That is also what pulls the buttons out of the
+   tab order once they are closed. */
+.tool-reveal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-6px);
+  transition:
+    max-width 0.18s ease-out,
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out,
+    visibility 0s linear 0.18s;
 }
 
-@keyframes tool-reveal {
-  from { opacity: 0; transform: translateX(-6px); }
-  to { opacity: 1; transform: none; }
+.tool-reveal.is-open {
+  max-width: 640px;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    max-width 0.18s ease-out,
+    opacity 0.18s ease-out,
+    transform 0.18s ease-out,
+    visibility 0s linear 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-reveal,
+  .tool-reveal.is-open {
+    transition: none;
+  }
+}
+
+/* How close the board is to the arrow limit. Silent until it matters. */
+.arrow-tally {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.arrow-tally.is-full {
+  background: hsl(var(--destructive) / 0.14);
+  color: hsl(var(--destructive));
+}
+
+.arrow-tally.is-shouting {
+  animation: tally-knock 0.3s ease-out 2;
+}
+
+@keyframes tally-knock {
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow-tally.is-shouting {
+    animation: none;
+  }
 }
 
 .tool-button {
@@ -1904,6 +2090,49 @@ input:focus-visible {
   background: transparent;
 }
 
+/* Choosing the shape you are up against. Sits in the toolbar and reads as one
+   of the tools, so it matches the buttons either side of it rather than
+   arriving as a browser control dropped into the middle of them. */
+.tool-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 4px 0 9px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.tool-select-label {
+  opacity: 0.7;
+}
+
+.tool-select select {
+  min-height: 24px;
+  max-width: 168px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tool-select select:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tool-select:focus-within {
+  border-color: hsl(var(--primary));
+}
+
 .tool-button.is-active {
   border-color: hsl(var(--primary));
   background: hsl(var(--primary));
@@ -1913,7 +2142,7 @@ input:focus-visible {
 .arrow-layer {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: var(--layer-arrow);
   width: 100%;
   height: 100%;
   overflow: visible;
@@ -2064,9 +2293,34 @@ input:focus-visible {
 
 /* --- Selecting and deleting pieces on the pitch ------------------------- */
 
+/* Destructive actions are the least prominent things in the row, not the
+   loudest: no fill, no border, just the colour that says what they do. They
+   are also always present and simply disabled, so the row never reflows and
+   you can find them before you need them rather than after. */
 .tool-button.danger-tool {
-  border-color: hsl(var(--destructive));
+  border-color: transparent;
+  background: transparent;
+  color: hsl(var(--destructive) / 0.85);
+  font-weight: 700;
+}
+
+.tool-button.danger-tool:hover:not(:disabled) {
+  border-color: hsl(var(--destructive) / 0.5);
+  background: hsl(var(--destructive) / 0.08);
   color: hsl(var(--destructive));
+}
+
+.tool-button:disabled,
+.tool-select select:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+/* The destructive pair is pushed to the far end of the row, away from the
+   tools you reach for constantly. */
+.tool-group.is-destructive {
+  margin-left: auto;
+  border-color: transparent;
 }
 
 .opponent-marker.is-selected {
@@ -2077,9 +2331,11 @@ input:focus-visible {
 /* The delete badge that rides on whatever is selected. Positioned in pitch
    percentages like the markers themselves, so it tracks the thing it belongs
    to as that thing is dragged around. */
+/* An arrow's close button belongs to its arrow, so it sits in the arrow layer
+   — above the line it deletes, below the players the line runs under. */
 .pitch-delete {
   position: absolute;
-  z-index: 4;
+  z-index: var(--layer-arrow-control);
   display: grid;
   place-items: center;
   width: 22px;
@@ -2096,8 +2352,152 @@ input:focus-visible {
 
 /* On an opponent the badge is nudged up and clear of the marker, so the
    circle underneath stays draggable. */
+/* The opponent's badge follows its own marker down instead, for the same
+   reason: a control does not outrank the thing it controls. */
 .pitch-delete.is-offset {
+  z-index: var(--layer-opponent-control);
   transform: translate(45%, -125%);
+}
+
+/* ---------------------------------------------------------------------------
+   Popups that open where you clicked.
+
+   One card, two users: the position brief on the pitch and the note about the
+   shirt numbers. Placement and edge-clamping are done in JS (AnchoredCard);
+   everything here is the look, which is deliberately flat — a crisp border and
+   a tight shadow, not the big soft one that used to be on every panel.
+   --------------------------------------------------------------------------- */
+.anchored-card {
+  position: fixed;
+  z-index: var(--layer-popover);
+  width: min(268px, calc(100vw - 20px));
+  padding: 12px 14px;
+  border: 1.5px solid hsl(var(--foreground) / 0.88);
+  border-radius: 12px;
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  box-shadow: 0 2px 0 hsl(var(--foreground) / 0.16);
+  font-size: 0.8rem;
+  line-height: 1.46;
+  outline: none;
+}
+
+.anchored-card.is-below {
+  transform-origin: top center;
+  animation: card-in-below 0.12s ease-out;
+}
+
+.anchored-card.is-above {
+  transform-origin: bottom center;
+  animation: card-in-above 0.12s ease-out;
+}
+
+@keyframes card-in-below {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+}
+
+@keyframes card-in-above {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+}
+
+.anchored-card-close {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+}
+
+.anchored-card-close:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+
+.position-popover-head {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 2px;
+}
+
+.position-popover-code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.position-popover-name {
+  font-family: var(--app-font-serif);
+  font-size: 0.95rem;
+  letter-spacing: -0.02em;
+}
+
+.position-popover-player {
+  margin-bottom: 5px;
+  color: hsl(var(--muted-foreground));
+  font-family: var(--app-font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* The board's own position initials, after the position's name. Quieter than
+   the name, because on a manager's side the man is the headline. */
+.position-popover-slot {
+  opacity: 0.6;
+}
+
+.position-popover-role {
+  margin: 5px 0 0;
+}
+
+.position-popover-used {
+  margin: 6px 0 0;
+  color: hsl(var(--muted-foreground));
+}
+
+.position-popover-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 9px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: hsl(var(--primary));
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.position-popover-link:hover {
+  text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anchored-card.is-below,
+  .anchored-card.is-above {
+    animation: none;
+  }
 }
 
 /* --- The guide ---------------------------------------------------------- */
@@ -2788,12 +3188,22 @@ input:focus-visible {
   left: 0;
   width: 100%;
   height: 100%;
-  /* A plain ease-in-out spreads the movement across the whole duration. An
-     aggressive curve put its second control point at x=0.24, so the players
-     stood still and then snapped — which is what read as choppy. */
+  /* The fallback, for any surface where requestAnimationFrame never fires and
+     the motion engine therefore never runs: ease each beat the way the game
+     used to, rather than teleporting. `.is-live` below switches it off the
+     moment a real frame has been drawn. */
   transition: transform var(--travel, 0.9s) cubic-bezier(0.42, 0, 0.58, 1);
   will-change: transform;
   pointer-events: none;
+}
+
+/* Engine driving: position is written on every animation frame, so a
+   transition on top would be smoothing something already smooth, one frame
+   late. A transition is also what made the game look stepped — a straight
+   line from A to B, eased in and out, so all twenty-two players accelerated
+   from a standstill and stopped dead together, once per beat. */
+.match-pitch.is-live .match-slot {
+  transition: none;
 }
 
 .match-slot > * {
@@ -2932,11 +3342,16 @@ input:focus-visible {
   transform: translate(-50%, -50%);
 }
 
-/* The ball travels a shade faster than the players and starts moving at once,
-   so a pass reads as the ball being played rather than everyone sliding. */
+/* The ball is a moving object now, not a marker that gets reassigned: it
+   leaves on a velocity, runs, slows and arrives, and the engine draws it
+   wherever it has got to. Same fallback as the players. */
 .match-slot.is-ball {
   z-index: 3;
   transition: transform var(--ball-travel, 0.7s) cubic-bezier(0.3, 0.5, 0.35, 1);
+}
+
+.match-pitch.is-live .match-slot.is-ball {
+  transition: none;
 }
 
 .match-pitch.is-celebrating {
@@ -3114,6 +3529,29 @@ input:focus-visible {
   height: 100%;
   overflow: visible;
   pointer-events: none;
+}
+
+/* Where the model thinks everybody is, over where they actually are. Only
+   drawn with ?debug on the URL — see the note at the ghost layer in the view. */
+.match-ghosts {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.match-ghost {
+  fill: none;
+  stroke: #ff2d55;
+  stroke-width: 0.5;
+  opacity: 0.85;
+}
+
+.match-ghost.is-ball {
+  stroke: #00e5ff;
 }
 
 .match-run {

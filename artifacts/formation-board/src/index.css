@@ -3072,37 +3072,6 @@ select:focus-visible,
   box-shadow: 4px 4px 0 hsl(var(--primary) / 0.32);
 }
 
-/* The simulator sits beside the match CTA and must not compete with it.
-   Playing a match is the thing to do here; watching one play itself is the
-   thing to do next. So it takes the same shape and the same weight and
-   gives up the fill — an outline button reads as secondary without reading
-   as disabled, and the pair still scan as one control group rather than as
-   two unrelated buttons that happen to be adjacent. */
-.match-cta--sim {
-  background: transparent;
-  color: hsl(var(--primary));
-  box-shadow: 3px 3px 0 hsl(var(--primary) / 0.18);
-}
-
-/* The one frame between pressing Simulate and the simulator arriving. It
-   is deliberately plain and centred rather than a spinner: the chunk is
-   300 kB and on any normal connection this is gone before it registers, so
-   anything more elaborate would be a flourish nobody sees. */
-.sim-loading {
-  display: grid;
-  place-items: center;
-  min-height: 60vh;
-  font-family: var(--app-font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: hsl(var(--muted-foreground));
-}
-
-.match-cta--sim:hover {
-  background: hsl(var(--primary) / 0.08);
-  box-shadow: 4px 4px 0 hsl(var(--primary) / 0.18);
-}
 
 /* The whole game is meant to sit in one screen: the board on the left, the
    instructions beside it on the right, and nothing to scroll for. */

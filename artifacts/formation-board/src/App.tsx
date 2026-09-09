@@ -1,6 +1,4 @@
 ﻿import {
-  lazy,
-  Suspense,
   type CSSProperties,
   type PointerEvent,
   type ReactNode,
@@ -63,12 +61,6 @@ import { MANAGERS, type Era } from './managers';
 import MatchGame from './match-game';
 import HowToPlay from './how-to-play';
 import Rules from './rules';
-/* Loaded on demand. The simulator is a 300 kB single file and it sits
-   behind a button most visitors will never press — bundling it into the
-   entry chunk pushed that chunk to 528 kB and made everybody pay for it on
-   first paint. Splitting it costs one short spinner the first time the
-   route is opened, and nothing at all after that. */
-const TacticsSim = lazy(() => import('./tactics-sim'));
 import { MANAGER_PHOTOS, managerPhotoUrl } from './manager-photos';
 import { PLAYER_PHOTOS, playerPhotoUrl, type PlayerPhoto } from './player-photos';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -3077,20 +3069,6 @@ function Home() {
                   <Gamepad2 size={15} />
                   Play a match
                 </button>
-                {/* And the one that plays itself. Distinct from the match
-                    CTA beside it: that one hands the board to you, this one
-                    hands it to two managers and lets you watch. It goes
-                    straight in rather than by way of the rules, because
-                    there is nothing a viewer needs to be told how to do. */}
-                <button
-                  className="match-cta match-cta--sim"
-                  data-testid="button-simulate"
-                  onClick={() => navigate('/simulate')}
-                  type="button"
-                >
-                  <Play size={15} />
-                  Simulate
-                </button>
               </div>
               {/* Only an era has anything to say here. The shapes used to get a
                   line about messy thinking, which told nobody anything. */}
@@ -4059,13 +4037,6 @@ function Router() {
         </Route>
         {/* Where Play a match lands: the laws first, then the way in. */}
         <Route path="/rules" component={Rules} />
-        {/* The simulator: a whole match playing itself, rather than a
-            shape moved by hand. See src/tactics-sim.jsx. */}
-        <Route path="/simulate">
-          <Suspense fallback={<div className="sim-loading">Loading the simulator…</div>}>
-            <TacticsSim />
-          </Suspense>
-        </Route>
         {/* The reference is a section of the match panel and a page of its
             own, from the same content and the same collapsible sections. */}
         <Route path="/how-to-play" component={HowToPlay} />

@@ -18,6 +18,7 @@ import {
   type CSSProperties,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -38,6 +39,18 @@ import { FORMATIONS, type Formation } from "./formations";
 import { TUTORIAL, TUTORIAL_DONE, type MatchEvent } from "./tutorial-content";
 import { HowToPlayPanel } from "./how-to-play";
 import type { Position } from "./pitch-types";
+import { Motion, flightSeconds, metresBetween } from "./motion";
+import {
+  type BallState,
+  LOOSE_SECONDS,
+  REACH_SECONDS,
+  ballAt,
+  ballCarrier,
+  contestFor,
+  firstTo,
+  meetPoint,
+  reachTime,
+} from "./ball";
 import {
   type ActionId,
   type Move,
@@ -61,6 +74,7 @@ import {
   blockById,
   zoneOf,
   aiStance,
+  answerRuns,
   availableMoves,
   buildTeam,
   canShoot,
@@ -68,7 +82,8 @@ import {
   drawMove,
   kickOffShape,
   kickOffTaker,
-  looseBall,
+
+  breakPoint,
   nearestTo,
   offsideLineOf,
   playerName,
@@ -141,7 +156,22 @@ const SECOND_SHAPE: SideChoice = {
   formation: FORMATIONS[1],
 };
 
-const MATCH_SECONDS = 60;
+/**
+ * How long a half-length match lasts, in seconds of football.
+ *
+ * Sixty was the number the game shipped with and the tester's sharpest
+ * complaint about it: "you can't do anything fancy or make elaborate plays,
+ * because before you know it time's up." That was measurably true. A
+ * possession runs about twelve seconds, so sixty seconds held five of them —
+ * two or three each — and the only strategy the clock permitted was to rush.
+ * Slowing the ball to a real speed makes every one of those possessions
+ * longer, so the same sixty seconds would now hold three.
+ *
+ * A hundred and fifty gives both sides six or seven possessions a half, which
+ * is enough for a patient build-up to be a choice you can actually make and
+ * lose rather than one the clock forbids.
+ */
+const MATCH_SECONDS = 150;
 /** The most the half can run past its mark while waiting for a natural break. */
 const HALF_ADDED_SECONDS = 5;
 /** When the first half is up, in milliseconds of football played. */
@@ -163,12 +193,18 @@ const REVEAL_MS = 520;
 /** How long each beat of play after a pass lands takes. How MANY of them there
  *  are is the model's call — see settlingPlan — because a ball into space and
  *  a ball into a crowded box are not the same event. */
-const SETTLE_BEAT_MS = 620;
+const SETTLE_BEAT_MS = 440;
 
-/** How long you get to send a man on after he has taken the ball down.
- *  Long enough to see it and react to it, short enough that the game does
- *  not stop dead every time somebody controls a pass. */
-const RUN_ON_MS = 1500;
+/**
+ * How long you get to send a man on after he has taken the ball down.
+ *
+ * A second and a half, which is what this was, is about as long as it takes to
+ * notice a prompt has appeared — never mind read whose name is on it and
+ * decide whether you want him to go. The tester's report was blunt about it:
+ * "it's kinda hard to even click on time for those." Four seconds is a pause
+ * in play you can actually use, and letting it lapse is still a real choice
+ * rather than a punishment for reading speed.
+ */
 
 /**
  * The catchment around a player is measured off his marker as it is actually
@@ -255,12 +291,58 @@ const travelTime = (distance: number) => clamp(320 + distance * 34, 420, 1300);
  * has anything to do with how much running is going on around it.
  */
 const ballTime = (distance: number) => clamp(240 + distance * 15, 300, 1000);
-/** How the ball gets under way and settles. Kept the same as the transition on
- *  .match-slot.is-ball, because a bent ball is animated instead of transitioned
- *  and the two have to be indistinguishable apart from the line they take. */
-const BALL_EASING = "cubic-bezier(0.3, 0.5, 0.35, 1)";
+
+/**
+ * How long the ball is in the air between two points, in milliseconds.
+ *
+ * Not a guess any more, and not a number the view owns: it is the engine's
+ * own answer, from the launch speed and the friction that is actually going to
+ * be applied to it. What you watch and what the game waits for are the same
+ * event because they are the same calculation.
+ */
+const ballMsFor = (from: Position, to: Position, lofted = false) =>
+  flightSeconds(metresBetween(from, to), lofted) * 1000;
+
+/**
+ * How long a beat lasts when a ball is played.
+ *
+ * A beat used to be a flat 1100ms and the ball always landed inside it. Now
+ * that the ball travels at a footballer's speed rather than four times it, a
+ * twenty-five metre pass is in the air for the best part of two seconds — so
+ * the beat has to be at least as long as the flight, or the game would settle
+ * who won the ball before it had arrived. The touch on the end is the moment
+ * after it lands where the picture is still resolving.
+ */
+const TOUCH_MS = 260;
+const beatMsFor = (flightMs: number) => Math.max(MOVE_MS, flightMs + TOUCH_MS);
 /** A phase has to end somehow if they simply never give it away. */
-const MAX_PHASE_BEATS = 9;
+/** How far the model and the pitch may be apart once a beat has finished. */
+const SETTLED_WITHIN = 2.5;
+
+/**
+ * The most beats one of their passages may run for.
+ *
+ * Nine was strangling them. Measured over 788 capped passages they were on the
+ * halfway line when the whistle went — mean y of 44.6, where shooting needs
+ * 72 — so 73% of everything they did ended not in a tackle, a shot or a
+ * mistake, but in the passage simply being called off for length. They took
+ * five shots in thirteen hundred possessions. That is not a defensive game
+ * being won, it is an opponent that was never allowed to arrive.
+ *
+ * The cap still exists, because a passage you cannot interrupt should not run
+ * forever. Twenty-two beats is about thirty seconds of football, against a
+ * match that is now a hundred and fifty.
+ */
+/**
+ * How many beats one of their attacks may run for.
+ *
+ * This is a WALL-CLOCK limit as much as a football one. Balls now travel at
+ * something like a real speed, so a beat lasts as long as the pass in it, and
+ * a passage of twenty-two of them is the best part of a minute of watching
+ * with nothing to do. Twelve is roughly as long as a real attacking move
+ * before it breaks down, and it keeps their longest spell under half a minute.
+ */
+const MAX_PHASE_BEATS = 12;
 /** How many times one passage can stop to let you re-set the shape. The
  *  last-ditch block against a shot is separate and always available once. */
 const MAX_RESETS = 2;
@@ -428,39 +510,6 @@ function bowOf(bend: number, lofted: boolean, length: number): number {
   return clamp(drawn, -most, most);
 }
 
-/**
- * The flight itself, as a run of points along the very curve the arrow drew.
- *
- * The ball used to slide from A to B in a straight line however hard you had
- * bent the arrow, so a curled shot looked like a mis-drawn straight one. These
- * are pitch percentages, ready to be handed to the marker's transform.
- */
-function flightPoints(
-  from: Position,
-  to: Position,
-  bend: number,
-  lofted: boolean,
-  steps = 24,
-): Position[] {
-  const x1 = from.x;
-  const y1 = from.y * VIEW_TALL;
-  const x2 = to.x;
-  const y2 = to.y * VIEW_TALL;
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const length = Math.hypot(dx, dy) || 1;
-  const bow = bowOf(bend, lofted, length);
-  const cx = (x1 + x2) / 2 - (dy / length) * bow;
-  const cy = (y1 + y2) / 2 + (dx / length) * bow;
-  return Array.from({ length: steps + 1 }, (_, index) => {
-    const t = index / steps;
-    const away = 1 - t;
-    return {
-      x: away * away * x1 + 2 * away * t * cx + t * t * x2,
-      y: (away * away * y1 + 2 * away * t * cy + t * t * y2) / VIEW_TALL,
-    };
-  });
-}
 
 type Drag = {
   fromId: string;
@@ -511,6 +560,9 @@ function MatchPitch({
   runs,
   drag,
   pitchRef,
+  engine,
+  restartSeq,
+  debug,
   onPointerDown,
   onPointerMove,
   onPointerUp,
@@ -528,6 +580,12 @@ function MatchPitch({
   runs: Record<string, Run>;
   drag: Drag | null;
   pitchRef: React.RefObject<HTMLDivElement | null>;
+  /** Owned by the match, not by the pitch — see the note where it is made. */
+  engine: Motion;
+  /** Bumped on every kick-off, so nobody jogs into position for a restart. */
+  restartSeq: number;
+  /** Draw where the model thinks everybody is, next to where they are. */
+  debug: boolean;
   onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
   onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
   onPointerUp: (event: React.PointerEvent<HTMLDivElement>) => void;
@@ -562,42 +620,158 @@ function MatchPitch({
     const cy = (y1 + y2) / 2 + (dx / length) * bow;
     return `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
   };
-  // The ball flies the line that was drawn.
+  // --- continuous motion ---------------------------------------------------
   //
-  // Its marker is moved by a CSS transition, and a transition is a straight
-  // line between two points — it cannot be anything else. So a bent ball is
-  // animated over the top of it, along the very same quadratic the arrow was
-  // drawn with. The transition has to be switched off while that runs: a
-  // transition beats an animation in the cascade and would otherwise drag the
-  // ball straight through the middle of its own arc.
-  const ballRef = useRef<HTMLDivElement>(null);
+  // The beat is still the unit of decision. What changed is that a beat now
+  // RESOLVES as motion rather than as a jump: the model says where everybody
+  // is trying to get to, and the engine runs them there on a fixed timestep
+  // while the renderer draws them wherever they actually are on this frame.
+  const nodesRef = useRef(new Map<string, HTMLElement>());
+
+  const holdNode = (id: string, node: HTMLElement | null) => {
+    if (node) nodesRef.current.set(id, node);
+    else nodesRef.current.delete(id);
+  };
+
+  // Where everybody is trying to get to. The model has just decided it; the
+  // engine spends the beat actually taking them there.
+  //
+  // A LAYOUT effect, and it plants everybody before it does anything else.
+  // Nothing else writes a transform any more, so a marker that reaches the
+  // screen before the engine has first drawn it has no transform at all — and
+  // an untransformed marker is not "roughly right", it is pinned to the top
+  // left corner of the pitch. Running before paint means that frame cannot
+  // happen: the node is placed in the same commit that creates it.
+  useLayoutEffect(() => {
+    const live = new Set<string>(["ball"]);
+    for (const player of [...home, ...away]) {
+      live.add(player.id);
+      engine.place(player.id, "player", player.spot, player.attributes.pace);
+      engine.aim(player.id, player.spot, player.attributes.pace);
+      const node = nodesRef.current.get(player.id);
+      const body = engine.get(player.id);
+      if (node && body && !node.style.transform)
+        node.style.transform = `translate(${body.at.x}%, ${body.at.y}%)`;
+    }
+    engine.keepOnly(live);
+  }, [home, away, engine]);
+
+  // A restart is not a passage of play. Everybody is simply standing in a
+  // legal kick-off before the whistle goes, so they are put there rather than
+  // jogging back into it from wherever the goal left them — which is where a
+  // good deal of the aimless drifting about came from.
   useEffect(() => {
-    const marker = ballRef.current;
-    if (!marker || !flight || typeof marker.animate !== "function") return;
+    for (const player of [...home, ...away]) engine.snap(player.id, player.spot);
+    engine.snap("ball", ball);
+    // Only on a restart. The shapes themselves are run into, not snapped to.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restartSeq, engine]);
+
+  // A pass is a kick, not a reassignment. The ball leaves on a velocity and
+  // is not attached to anybody until it gets there.
+  useEffect(() => {
+    engine.place("ball", "ball", ball);
+    if (!flight) return;
     const dx = flight.to.x - flight.from.x;
     const dy = (flight.to.y - flight.from.y) * VIEW_TALL;
-    const length = Math.hypot(dx, dy);
-    const bow = bowOf(flight.bend, flight.lofted, length);
-    // A straight ball is exactly what the transition already does, and doing
-    // it twice is how you get a stutter.
-    if (length < 2 || Math.abs(bow) < 1.5) return;
-    const flown = marker.animate(
-      flightPoints(flight.from, flight.to, flight.bend, flight.lofted).map(
-        (point) => ({ transform: `translate(${point.x}%, ${point.y}%)` }),
-      ),
-      // The same duration and the same easing as the transition it stands in
-      // for (see .match-slot.is-ball), so a curled ball and a straight one are
-      // hit with the same weight.
-      { duration: ballMs, easing: BALL_EASING, fill: "none" },
-    );
-    marker.style.transition = "none";
-    const land = () => {
-      marker.style.transition = "";
+    const bow = bowOf(flight.bend, flight.lofted, Math.hypot(dx, dy) || 1);
+    engine.kick(flight.from, flight.to, bow, flight.lofted);
+    // Only when a new flight starts — `ball` is in the deps of the place()
+    // above for the first paint, not to re-kick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flight, engine]);
+
+  // One rAF loop for the whole pitch. It writes transforms straight onto the
+  // nodes: React is not involved in where anybody is, only in who exists.
+  //
+  // The pitch is marked as engine-driven from the first frame that actually
+  // runs, and not before. That is what turns the CSS transition off — so on
+  // any surface where rAF never fires (an embedded view that is not
+  // compositing, a remoted display), the class never lands, the transition
+  // stays on, and the game falls back to the eased beat-to-beat movement it
+  // had before rather than to twenty-two players teleporting. Progressive
+  // enhancement rather than a hard dependency on one browser API.
+  // Read inside the frame loop, which must not be rebuilt sixty times a
+  // second just because the man on the ball changed.
+  const carrierRef = useRef<string | null>(carrierId);
+  carrierRef.current = carrierId;
+
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    let lastFrame = 0;
+
+    /** Put every body where it is. The ONE thing that writes a transform. */
+    const draw = (alpha: number) => {
+      // A ball somebody has is a ball at his feet — it does not need moving
+      // to him, and it certainly does not need to be somewhere else while he
+      // runs about. This is what makes "controlled" mean something physical
+      // rather than being a label on a position that drifts away from him.
+      const owner = carrierRef.current ? engine.get(carrierRef.current) : null;
+      const held = engine.get("ball");
+      if (owner && held) {
+        // Somebody has it, so the flight is over whatever the engine thinks.
+        //
+        // It used to check `!held.flight` and skip if one was still running,
+        // which happens all the time: the match settles possession off its own
+        // reckoning of when the ball lands, and the engine is flying it on
+        // its own physics, and the two do not agree to the millisecond. The
+        // result was the ball left sitting out on its arc, visibly detached
+        // from the player the game had just given it to — eight units adrift
+        // on average, thirty at worst. Possession is the authority here; if a
+        // man has it, it is at his feet, full stop.
+        held.flight = null;
+        held.was = { ...held.at };
+        held.at = { ...owner.at };
+        held.vel = { ...owner.vel };
+      }
+      for (const body of engine.all()) {
+        const node = nodesRef.current.get(body.id);
+        if (!node) continue;
+        const at = engine.drawAt(body, alpha);
+        // A runner leans into the way he is going. The markers are numbered
+        // circles, so a full heading rotation would stand the number on its
+        // ear — a lean reads as motion and keeps the number legible.
+        const lean =
+          body.kind === "player" ? clamp(body.vel.x * 1.1, -10, 10) : 0;
+        node.style.transform = `translate(${at.x}%, ${at.y}%) rotate(${lean.toFixed(1)}deg)`;
+      }
     };
-    flown.addEventListener("finish", land);
-    flown.addEventListener("cancel", land);
-    return () => flown.cancel();
-  }, [flight, ballMs]);
+
+    // The engine is no longer only in charge of how the game LOOKS — the match
+    // asks it where everybody is before deciding anything, so it has to keep
+    // running whether or not this surface ever paints a frame. Some do not: an
+    // embedded view that is not compositing never fires rAF at all, and a
+    // backgrounded tab stops. Freezing would now mean twenty-two players stuck
+    // on the kick-off spots with every ball settled against them.
+    //
+    // So a timer stands behind rAF and takes over if no frame has arrived. It
+    // steps the same fixed timestep, so the game plays out identically; it
+    // just draws at ten a second instead of sixty. The `is-live` class comes
+    // OFF while the timer is driving, which switches the CSS transition back
+    // on and eases between those ten — the same progressive enhancement as
+    // before, now measured continuously rather than latched on the first frame.
+    const keepAlive = window.setInterval(() => {
+      const now = performance.now();
+      if (now - lastFrame < 250) return;
+      pitchRef.current?.classList.remove("is-live");
+      draw(engine.advance(now - last));
+      last = now;
+    }, 100);
+
+    const frame = (now: number) => {
+      lastFrame = now;
+      pitchRef.current?.classList.add("is-live");
+      draw(engine.advance(now - last));
+      last = now;
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearInterval(keepAlive);
+    };
+  }, [engine]);
 
   type RunArrow = {
     id: string;
@@ -616,11 +790,25 @@ function MatchPitch({
     })
     .filter((entry): entry is RunArrow => entry !== null);
 
+  // React owns who is on the pitch. The engine owns where they are.
+  //
+  // There is deliberately no `style={{ transform }}` here, and that absence is
+  // the fix for the whole pitch shaking every time the ball moved. There used
+  // to be one, and it fought the engine: React wrote the model's finishing
+  // position, the engine wrote the real one, and the clock re-rendered ten
+  // times a second while the ball was travelling. Every 100ms all twenty-three
+  // markers snapped up to seven and a half units to where the model said they
+  // would end up, and the next frame dragged them back. That is the shake, the
+  // choppiness, and a good deal of what read as random movement — one bug,
+  // three symptoms, and it only happened while the ball was in play because
+  // that is the only time the clock was ticking.
+  //
+  // Now exactly one thing writes a transform: draw(), above.
   const marker = (player: Player) => (
     <div
       className="match-slot"
       key={player.id}
-      style={{ transform: `translate(${player.spot.x}%, ${player.spot.y}%)` }}
+      ref={(node) => holdNode(player.id, node)}
     >
       {markerFace(player)}
     </div>
@@ -644,6 +832,21 @@ function MatchPitch({
       {player.name && <span className="match-marker-name">{player.name}</span>}
     </div>
   );
+
+  // The clock ticks ten times a second while the ball is travelling, and every
+  // tick re-renders this component. Nothing about a marker depends on the
+  // clock, so hold the elements steady across those renders and React skips
+  // twenty-three subtrees rather than reconciling them for nothing.
+  const awayMarkers = useMemo(
+    () => away.map(marker),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [away, carrierId, targetId, runs],
+  );
+  const homeMarkers = useMemo(
+    () => home.map(marker),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [home, carrierId, targetId, runs],
+  );
   return (
     <div
       className={`match-pitch ${celebrating ? "is-celebrating" : ""}`}
@@ -656,8 +859,8 @@ function MatchPitch({
       ref={pitchRef}
     >
       <PitchLines />
-      {away.map(marker)}
-      {home.map(marker)}
+      {awayMarkers}
+      {homeMarkers}
       <svg className="match-arrows" viewBox="0 0 100 150" aria-hidden="true">
         <defs>
           <marker
@@ -716,13 +919,34 @@ function MatchPitch({
             />
           ))}
       </svg>
-      <div
-        className="match-slot is-ball"
-        ref={ballRef}
-        style={{ transform: `translate(${ball.x}%, ${ball.y}%)` }}
-      >
+      <div className="match-slot is-ball" ref={(node) => holdNode("ball", node)}>
         <div className="match-ball" data-testid="match-ball" />
       </div>
+      {/* The model's picture, drawn over the real one. Rings are where the
+          game thinks everybody is; markers are where they are. They should sit
+          on top of each other by the time you are asked to do anything, and
+          any beat where they do not is a beat somebody was passed to in
+          absentia. Off unless ?debug is on the URL. */}
+      {debug && (
+        <svg className="match-ghosts" viewBox="0 0 100 150" aria-hidden="true">
+          {[...home, ...away].map((player) => (
+            <circle
+              className="match-ghost"
+              cx={vx(player.spot.x)}
+              cy={vy(player.spot.y)}
+              data-ghost={player.id}
+              key={player.id}
+              r="2.4"
+            />
+          ))}
+          <circle
+            className="match-ghost is-ball"
+            cx={vx(ball.x)}
+            cy={vy(ball.y)}
+            r="1.3"
+          />
+        </svg>
+      )}
     </div>
   );
 }
@@ -774,9 +998,87 @@ export default function MatchGame({
     kickOffShape(buildTeam(FORMATIONS[1].shape, "away"), "away", false),
   );
   const [possession, setPossession] = useState<Side>("home");
-  const [carrierId, setCarrierId] = useState<string | null>(null);
   const [targetId, setTargetId] = useState<string | null>(null);
-  const [ball, setBall] = useState<Position>(CENTRE);
+
+  // --- one source of truth for where everybody is --------------------------
+  //
+  // The engine used to live inside the pitch, which meant the game itself had
+  // no way to ask where anybody actually WAS: it only knew where the model had
+  // decided they would end up, and it made every decision against that. So the
+  // ball was played to a man's finishing position the instant the beat began,
+  // arrived there long before he did, and was collected by a player who was
+  // still eight metres away when it landed. Passes from nobody, to nobody.
+  //
+  // It lives here now. The model still decides — reshape() says where a man is
+  // trying to get to — but every question of the form "who is near enough to
+  // do something about this" is put to the engine, and the engine answers with
+  // where he is standing this instant.
+  const engineRef = useRef<Motion | null>(null);
+  if (!engineRef.current) engineRef.current = new Motion();
+  const engine = engineRef.current;
+  /** Bumped on every restart, so a kick-off is stood in, not jogged into. */
+  const [restartSeq, setRestartSeq] = useState(0);
+  /**
+   * The developer overlay: the model's picture drawn over the real one.
+   *
+   * Deliberately NOT a URL flag any more. It was, and a link with ?debug on it
+   * is trivially easy to still be sitting on without realising — which is what
+   * happened: red rings over every player during an ordinary game, looking
+   * like part of the game rather than a tool. A stored key cannot be arrived
+   * at by following a link or reloading a tab somebody left open.
+   */
+  const debug = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem("match-debug") === "on";
+    } catch {
+      return false;
+    }
+  }, []);
+
+  /**
+   * These players, where they actually are.
+   *
+   * The list carries the model's view — the spot each man is running towards.
+   * This swaps in the engine's view, the spot he has got to. Anything that has
+   * to be true of the pitch as it stands rather than as it is about to stand
+   * goes through here first.
+   */
+  const liveOf = useCallback(
+    (players: Player[]): Player[] =>
+      players.map((player) => {
+        const at = engine.at(player.id);
+        return at ? { ...player, spot: { x: at.x, y: at.y } } : player;
+      }),
+    [engine],
+  );
+
+  // --- the ball ------------------------------------------------------------
+  //
+  // One piece of state, three states, and no way to be in two of them. It used
+  // to be four separate things — a side, a carrier id, a position and a flight
+  // — kept in step by hand, which is how the ball ended up belonging to
+  // somebody while it was still in the air.
+  const [ballState, setBallState] = useState<BallState>({
+    kind: "controlled",
+    by: "",
+    at: CENTRE,
+  });
+  const carrierId = ballCarrier(ballState);
+  const ball = ballAt(ballState);
+  /** The flight it is on, or null when it is on somebody's foot or the floor. */
+  const flight = useMemo<Flight | null>(
+    () =>
+      ballState.kind === "inFlight"
+        ? {
+            from: ballState.from,
+            to: ballState.to,
+            bend: ballState.bend,
+            lofted: ballState.lofted,
+          }
+        : null,
+    [ballState],
+  );
   /** Which part of the pitch the ball is in, from your goal's point of view. */
   const ballZone = useMemo(() => zoneOf(ball, "home"), [ball]);
   const [score, setScore] = useState({ home: 0, away: 0 });
@@ -812,18 +1114,84 @@ export default function MatchGame({
   /** How long the ball itself should take over its current flight. */
   const [ballMs, setBallMs] = useState(600);
   const ballWasRef = useRef<Position>(CENTRE);
-  /** The flight it is on, so the marker can be sent along the drawn curve
-   *  rather than sliding straight through it. */
-  const [flight, setFlight] = useState<Flight | null>(null);
 
-  /** Move the ball, timing the flight off how far IT travels. `bend` is what
-   *  the drag measured, in the same units the arrow was drawn with. */
-  const playBall = (spot: Position, bend = 0, lofted = false) => {
+  /** Strike it. Timed off how far IT travels; `bend` is what the drag
+   *  measured, in the same units the arrow was drawn with. */
+  const playBall = (
+    spot: Position,
+    bend = 0,
+    lofted = false,
+    struckBy: string | null = null,
+    meantFor: string | null = null,
+  ) => {
     const was = ballWasRef.current;
-    setBallMs(ballTime(Math.hypot(spot.x - was.x, spot.y - was.y)));
+    setBallMs(ballMsFor(was, spot, lofted));
     ballWasRef.current = spot;
-    setFlight({ from: was, to: spot, bend, lofted });
-    setBall(spot);
+    setBallState({
+      kind: "inFlight",
+      from: was,
+      to: spot,
+      struckBy,
+      meantFor,
+      bend,
+      lofted,
+    });
+  };
+
+  /** He has it. The ball is at his feet from here until somebody plays it. */
+  const giveBall = (player: Player) => {
+    ballWasRef.current = player.spot;
+    setBallState({ kind: "controlled", by: player.id, at: player.spot });
+  };
+
+  /**
+   * Where a pass should actually be hit.
+   *
+   * A ball into space is hit into the space — that is what it is for, and
+   * whether anybody gets on the end of it is the gamble you took. A ball to a
+   * man's feet is hit to his feet, and since he is running, his feet will not
+   * be where they are now by the time it arrives. Hitting the spot the model
+   * has sent him to is what made the ball beat the man to his own pass: it
+   * travels several times faster than he does, so it got there first, every
+   * time, and waited for him.
+   */
+  const aimAt = (
+    from: Position,
+    receiver: Player | null,
+    target: Position,
+    lofted: boolean,
+  ): Position =>
+    lofted || !receiver ? target : meetPoint(from, receiver, target, lofted);
+
+  /**
+   * Who comes away with a ball that has just come down.
+   *
+   * `meant` is the man it was played to, when it was a good ball — he has
+   * first call on it, but only in the sense that a footballer does: he still
+   * has to get there, and if an opponent gets there first it is theirs however
+   * well the pass was struck. Everything else is an even race.
+   */
+  const claimFor = (
+    at: Position,
+    meant: Player | null,
+    theirs: Player[],
+    ours: Player[],
+  ): { player: Player; turnedOver: boolean; scrappy: boolean } => {
+    if (meant) {
+      const his = reachTime(meant, at);
+      const rival = firstTo(at, theirs);
+      if (his.seconds <= REACH_SECONDS && (!rival || his.seconds <= rival.seconds))
+        return { player: meant, turnedOver: false, scrappy: false };
+    }
+    const near = contestFor(at, theirs, ours);
+    if (near) return { ...near, scrappy: near.clearBy < 0.25 };
+    // Nobody is near it at all. It is not anybody's yet — so it runs on, and
+    // whoever is prepared to chase it furthest ends up with it.
+    const chase = contestFor(at, theirs, ours, LOOSE_SECONDS);
+    if (chase) return { ...chase, scrappy: true };
+    const all = [...theirs, ...ours];
+    const last = nearestTo(at, all);
+    return { player: last, turnedOver: theirs.includes(last), scrappy: true };
   };
   /** Set while the phase is paused waiting for you to react. */
   const [recover, setRecover] = useState<{
@@ -845,7 +1213,6 @@ export default function MatchGame({
   const [runTiming, setRunTiming] = useState<RunTiming>("onPass");
   /** Whose name is on the run-on prompt, or null when the window is shut. */
   const [runOn, setRunOn] = useState<string | null>(null);
-  const runOnOpenRef = useRef(false);
   const runOnGoRef = useRef<(() => void) | null>(null);
   const [dragIntent, setDragIntent] = useState<DragIntent>("ground");
   const [drag, setDrag] = useState<Drag | null>(null);
@@ -915,9 +1282,9 @@ export default function MatchGame({
       kickOffShape(buildTeam(awayShape, "away", awaySquad), "away", false),
     );
     ballWasRef.current = CENTRE;
-    setBall(CENTRE);
-    setCarrierId(null);
+    setBallState({ kind: "loose", at: CENTRE });
     setTargetId(null);
+    setRestartSeq((n) => n + 1);
   }, [stage, homeShape, homeSquad, awayShape, awaySquad]);
 
   /**
@@ -1163,8 +1530,13 @@ export default function MatchGame({
     const chaserStepped = stepped === true || stepped === "defenders";
     const homeStepped = holder === "home" ? holderStepped : chaserStepped;
     const awayStepped = holder === "away" ? holderStepped : chaserStepped;
-    const fromHome = from?.home ?? home;
-    const fromAway = from?.away ?? away;
+    // Every beat starts from where the players have actually got to, not from
+    // where the last beat sent them. Those are the same thing once a beat has
+    // run its course and are very much not the same thing in the middle of one
+    // — and beats overlap, because a pass lands before the run that was made
+    // for it has finished.
+    const fromHome = liveOf(from?.home ?? home);
+    const fromAway = liveOf(from?.away ?? away);
     const pin = onBall ? { [onBall]: spot } : {};
     // Runs you draw while they have the ball are positions to take up, not
     // runs to time — you are not passing to anybody. So when defending they
@@ -1268,8 +1640,9 @@ export default function MatchGame({
     // game carried on without them. A run is a thing you do for a moment of
     // the match, and if it does not come off you get back in the game.
     setRuns((current) => (Object.keys(current).length ? {} : current));
-    playBall(next.spot);
-    setCarrierId(next.id);
+    // He has it because he got to it. The ball goes onto his foot and stays
+    // there — it is not kicked to him, which is what it used to be.
+    giveBall(next);
     setTargetId(null);
     setPossession(holder);
     setJustWon(wonIt);
@@ -1288,11 +1661,13 @@ export default function MatchGame({
     );
     setHome(freshHome);
     setAway(freshAway);
+    const taker = kickOffTaker(holder === "home" ? freshHome : freshAway);
     ballWasRef.current = CENTRE;
-    setBall(CENTRE);
-    setCarrierId(kickOffTaker(holder === "home" ? freshHome : freshAway).id);
+    setBallState({ kind: "controlled", by: taker.id, at: CENTRE });
     setTargetId(null);
     setPossession(holder);
+    // Stand them in the kick-off rather than letting them jog into it.
+    setRestartSeq((n) => n + 1);
     setJustWon(false);
     setRuns({});
     // Both sides are standing in a legal kick-off and must be left there until
@@ -1336,13 +1711,26 @@ export default function MatchGame({
     bend = 0,
     lofted = false,
   ) => {
+    // Where it was played FROM, kept before the ball is moved, so a ball that
+    // does not come off can be broken down somewhere along the way instead of
+    // arriving perfectly at the target anyway.
+    const playedFrom = ball;
+    spendRunOn();
     setStage("moving");
     setTargetId(endsOn.id);
     // The ball is away, so the kick-off no longer pins anybody and the runs
     // that were timed to the pass go now — which is the point of timing them.
     atKickOffRef.current = false;
+    // Hit into his stride, not at the patch of grass he is heading for. This
+    // is the whole of the phantom-passer fix on the striking side: the ball
+    // and the man now arrive together because the ball was aimed at where he
+    // can be, rather than at where the model has already decided he is.
+    const runner = liveOf(holder === "home" ? home : away).find(
+      (player) => player.id === endsOn.id,
+    );
+    const meets = aimAt(playedFrom, runner ?? null, spot, lofted);
     const { nextHome, nextAway } = applyShapes(
-      spot,
+      meets,
       holder,
       endsOn.id,
       stance,
@@ -1350,47 +1738,85 @@ export default function MatchGame({
       undefined,
       true,
     );
-    playBall(spot, bend, lofted);
+    const flightMs = ballMsFor(playedFrom, meets, lofted);
+    playBall(meets, bend, lofted, carrierId, endsOn.id);
     setCommentary(lines.going);
+
+    // Who ends up with it is settled the moment the ball comes down, which is
+    // NOT the moment the beat ends: a pass is in the air for a third of a
+    // second and the beat runs for over a second. Judging it at the end of the
+    // beat gave everybody the rest of the beat to get to a ball that had
+    // already stopped rolling, which is another way of saying nobody had to be
+    // there when it arrived. So the claim is taken here, on the whistle, and
+    // spent below.
+    const failed = offside || Math.random() < risk;
+    let claimed: { player: Player; turnedOver: boolean; scrappy: boolean } | null =
+      null;
+    let landedAt = meets;
+    timersRef.current.push(
+      window.setTimeout(() => {
+        const liveHome = liveOf(nextHome);
+        const liveAway = liveOf(nextAway);
+        const theirs = holder === "home" ? liveAway : liveHome;
+        const ours = holder === "home" ? liveHome : liveAway;
+        // Where the ball came down: short of the target if it broke down on
+        // the way, on the target if it was struck well.
+        landedAt = offside
+          ? meets
+          : failed
+            ? breakPoint(playedFrom, meets, theirs, lofted)
+            : meets;
+        if (!offside && failed) playBall(landedAt, 0, false, carrierId, null);
+        // And now, whatever the die said, somebody has to be there. A ball
+        // that came off is the receiver's — if he got to it before they did.
+        const meant = failed
+          ? null
+          : (ours.find((player) => player.id === endsOn.id) ?? null);
+        claimed = offside
+          ? { player: nearestTo(meets, theirs), turnedOver: true, scrappy: false }
+          : claimFor(landedAt, meant, theirs, ours);
+      }, flightMs),
+    );
 
     timersRef.current.push(
       window.setTimeout(() => {
-        const failed = offside || Math.random() < risk;
-        if (failed) {
-          const nextStance = nextTheirStance();
-          const theirs = holder === "home" ? nextAway : nextHome;
-          const ours = holder === "home" ? nextHome : nextAway;
-          // Offside is always their ball. Everything else is a contest, and a
-          // pass that simply went astray with nobody near it is a loose ball
-          // rather than a tackle by somebody thirty yards away.
-          const scramble = offside
-            ? { player: nearestTo(spot, theirs), turnedOver: true }
-            : looseBall(spot, theirs, ours);
-          const winnerSide: Side = scramble.turnedOver
-            ? holder === "home"
-              ? "away"
-              : "home"
-            : holder;
-          settle(scramble.player, winnerSide, scramble.turnedOver, nextStance, {
-            home: nextHome,
-            away: nextAway,
+        const nextStance = nextTheirStance();
+        const liveHome = liveOf(nextHome);
+        const liveAway = liveOf(nextAway);
+        const theirs = holder === "home" ? liveAway : liveHome;
+        const ours = holder === "home" ? liveHome : liveAway;
+        // The claim was taken when the ball landed; the man who took it has
+        // been playing on ever since, so pick him up where he is now.
+        const claim = claimed ?? claimFor(landedAt, null, theirs, ours);
+        const won =
+          [...liveHome, ...liveAway].find(
+            (player) => player.id === claim.player.id,
+          ) ?? claim.player;
+        const winnerSide: Side = claim.turnedOver
+          ? holder === "home"
+            ? "away"
+            : "home"
+          : holder;
+        if (claim.turnedOver || won.id !== endsOn.id) {
+          settle(won, winnerSide, claim.turnedOver, nextStance, {
+            home: liveHome,
+            away: liveAway,
           });
           setTheirStance(nextStance);
           setCommentary(
             offside
               ? "Flag is up. Offside."
-              : scramble.turnedOver
-                ? lines.lost
-                : `Loose, but ${playerName(scramble.player)} gets there first.`,
+              : claim.turnedOver
+                ? claim.scrappy
+                  ? `It runs loose — ${playerName(won)} gets there first.`
+                  : lines.lost
+                : `Not quite to feet, but ${playerName(won)} reaches it.`,
           );
         } else {
-          const arrived = (holder === "home" ? nextHome : nextAway).find(
-            (p) => p.id === endsOn.id,
-          ) ?? { ...endsOn, spot };
-          const nextStance = nextTheirStance();
+          const arrived = won;
           settle(arrived, holder, false, nextStance, {
-            home: nextHome,
-            away: nextAway,
+            home: liveHome,
+            away: liveAway,
           });
           setTheirStance(nextStance);
           setCommentary(lines.kept);
@@ -1399,14 +1825,14 @@ export default function MatchGame({
           // and only then — and only if there is anywhere to go — can he do
           // something with it. It carries on from the shape the ball has just
           // arrived into, not from the one it left.
-          runSettlingBeats(arrived, spot, holder, nextStance, lines.kept, {
-            home: nextHome,
-            away: nextAway,
+          runSettlingBeats(arrived, arrived.spot, holder, nextStance, lines.kept, {
+            home: liveHome,
+            away: liveAway,
           });
           return;
         }
         setStage("choose");
-      }, MOVE_MS),
+      }, beatMsFor(flightMs)),
     );
   };
 
@@ -1468,8 +1894,8 @@ export default function MatchGame({
         (holder === "home" ? shaped.nextHome : shaped.nextAway).find(
           (p) => p.id === carrier.id,
         ) ?? carrier;
-      playBall(ball);
-      setCarrierId(carrier.id);
+      // He is carrying it, so it is on his foot and goes where he goes.
+      giveBall(carrier);
       const room = plan.beats > 1;
       setCommentary(
         first
@@ -1513,23 +1939,27 @@ export default function MatchGame({
         timersRef.current.push(window.setTimeout(handOver, SETTLE_BEAT_MS));
         return;
       }
+      // He has taken it down with grass in front of him, so driving at them is
+      // ON — but it is an OPTION, not a quick-time event.
+      //
+      // It used to be a window: a few seconds to click before the chance was
+      // taken away from you. That was one of the things the tester could not
+      // make sense of, and he was right — it is the only moment in the game
+      // played against a clock you cannot see, in a game whose whole selling
+      // point is that reading the pitch is free. Worse, it stopped the match
+      // dead every time it appeared whether you wanted it or not.
+      //
+      // Now the ball simply comes back to you with one extra move on the
+      // table. Take it, or play something else, or sit and look at it.
       runOnGoRef.current = carryOn;
-      runOnOpenRef.current = true;
       setRunOn(playerName(carrier));
-      timersRef.current.push(
-        window.setTimeout(() => {
-          if (!runOnOpenRef.current) return;
-          runOnOpenRef.current = false;
-          runOnGoRef.current = null;
-          setRunOn(null);
-          handOver();
-        }, RUN_ON_MS),
-      );
+      timersRef.current.push(window.setTimeout(handOver, SETTLE_BEAT_MS));
     };
     beat(0, settlingPlan(receiver, holder === "home" ? live.away : live.home));
   };
 
   const runShot = (chance: number, holder: Side, bend = 0) => {
+    spendRunOn();
     setStage("moving");
     setTargetId(null);
     // Your first shot in the tutorial goes in.
@@ -1591,26 +2021,80 @@ export default function MatchGame({
     );
   };
 
+  /**
+   * The invariant, checked out loud.
+   *
+   * The claim this whole rework rests on is that the model's picture and the
+   * pitch are the same picture by the time you are asked to do something about
+   * it. A beat is allowed to be mid-flight — a man running to a position is
+   * not yet at it, and that is the point of him running. But at 'choose' the
+   * beat is over, and if the two have drifted then every price on the panel is
+   * quoted against a pitch that does not exist, which is the bug this replaced
+   * rather than a new one.
+   *
+   * It complains rather than throwing: a drifted marker is a wrong-looking
+   * game, not a broken one, and taking the match down mid-passage in front of
+   * somebody playing it would be the worse failure.
+   */
+  useEffect(() => {
+    if (!debug || stage !== "choose") return;
+    const drift: string[] = [];
+    for (const player of [...home, ...away]) {
+      const at = engine.at(player.id);
+      if (!at) continue;
+      const off = Math.hypot(at.x - player.spot.x, at.y - player.spot.y);
+      if (off > SETTLED_WITHIN)
+        drift.push(`${player.id} off by ${off.toFixed(1)}`);
+    }
+    const held = carrierId ? engine.at(carrierId) : null;
+    if (held) {
+      const off = Math.hypot(held.x - ball.x, held.y - ball.y);
+      if (off > SETTLED_WITHIN) drift.push(`ball off its carrier by ${off.toFixed(1)}`);
+    }
+    if (drift.length)
+      console.warn(`[match] model and pitch disagree at choose: ${drift.join(", ")}`);
+  }, [debug, stage, home, away, ball, carrierId, engine]);
+
   // A run drawn for right now should be on the pitch the moment it is drawn,
-  // not held over until the next pass. reshape() always works from each
-  // player's base spot, so re-running it here cannot make the shape drift.
+  // not held over until the next pass.
   //
-  // Only YOUR side, though. This used to reshape both, unstepped — and because
-  // settling after a move clears spent runs, the effect fired on every single
-  // turnover and flung the opposition across the pitch into their block in one
-  // frame. Redrawing your own orders is not a beat of the match and must not
-  // move a single one of their players.
+  // What this used to do was call applyShapes() — one drawn arrow, and the
+  // ENTIRE opposition was recomputed from scratch. That is why moving one of
+  // your players moved all eleven of theirs, and why a ball jittering by a
+  // single unit reshuffled their whole side. The mechanic you wanted was
+  // right; the implementation was a global recalculation wearing its costume.
+  //
+  // Now: your man goes where you sent him, and their side is not reshaped at
+  // all. Instead each defender is asked, on his own, whether the man HE is
+  // marking has moved — and only the ones whose man has actually gone
+  // somewhere react, by running after him. Everybody else holds their shape,
+  // which is the point: the hole he leaves is a hole nobody else fills in.
   useEffect(() => {
     if (stage !== "choose" || !carrierId || atKickOffRef.current) return;
-    applyShapes(
-      ball,
-      possession,
-      carrierId,
-      theirStance,
-      false,
-      undefined,
-      "defenders",
-    );
+    const mine = possession === "home" ? home : away;
+    const theirs = possession === "home" ? away : home;
+    // An order moves the man you gave it to. Nobody else on your side shifts
+    // either — re-shaping all eleven of yours would nudge every man being
+    // marked, and every defender marking one of them would set off after him,
+    // which is the same global twitch coming back in through the other door.
+    // The rest of your side takes up its shape on the next beat of football,
+    // which is when a team actually re-organises.
+    let sent = false;
+    const moved = mine.map((player) => {
+      const order = heldRuns[player.id];
+      if (!order || player.id === carrierId) return player;
+      sent = true;
+      return { ...player, spot: { ...order } };
+    });
+    if (!sent) return;
+    const answered = answerRuns(liveOf(theirs), mine, moved, theirStance);
+    if (possession === "home") {
+      setHome(moved);
+      setAway(answered);
+    } else {
+      setAway(moved);
+      setHome(answered);
+    }
     // Only the run orders should trigger this; everything else already
     // reshapes as part of playing a move.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1656,22 +2140,21 @@ export default function MatchGame({
    *  open, or by the prompt in the panel. */
   const sendHimOn = () => {
     const go = runOnGoRef.current;
-    if (!go) return;
+    if (!go || stage !== "choose") return;
     emit({ kind: "ranOn" });
     runOnGoRef.current = null;
-    runOnOpenRef.current = false;
     setRunOn(null);
-    // Cancel the timer that would otherwise hand the ball back underneath him.
     clearTimers();
     go();
   };
 
+  /** Whatever else you do with the ball, the offer to drive is spent. */
+  const spendRunOn = () => {
+    runOnGoRef.current = null;
+    setRunOn((current) => (current === null ? current : null));
+  };
+
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    // A click on the pitch while he is looking up is you telling him to go.
-    if (runOnOpenRef.current) {
-      sendHimOn();
-      return;
-    }
     if (stage !== "choose") return;
     const spot = toPitch(event);
     if (!spot) return;
@@ -1986,6 +2469,18 @@ export default function MatchGame({
     const beat = () => {
       beats += 1;
       if (beats > MAX_PHASE_BEATS) {
+        // Unless they have actually arrived.
+        //
+        // The cap is here to stop a side keeping the ball for ever, not to
+        // save you from a shot they have worked the ball into range for. It
+        // was doing the second: from their own keeper they reach the edge of
+        // shooting range at about the ninth beat, so the whistle went one beat
+        // before they could ever pull the trigger — which is why they took
+        // nought shots in three hundred simulated matches.
+        if (canShoot(liveCarrier.spot, "away")) {
+          takeShot(shotChance(liveCarrier.spot, "away", liveHome, liveCarrier));
+          return;
+        }
         finish("They run it into touch. Your ball.", true);
         return;
       }
@@ -2055,8 +2550,18 @@ export default function MatchGame({
       const shape = stanceById(liveStance).name.toLowerCase();
 
       setTargetId(move.endsOn.id);
+      // Their passes are hit into a man's stride on exactly the same terms as
+      // yours. This is the half of the phantom-passer fix the tester could see
+      // most clearly, because their moves run without you touching anything:
+      // the receiver used to be teleported to the far end of the pass and the
+      // ball played to where he had just appeared.
+      const lofted = IN_THE_AIR.has(move.id);
+      const runner = liveOf(liveAway).find(
+        (player) => player.id === move.endsOn.id,
+      );
+      const meets = aimAt(liveBall, runner ?? null, move.spot, lofted);
       const shaped = applyShapes(
-        move.spot,
+        meets,
         "away",
         move.endsOn.id,
         liveStance,
@@ -2066,27 +2571,51 @@ export default function MatchGame({
       );
       liveHome = shaped.nextHome;
       liveAway = shaped.nextAway;
-      liveBall = move.spot;
-      playBall(move.spot, 0, IN_THE_AIR.has(move.id));
+      const playedFrom = liveBall;
+      liveBall = meets;
+      const flightMs = ballMsFor(playedFrom, meets, lofted);
+      playBall(meets, 0, lofted, liveCarrier.id, move.endsOn.id);
+
+      const failed = move.offside || Math.random() < move.risk;
+      let claimed: { player: Player; turnedOver: boolean; scrappy: boolean } | null =
+        null;
+      // Judged the instant it comes down, on the same whistle as yours.
+      timersRef.current.push(
+        window.setTimeout(() => {
+          const atHome = liveOf(liveHome);
+          const atAway = liveOf(liveAway);
+          // It broke down on the way, not on the receiver's feet.
+          const landed = move.offside
+            ? liveBall
+            : failed
+              ? breakPoint(playedFrom, meets, atHome, lofted)
+              : meets;
+          if (!move.offside && failed) {
+            liveBall = landed;
+            playBall(landed, 0, false, liveCarrier.id, null);
+          }
+          const meant = failed
+            ? null
+            : (atAway.find((player) => player.id === move.endsOn.id) ?? null);
+          claimed = move.offside
+            ? { player: nearestTo(liveBall, atHome), turnedOver: true, scrappy: false }
+            : claimFor(landed, meant, atHome, atAway);
+        }, flightMs),
+      );
 
       timersRef.current.push(
         window.setTimeout(() => {
-          const failed = move.offside || Math.random() < move.risk;
-          if (failed) {
-            // Same rule the other way round: one of yours has to actually be
-            // near it to have won it back.
-            const scramble = move.offside
-              ? { player: nearestTo(liveBall, liveHome), turnedOver: true }
-              : looseBall(liveBall, liveHome, liveAway);
-            if (!scramble.turnedOver) {
-              // It got away from them but nobody of yours was close either.
-              liveCarrier = scramble.player;
-              setCarrierId(liveCarrier.id);
-              say(`${move.name} — loose, but they scramble it back.`);
-              beat();
-              return;
-            }
-            settle(scramble.player, "home", true, liveStance, {
+          // Where everybody has actually got to over the beat just played.
+          liveHome = liveOf(liveHome);
+          liveAway = liveOf(liveAway);
+          const claim =
+            claimed ?? claimFor(liveBall, null, liveHome, liveAway);
+          claim.player =
+            [...liveHome, ...liveAway].find(
+              (player) => player.id === claim.player.id,
+            ) ?? claim.player;
+          if (claim.turnedOver) {
+            settle(claim.player, "home", true, liveStance, {
               home: liveHome,
               away: liveAway,
             });
@@ -2098,16 +2627,23 @@ export default function MatchGame({
             finish(
               move.offside
                 ? "Offside. Your ball."
-                : `Won back by ${playerName(scramble.player)}. Your ball.`,
+                : `Won back by ${playerName(claim.player)}. Your ball.`,
               false,
             );
             return;
           }
-          const arrived = liveHome
-            .concat(liveAway)
-            .find((p) => p.id === move.endsOn.id);
-          liveCarrier = arrived ?? { ...move.endsOn, spot: move.spot };
-          setCarrierId(liveCarrier.id);
+          if (failed || claim.player.id !== move.endsOn.id) {
+            // It got away from them but nobody of yours could get to it.
+            liveCarrier = claim.player;
+            liveBall = claim.player.spot;
+            giveBall(claim.player);
+            say(`${move.name} — loose, but they scramble it back.`);
+            beat();
+            return;
+          }
+          liveCarrier = claim.player;
+          liveBall = claim.player.spot;
+          giveBall(claim.player);
           say(
             bite < 0.12
               ? `${move.name} — your ${shape} was never going to reach that.`
@@ -2123,7 +2659,7 @@ export default function MatchGame({
             return;
           }
           beat();
-        }, MOVE_MS),
+        }, beatMsFor(flightMs)),
       );
     };
 
@@ -2137,7 +2673,10 @@ export default function MatchGame({
     stage === "moving" ||
     stage === "defending" ||
     stage === "recover";
-  const clock = `0:${String(Math.ceil(secondsLeft)).padStart(2, "0")}`;
+  // The minute was hard-coded to zero, which was fine while a match was sixty
+  // seconds long and read "0:75" the moment it was not.
+  const left = Math.ceil(secondsLeft);
+  const clock = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
 
   return (
     <main className="match-shell">
@@ -2239,13 +2778,16 @@ export default function MatchGame({
             ballMs={ballMs}
             carrierId={carrierId}
             celebrating={celebrating}
+            debug={debug}
             drag={drag}
+            engine={engine}
             flight={flight}
             home={home}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             pitchRef={pitchRef}
+            restartSeq={restartSeq}
             runs={runs}
             targetId={targetId}
           />
@@ -2367,7 +2909,15 @@ export default function MatchGame({
               type="button"
             >
               <strong>Go on, {runOn}!</strong>
-              <span>Click here or anywhere on the pitch to drive at them</span>
+              {/* What the choice IS, not just that there is one. The tester
+                  did not know why these moments existed, which is fair: the
+                  prompt named a player and gave no idea what taking it or
+                  leaving it would do. */}
+              <span>
+                He has taken it down with grass ahead of him. Send him and he
+                drives at them. There is no rush — this sits here alongside
+                everything else until you play something.
+              </span>
             </button>
           )}
 

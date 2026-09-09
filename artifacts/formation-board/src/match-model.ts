@@ -26,6 +26,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Position } from './pitch-types';
+import { M_PER_X, M_PER_Y, coverIn, topSpeedFor } from './motion';
 import { type Attributes, type SquadEntry, baseAttributes, edge } from './squad';
 
 export type Side = 'home' | 'away';
@@ -46,6 +47,20 @@ export type Player = {
   /** How he was moving on the last beat, so that turning round costs him time
    *  the way it costs a real player. Only set by a real beat of the match. */
   momentum?: Position;
+  /**
+   * Who he has picked up, and how long he has been committed to him.
+   *
+   * Marking used to be worked out from scratch on every single call, which
+   * meant a defender's man could change because the ball had jittered a unit
+   * sideways — measured, that reassigned somebody on eleven samples out of
+   * eleven. A defence that swaps men several times a second does not look like
+   * a defence; it looks like a shape being recalculated, which is exactly what
+   * it was. Carrying the decision on the player is what lets him stay with the
+   * man he went with.
+   */
+  marking?: string;
+  /** Beats he has been on that man. He does not drop him on a whim. */
+  markedFor?: number;
 };
 
 export const clamp = (value: number, low: number, high: number) =>
@@ -53,14 +68,20 @@ export const clamp = (value: number, low: number, high: number) =>
 
 const attackDirOf = (side: Side) => (side === 'home' ? -1 : 1);
 
-/** Distance from a point to the segment between two others. */
-function distanceToLane(point: Position, from: Position, to: Position): number {
+/** The point on the segment between two others that is nearest a third. */
+function pointOnLane(point: Position, from: Position, to: Position): Position {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const lengthSquared = dx * dx + dy * dy;
-  if (lengthSquared === 0) return Math.hypot(point.x - from.x, point.y - from.y);
+  if (lengthSquared === 0) return { ...from };
   const t = clamp(((point.x - from.x) * dx + (point.y - from.y) * dy) / lengthSquared, 0, 1);
-  return Math.hypot(point.x - (from.x + t * dx), point.y - (from.y + t * dy));
+  return { x: from.x + t * dx, y: from.y + t * dy };
+}
+
+/** Distance from a point to the segment between two others. */
+function distanceToLane(point: Position, from: Position, to: Position): number {
+  const near = pointOnLane(point, from, to);
+  return Math.hypot(point.x - near.x, point.y - near.y);
 }
 
 const gapBetween = (a: Position, b: Position) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -533,6 +554,39 @@ const MARKING: Record<StanceId, number> = {
 /** How far from his own patch a defender will go to pick somebody up. */
 const MARK_RANGE = 26;
 
+/** And how much further he will follow, per beat he has already been on him.
+ *  This is what turns marking from a lookup into a commitment. */
+const MARK_STICK = 3.5;
+
+/**
+ * How far a man has to be off where he wants to be before he bothers moving.
+ *
+ * Without this, every player is handed a slightly different target on every
+ * beat and every one of them sets off for it: measured, 98% of the side was in
+ * motion on any given beat and only 2% were standing still. Real football is
+ * mostly people standing, walking and jogging while three or four sprint. A
+ * shape that is already right is a shape nobody needs to adjust, and half a
+ * unit is well inside the width of the man himself.
+ */
+const HOLD_WITHIN = 1.6;
+
+/** How far up the pitch the side holds itself when its own keeper has the
+ *  ball, rather than dropping onto him. See the note in reshape(). */
+const BUILD_OUT = 26;
+
+/** How much wider than usual the back line stands to play out. */
+const SPLIT_WIDE = 0.5;
+
+/** The deepest line of outfielders — the ones a side plays out through. */
+function isBackLine(player: Player, team: Player[], dir: number): boolean {
+  if (player.role === 'GK') return false;
+  const outfield = team.filter((man) => man.role !== 'GK');
+  // Deepest first: `dir` is the way this side attacks, so its own goal is the
+  // other way.
+  const deepest = [...outfield].sort((a, b) => (a.base.y - b.base.y) * dir);
+  return deepest.slice(0, 4).some((man) => man.id === player.id);
+}
+
 const CHASE: Record<StanceId, { men: number; pull: number; support: number }> = {
   // `pull` used to be the fraction of the way to the ball a challenger got in
   // a beat — which meant a man twenty-five units away closed to fifteen, then
@@ -593,8 +647,26 @@ const STANCE_STEP: Record<StanceId, number> = {
  * ordinary one nearer six, and none of that is available to a man who has to
  * stop, turn and set off again.
  */
-const RECOVERY_BASE = 3.2;
-const RECOVERY_PACE = 0.32;
+// What a man can cover in one beat.
+//
+// These used to let him make about 7.6 units — call it eight metres — in a
+// 1.1s beat, which is an average of better than seven metres a second
+// including getting going. Nobody does that. It went unnoticed while the
+// engine accelerated everyone at 23 m/s², because then it very nearly was
+// possible; with real legs underneath him the model was writing cheques the
+// engine could not cash, and the two pictures drifted apart over every beat.
+// Halved, so what the shape asks for is what a player can actually deliver.
+
+/**
+ * How long one beat of the match lasts. The view stretches a beat to fit the
+ * pass in it, so this is the floor rather than the exact figure — but it is
+ * the number the shape is allowed to move by, and it has to be A number the
+ * engine also recognises.
+ */
+const BEAT_SECONDS = 1.1;
+
+/** How much of the theoretical distance the shape may actually ask for. */
+const REACH_MARGIN = 0.56;
 
 function stepToward(player: Player, target: Position): Position {
   const dx = target.x - player.spot.x;
@@ -603,23 +675,53 @@ function stepToward(player: Player, target: Position): Position {
   if (distance < 0.001) return target;
   const ux = dx / distance;
   const uy = dy / distance;
+  // Measured the way the engine measures it. The pitch is a hundred units
+  // across either way but a good deal longer than it is wide, so a unit
+  // sideways and a unit up the pitch are not the same distance — and a limit
+  // on how far a man can run has to be in something he actually runs in.
+  const metres = Math.hypot(dx * M_PER_X, dy * M_PER_Y);
 
   // Was he already going this way? A man carrying his momentum keeps nearly
   // all of it; a man who has to turn through 180 degrees spends most of the
   // beat doing exactly that. This is the difference between a defence that
   // flows back and one that snaps into place.
+  //
+  // `momentum` is last beat's displacement, so it divides down into the speed
+  // he is carrying into this one.
   const was = player.momentum;
   const speed = was ? Math.hypot(was.x, was.y) : 0;
-  let turn = 0.78; // a standing start: he has to get going first
+  let entry = 0;
   if (was && speed > 0.6) {
-    const carriedOn = (was.x * ux + was.y * uy) / speed; // 1 same way, -1 straight back
-    turn = 0.42 + 0.58 * clamp((carriedOn + 1) / 2, 0, 1) ** 0.7;
+    const carriedOn = (was.x * ux + was.y * uy) / speed; // 1 same way, -1 back
+    const kept = clamp((carriedOn + 1) / 2, 0, 1) ** 0.7;
+    entry = (Math.hypot(was.x * M_PER_X, was.y * M_PER_Y) / BEAT_SECONDS) * kept;
   }
 
-  const reach = (RECOVERY_BASE + player.attributes.pace * RECOVERY_PACE) * turn;
-  if (distance <= reach) return target;
-  return { x: player.spot.x + ux * reach, y: player.spot.y + uy * reach };
+  // ...and then ask for less than that.
+  //
+  // coverIn() is the straight line: a man who sets off the instant he is told
+  // and runs dead at the spot. The engine grants none of that. He takes a
+  // moment to react, he can only turn so fast so he arcs rather than cutting
+  // the corner, and he brakes into the last couple of metres. Asking for the
+  // full theoretical distance meant he was still short when the next beat
+  // arrived and moved the target again — so the side never once stood in the
+  // shape it was being drawn in, and every price on the panel was quoted
+  // against a formation that was not on the screen.
+  const reach =
+    coverIn(BEAT_SECONDS, topSpeedFor(player.attributes.pace), entry) *
+    REACH_MARGIN;
+  if (metres <= reach) return target;
+  const along = reach / metres;
+  return { x: player.spot.x + dx * along, y: player.spot.y + dy * along };
 }
+
+/** Remember who he went with, so the next beat can honour it. */
+const marked = (player: Player, mark: Player | undefined, beats: number | undefined): Player =>
+  mark
+    ? { ...player, marking: mark.id, markedFor: beats ?? 1 }
+    : player.marking
+      ? { ...player, marking: undefined, markedFor: undefined }
+      : player;
 
 /** Put a player somewhere, remembering how he got there. Only a real beat of
  *  the match leaves momentum behind — a preview is a question about where the
@@ -673,6 +775,26 @@ export function reshape(
   // there is always somebody past the ball to play forward to. Without it, the
   // centre sits goal-side of the ball instead, between it and your own net.
   let desired = hasBall ? ball.y + dir * style.push : ball.y - dir * style.behind;
+
+  // Playing out from the back.
+  //
+  // The screenshot that started this: a back four stood on their own goal
+  // line, inside the six-yard box, shoulder to shoulder with their own keeper.
+  // It happened because the shape simply follows the ball — and when your own
+  // keeper has it, the ball is on the goal line, so the whole side dutifully
+  // collapsed onto him.
+  //
+  // No team does this. When the keeper has it the centre-halves split towards
+  // the corners of the box and the full-backs push up the touchline, because
+  // the point of having the ball back there is to have somewhere to play it.
+  // So the deeper the ball is in your own third, the less of the way back the
+  // team goes with it.
+  let buildOut = 0;
+  if (hasBall) {
+    const ownGoalLine = side === 'home' ? 100 : 0;
+    buildOut = clamp(1 - Math.abs(ball.y - ownGoalLine) / 32, 0, 1);
+    desired += dir * buildOut * BUILD_OUT;
+  }
 
   // The block height is how far from your own goal you are willing to defend,
   // but it can only ever be a ceiling. You cannot hold a high line while the
@@ -757,14 +879,39 @@ export function reshape(
   // somebody moves. Deepest defenders choose first, so the back line takes the
   // most advanced attackers and the midfield picks up what is left.
   const marks: Record<string, Player> = {};
+  const held: Record<string, number> = {};
   if (!hasBall && stance && opponents.length) {
     const threats = [...opponents]
       .filter((player) => player.role !== 'GK')
       .sort((a, b) => (b.spot.y - a.spot.y) * -dir);
+    const byId = new Map(threats.map((threat) => [threat.id, threat]));
     const picked = new Set<string>();
     const pickers = [...outfield].sort((a, b) => (b.base.y - a.base.y) * -dir);
+
+    // First, everybody who is already on somebody stays on him.
+    //
+    // A defender who has gone with his man has committed to it: he is goal-side
+    // of him, facing him, and moving with him. Dropping that because a
+    // recalculation found somebody marginally nearer is not a decision a
+    // footballer makes, and doing it several times a second is what made the
+    // whole back line shimmer. He lets go when there is a reason to — his man
+    // has gone somewhere else entirely, or he has been sent to the ball — and
+    // the longer he has been on him the further he will follow before he does.
     for (const picker of pickers) {
       if (challengers.has(picker.id)) continue;
+      const was = picker.marking && byId.get(picker.marking);
+      if (!was || picked.has(was.id)) continue;
+      const patch = { x: picker.base.x, y: picker.base.y + shift };
+      const committed = Math.min(picker.markedFor ?? 0, 4);
+      if (gapBetween(was.spot, patch) > MARK_RANGE + committed * MARK_STICK) continue;
+      picked.add(was.id);
+      marks[picker.id] = was;
+      held[picker.id] = (picker.markedFor ?? 0) + 1;
+    }
+
+    // Then anybody still free picks up whoever is nearest his patch.
+    for (const picker of pickers) {
+      if (challengers.has(picker.id) || marks[picker.id]) continue;
       const patch = { x: picker.base.x, y: picker.base.y + shift };
       let closest: Player | null = null;
       let nearest = MARK_RANGE;
@@ -779,6 +926,7 @@ export function reshape(
       if (closest) {
         picked.add(closest.id);
         marks[picker.id] = closest;
+        held[picker.id] = 1;
       }
     }
   }
@@ -804,6 +952,13 @@ export function reshape(
       (ball.x - 50) * 0.3 +
       (player.base.x - 50) * (style.spread - narrowing);
     let y = player.base.y + shift;
+    // ...and the other half of playing out: the back line SPLITS. Centre-halves
+    // go towards the corners of the box and full-backs go to the touchline, so
+    // there are angles to play into instead of four men in a huddle. Only the
+    // deepest outfielders — the ones actually being played out through.
+    if (buildOut > 0 && isBackLine(player, team, dir)) {
+      x += (player.base.x - 50) * buildOut * SPLIT_WIDE;
+    }
     if (hasBall && helpers.has(player.id)) {
       // Close to within passing range and stop there. Pulling him a flat
       // fraction of the way in left him thirty yards off when he started far
@@ -883,8 +1038,82 @@ export function reshape(
       y = dir < 0 ? Math.max(y, Math.min(holdLine, 50)) : Math.min(y, Math.max(holdLine, 50));
     }
     const target = { x: clamp(x, 4, 96), y: clamp(y, 6, 94) };
-    return moved(player, stepped ? stepToward(player, target) : target, stepped);
+    // Close enough. Standing still is a thing footballers do, and a man who is
+    // already where he needs to be should not be sent trotting half a yard
+    // sideways because the arithmetic moved. See HOLD_WITHIN.
+    const settled =
+      stepped && gapBetween(player.spot, target) < HOLD_WITHIN
+        ? player.spot
+        : stepped
+          ? stepToward(player, target)
+          : target;
+    const next = moved(player, settled, stepped);
+    // Only a real beat commits him to a man. A preview is a question about
+    // where the shape would be, and must not be able to make a defender let go
+    // of somebody he is marking.
+    return stepped ? marked(next, marks[player.id], held[player.id]) : next;
   });
+}
+
+/**
+ * One defender, one decision: has the man I picked up gone somewhere?
+ *
+ * This is the whole of what happens on their side when you drag one of your
+ * players. It replaces a call that recomputed the entire opposition shape from
+ * scratch, which is why one arrow used to move all eleven of them and why the
+ * side flickered whenever anything moved at all.
+ *
+ * The mechanic itself is the one that was asked for and it is real football:
+ * a man goes somewhere, the defender who has him goes with him, and the space
+ * that defender was standing in is now space. What changed is that it is now
+ * ELEVEN separate decisions instead of one, and ten of them are usually "no":
+ *
+ *   he is not marking anybody           — he holds his position
+ *   his man has not really moved        — he holds his position
+ *   his man has gone                    — he goes with him, as far as the
+ *                                         stance says he is willing to follow,
+ *                                         and no further than his legs allow
+ *
+ * Nobody else adjusts to cover him. That is not an omission; it is the hole,
+ * and the hole is the reward for having pulled him out of position.
+ */
+export function answerRuns(
+  defenders: Player[],
+  /** Their attackers as they stood, and as they stand now. */
+  was: Player[],
+  now: Player[],
+  stance: StanceId,
+): Player[] {
+  const before = new Map(was.map((player) => [player.id, player.spot]));
+  const after = new Map(now.map((player) => [player.id, player.spot]));
+  const tight = MARKING[stance];
+  let anyone = false;
+  const next = defenders.map((defender) => {
+    if (!defender.marking) return defender;
+    const from = before.get(defender.marking);
+    const to = after.get(defender.marking);
+    if (!from || !to) return defender;
+    // He reacts to the RUN, not to where his man happens to be standing.
+    //
+    // Deriving a fresh "where I ought to be" from the marked man's absolute
+    // position looks equivalent and is not: a defender is never exactly on
+    // that ideal spot — the block, the squeeze and being goal-side of the ball
+    // all pull him off it — so re-deriving it made every marker in the side
+    // shuffle towards his ideal every time anything happened anywhere. Six men
+    // moved when one attacker ran. Following the DISPLACEMENT means a man
+    // whose marker has not moved does not move, which is the whole idea.
+    const ran = gapBetween(from, to);
+    if (ran < HOLD_WITHIN) return defender;
+    const want = {
+      x: clamp(defender.spot.x + (to.x - from.x) * tight, 4, 96),
+      y: clamp(defender.spot.y + (to.y - from.y) * tight, 6, 94),
+    };
+    anyone = true;
+    return moved(defender, stepToward(defender, want), true);
+  });
+  // If not one of them had a reason to move, hand back the very same array so
+  // React can see nothing happened rather than re-rendering the whole side.
+  return anyone ? next : defenders;
 }
 
 /**
@@ -943,6 +1172,56 @@ export const TACKLE_RANGE = 16;
  * usually one of your own. Handing every failed pass straight to the other
  * side made them look like they were teleporting in from twenty yards.
  */
+/**
+ * Where a ball that did not come off actually ended up.
+ *
+ * This is the fix for the reason nobody ever lost the ball. The loose ball
+ * used to be handed to looseBall() at the pass TARGET — which is the receiver's
+ * own feet, where the shape code has just pinned him. So the side that had
+ * lost it was always nearest to it by a distance of exactly zero, the turnover
+ * branch needed a defender standing on the same square, and a failed pass
+ * arrived perfectly anyway. Fourteen per cent of balls failed their roll and
+ * one hundred per cent of those came straight back.
+ *
+ * A ball that fails has to break down SOMEWHERE ELSE. Two ways it can:
+ *
+ *   cut out — somebody was in the lane, and he takes it where he stands. The
+ *             bodies that made the pass risky in the first place are exactly
+ *             the bodies that can intercept it, which is the same list.
+ *   overhit — nobody was near it, so it simply did not come off and runs on
+ *             past the man it was meant for, which is what the commentary has
+ *             always said happens.
+ */
+export function breakPoint(
+  from: Position,
+  to: Position,
+  opponents: Player[],
+  /** A ball in the air passes over the men in the lane, so it cannot be cut
+   *  out by somebody standing under it — it is simply overhit. The risk
+   *  formula already ignores lane blockers on a lofted ball for the same
+   *  reason, and this keeps the two agreeing. */
+  lofted = false,
+): Position {
+  const lane = lofted ? [] : inLane(from, to, opponents).filter((player) => player.role !== 'GK');
+  if (lane.length) {
+    const cutter = lane.reduce((closest, player) =>
+      distanceToLane(player.spot, from, to) < distanceToLane(closest.spot, from, to)
+        ? player
+        : closest,
+    );
+    return pointOnLane(cutter.spot, from, to);
+  }
+  // Past the target, along the line it was played on. A quarter of the pass
+  // again, so a short one dribbles a yard beyond him and a long one runs away.
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const over = 0.25;
+  return {
+    x: clamp(to.x + dx * over, 2, 98),
+    y: clamp(to.y + dy * over, 2, 98),
+  };
+}
+
 export function looseBall(
   spot: Position,
   opponents: Player[],
@@ -1231,9 +1510,22 @@ const STANCE_BITE: Record<StanceId, Partial<Record<ActionId, number>>> = {
   },
 };
 
+/**
+ * How much of a stance's bite actually lands.
+ *
+ * The table above is written as "how much does this shape trouble this move",
+ * and those relative numbers are the design: press murders short build-up, a
+ * trap murders anything in behind, and so on. This is the single place the
+ * overall LEVEL is set, so the shapes keep every difference from each other
+ * while the game as a whole is dialled to where it should be. Reading the play
+ * right is meant to win the ball back often; it is not meant to end nine
+ * attacks in ten, which is what an unscaled table did.
+ */
+const STANCE_SCALE = 0.8;
+
 function stancePenalty(id: ActionId, stance: StanceId | null): number {
   if (!stance) return 0;
-  return STANCE_BITE[stance][id] ?? 0.06;
+  return (STANCE_BITE[stance][id] ?? 0.06) * STANCE_SCALE;
 }
 
 /** How much a stance was ever going to trouble a given move. Used to explain
@@ -1241,18 +1533,48 @@ function stancePenalty(id: ActionId, stance: StanceId | null): number {
 export const stanceBiteFor = (stance: StanceId, id: ActionId) => STANCE_BITE[stance][id] ?? 0.06;
 
 
+/** How far off the line still counts as being in the lane. */
+const LANE_WIDTH = 7.5;
+
 const inLane = (from: Position, to: Position, opponents: Player[]) =>
-  opponents.filter((opponent) => distanceToLane(opponent.spot, from, to) < 7.5);
+  opponents.filter((opponent) => distanceToLane(opponent.spot, from, to) < LANE_WIDTH);
 
 /** How many bodies are in the lane — the number the panel tells you about. */
 function laneBlockers(from: Position, to: Position, opponents: Player[]): number {
   return inLane(from, to, opponents).length;
 }
 
-/** The same bodies, weighed by whose they are. Kanté in the lane is not the
- *  same obstacle as a winger tracking back, and this is where that shows. */
-function laneBite(from: Position, to: Position, opponents: Player[]): number {
-  return inLane(from, to, opponents).reduce((total, opponent) => total + bite(opponent), 0);
+/**
+ * How well the lane is actually covered.
+ *
+ * Counting bodies within seven units of the line treated a man standing on the
+ * passer's toes, a man on the receiver's shoulder and a man planted in the
+ * middle of the lane as the same obstacle. They are not: only the third can
+ * step across and take it. So each defender is weighed three ways —
+ *
+ *   how near the line he is   — on it counts fully, at the edge barely
+ *   where along it he stands  — peaking in the middle, nothing at either end,
+ *                               because the ends are the two players already
+ *                               priced by pressure on the passer and receiver
+ *   who he is                 — a reader of the game gets to more balls
+ *
+ * This is the number that makes passing "wherever, whenever" cost something:
+ * not the ambition of the pass, but whether anybody is in a position to do
+ * anything about it.
+ */
+function laneCover(from: Position, to: Position, opponents: Player[]): number {
+  const length = gapBetween(from, to) || 1;
+  let cover = 0;
+  for (const opponent of opponents) {
+    if (opponent.role === 'GK') continue;
+    const near = pointOnLane(opponent.spot, from, to);
+    const off = gapBetween(opponent.spot, near);
+    if (off >= LANE_WIDTH) continue;
+    const across = 1 - off / LANE_WIDTH;
+    const along = clamp(gapBetween(from, near) / length, 0, 1);
+    cover += across * Math.sin(Math.PI * along) * bite(opponent);
+  }
+  return cover;
 }
 
 /**
@@ -1292,7 +1614,7 @@ export function availableMoves(
     // can be pressing all they like: if nobody is near the man on the ball and
     // nobody is in the lane, the pass is not in any danger. Without this, a
     // free ball back to your own centre-back cost a third of the time.
-    const inTheWay = laneBite(carrier.spot, spot, opponents);
+    const inTheWay = laneCover(carrier.spot, spot, opponents);
     const contest = contestAround(read.pressureBite, inTheWay);
     // Who plays it, who takes it in, and — on a ball played into space — who
     // is chasing it. These scale the whole cost rather than the base alone:
@@ -1703,7 +2025,14 @@ export function settlingPlan(carrier: Player, opponents: Player[]): Settling {
   // same figure scales down to a shift of the feet.
   const legs = 4 + carrier.attributes.pace * 0.34;
   return {
-    beats: room > 0.58 ? 3 : room > 0.28 ? 2 : 1,
+    // Two at most, and only with real grass ahead.
+    //
+    // It was three, which cost the best part of two seconds of watching after
+    // every single pass that came off — and the tester's complaint about
+    // "moves in between plays" was mostly this. The ball now takes a realistic
+    // time to travel, so the beat it lands in is already long; stacking three
+    // more on top of it is what made a single pass a five-second event.
+    beats: room > 0.5 ? 2 : 1,
     carry: legs * (0.1 + room * 0.9),
     room,
   };
@@ -1812,17 +2141,25 @@ export function drawMove(
     // rather than a strength one, so a good passer gets far more out of the
     // trade than a centre-half launching it.
     const whip = lofted ? clamp(curve, 0, 1) : 0;
+    // What makes a pass risky is whether anybody can get to it — not how
+    // ambitious it is. The old weighting taxed distance and forward progress
+    // twice over and counted lane blockers as a flat headcount, so a fifty
+    // yard ball into acres cost more than a ten yard ball straight through a
+    // midfielder. Ambition is now cheap and covered lanes are dear, which is
+    // the whole point: passing should stay good, it should just stop being
+    // free.
+    const cover = lofted ? 0 : laneCover(carrier.spot, meetsAt, opponents);
     const base = lofted
       ? 0.09 + distance * 0.0032 + read.pressure * 0.03 + whip * 0.06
       : 0.02 +
-        distance * (backward ? 0.0008 : 0.0018) +
-        forward * 0.002 +
-        blockers * 0.08 +
-        read.pressure * 0.04;
+        distance * (backward ? 0.0005 : 0.0009) +
+        forward * 0.001 +
+        cover * 0.17 +
+        read.pressure * 0.03;
     // Same rule as the listed moves: a stance only bites where they can
     // actually get at it — and less of it reaches a ball bending away from it.
     const contest =
-      contestAround(read.pressureBite, lofted ? 0 : laneBite(carrier.spot, meetsAt, opponents)) *
+      contestAround(read.pressureBite, lofted ? 0 : cover) *
       (1 - whip * 0.32);
     // A ball in the air asks more of the man taking it in than one on the deck.
     const played = quality(carrier.attributes.passing, 0.34 + whip * 0.22);
@@ -2041,7 +2378,13 @@ export function aiChoose(
       // board won every single time and they hit it long on every play. A
       // forty-yard ball is a better move than a twenty-yard one; it is not
       // twice the move.
-      const ground = Math.sign(gain) * Math.sqrt(Math.abs(gain)) * 4.5;
+      // Measured: at 4.5 they gained 2.79 units a pass — under three metres —
+      // and 73% of their possessions timed out around the halfway line having
+      // never once got within shooting range. They were not being cautious,
+      // they were being becalmed: `keep` below is worth 9 for any ball that
+      // does not go backwards, so a completely safe two-yard square pass
+      // outscored anything that actually went anywhere.
+      const ground = Math.sign(gain) * Math.sqrt(Math.abs(gain)) * 6;
       const taste = LONG_MOVES.has(move.id) ? LONG_TASTE[style.id] : 1;
       // There is always something in keeping it. A side with nothing on should
       // go back and come again rather than launching it and hoping — which is
@@ -2049,7 +2392,7 @@ export function aiChoose(
       // ...but keeping it by going backwards is worth a good deal less than
       // keeping it while going forward, or a side that only wants the ball
       // safe passes it back to its own defence all afternoon.
-      const keep = (1 - move.risk) * (gain < -3 ? 3.5 : 9);
+      const keep = (1 - move.risk) * (gain < -3 ? 3.5 : 7);
       // And not the same ball twice running — nor a second long one straight
       // after the first. One team hitting it forty yards on every touch is not
       // a style, it is a tic, and penalising only the identical action was not

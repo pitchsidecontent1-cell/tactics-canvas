@@ -1,4 +1,6 @@
 ﻿import {
+  lazy,
+  Suspense,
   type CSSProperties,
   type PointerEvent,
   type ReactNode,
@@ -55,11 +57,18 @@ import {
   positionBrief,
 } from './guide-content';
 import { squadForEra } from './squad';
+import { benchForEra, type EraBench, type SubPlayer } from './bench';
 import { FORMATIONS, type Formation } from './formations';
 import { MANAGERS, type Era } from './managers';
 import MatchGame from './match-game';
 import HowToPlay from './how-to-play';
 import Rules from './rules';
+/* Loaded on demand. The simulator is a 300 kB single file and it sits
+   behind a button most visitors will never press — bundling it into the
+   entry chunk pushed that chunk to 528 kB and made everybody pay for it on
+   first paint. Splitting it costs one short spinner the first time the
+   route is opened, and nothing at all after that. */
+const TacticsSim = lazy(() => import('./tactics-sim'));
 import { MANAGER_PHOTOS, managerPhotoUrl } from './manager-photos';
 import { PLAYER_PHOTOS, playerPhotoUrl, type PlayerPhoto } from './player-photos';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -304,9 +313,14 @@ function lineLabel(row: number, totalRows: number): string {
 
 // The dugout list is split by whether the manager is still coaching, so the
 // people you can watch this weekend are not buried among the greats.
+// The tab says "Current", not "Current managers": the panel heading directly
+// above it already says Managers, and the shorter label is what lets the two
+// tabs be a comfortable size instead of being squeezed to fit the column.
+// `label` carries the full phrase for anyone hearing the page rather than
+// seeing that heading.
 const MANAGER_SECTIONS = [
-  { status: 'current' as const, title: 'Current managers' },
-  { status: 'retired' as const, title: 'Retired managers' },
+  { status: 'current' as const, title: 'Current', label: 'Current managers' },
+  { status: 'retired' as const, title: 'Retired', label: 'Retired managers' },
 ].map((section) => ({
   ...section,
   // Alphabetical by surname. localeCompare rather than a plain sort so
@@ -1167,6 +1181,73 @@ function PitchLinesRaw() {
 // re-render of the board — a message, a selection, the end of a drag — used to
 // rebuild all twenty-odd of these nodes for nothing.
 const PitchLines = memo(PitchLinesRaw);
+
+// The eleven on the board is not the side. This sits under it and names
+// everyone else who played: the substitutes who decided games, the cover for
+// the injuries, the keeper who played the league while somebody else played
+// the cups. Data, and where the counts come from, in bench.ts.
+const BASIS_LABEL: Record<EraBench['basis'], (season: string) => string> = {
+  all: (season) => season,
+  league: (season) => `${season} · league games`,
+  squad: (season) => `${season} squad`,
+};
+
+function BenchList({ players, testid }: { players: SubPlayer[]; testid: string }) {
+  return (
+    <ul className="bench-list" data-testid={testid}>
+      {players.map((player) => (
+        <li className="bench-item" key={player.name}>
+          {/* Sides that played before fixed squad numbers keep the slot so the
+              names stay in line, but there is no number to put in it. */}
+          {player.number === undefined ? (
+            <span aria-hidden="true" className="bench-badge is-blank">
+              –
+            </span>
+          ) : (
+            <span className="bench-badge">{player.number}</span>
+          )}
+          <span className="bench-body">
+            <span className="bench-name">{player.name}</span>
+            <span className="bench-line">
+              <span className="bench-role">{roleName(player.role)}</span>
+              {player.apps !== undefined && (
+                <span className="bench-apps">
+                  {player.apps} {player.apps === 1 ? 'game' : 'games'}
+                  {player.goals ? `, ${player.goals} ${player.goals === 1 ? 'goal' : 'goals'}` : ''}
+                </span>
+              )}
+            </span>
+            {player.note && <span className="bench-note">{player.note}</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function BenchRaw({ bench, label }: { bench: EraBench; label: string }) {
+  return (
+    <section className="bench" aria-label={`The rest of the ${label} squad`} data-testid="section-bench">
+      <h2 className="bench-title">
+        The rest of the squad
+        <span className="bench-count">{bench.players.length}</span>
+        <span className="bench-basis">{BASIS_LABEL[bench.basis](bench.season)}</span>
+      </h2>
+      <BenchList players={bench.players} testid="list-bench" />
+      {bench.tail && bench.tail.length > 0 && (
+        <div className="bench-tail">
+          <h3 className="bench-subtitle">
+            Fewer than ten games, and worth knowing about
+            <span className="bench-count">{bench.tail.length}</span>
+          </h3>
+          <BenchList players={bench.tail} testid="list-bench-tail" />
+        </div>
+      )}
+    </section>
+  );
+}
+
+const Bench = memo(BenchRaw);
 
 // ---------------------------------------------------------------------------
 // The Guide. The library panel holds the index; the right-hand column holds
@@ -2612,6 +2693,10 @@ function Home() {
       ? `${CUSTOM_NAME} ${customShape.join('-')}`
       : formation.name;
 
+  // Only a manager's side has a squad behind it; a bare shape has nobody.
+  // benchForEra hands back the stored object, so Bench's memo holds.
+  const activeBench = activeEra ? benchForEra(activeEra.id) : null;
+
   // A custom shape has no write-up, but the in/out-of-possession slide is
   // driven purely by each player's role, so it works on any eleven.
   const showShapePhases = !activeEra && (Boolean(content) || (isCustom && customIsFull));
@@ -2915,6 +3000,7 @@ function Home() {
               <div className="panel-tabs manager-tabs" role="tablist" aria-label="Dugout sections">
                 {MANAGER_SECTIONS.map((section) => (
                   <button
+                    aria-label={`${section.label}, ${section.managers.length}`}
                     aria-selected={managerTab === section.status}
                     className={`panel-tab ${managerTab === section.status ? 'is-active' : ''}`}
                     data-testid={`tab-managers-${section.status}`}
@@ -2990,6 +3076,20 @@ function Home() {
                 >
                   <Gamepad2 size={15} />
                   Play a match
+                </button>
+                {/* And the one that plays itself. Distinct from the match
+                    CTA beside it: that one hands the board to you, this one
+                    hands it to two managers and lets you watch. It goes
+                    straight in rather than by way of the rules, because
+                    there is nothing a viewer needs to be told how to do. */}
+                <button
+                  className="match-cta match-cta--sim"
+                  data-testid="button-simulate"
+                  onClick={() => navigate('/simulate')}
+                  type="button"
+                >
+                  <Play size={15} />
+                  Simulate
                 </button>
               </div>
               {/* Only an era has anything to say here. The shapes used to get a
@@ -3456,6 +3556,9 @@ function Home() {
               </button>
             </div>
           </div>
+          {activeEra && activeBench && activeBench.players.length > 0 && (
+            <Bench bench={activeBench} label={`${activeEra.club} ${activeEra.years}`} />
+          )}
           {visiblePhotoCredits.length > 0 && (
             <details className="pitch-credits" data-testid="details-photo-credits">
               <summary>Photo credits ({visiblePhotoCredits.length})</summary>
@@ -3956,6 +4059,13 @@ function Router() {
         </Route>
         {/* Where Play a match lands: the laws first, then the way in. */}
         <Route path="/rules" component={Rules} />
+        {/* The simulator: a whole match playing itself, rather than a
+            shape moved by hand. See src/tactics-sim.jsx. */}
+        <Route path="/simulate">
+          <Suspense fallback={<div className="sim-loading">Loading the simulator…</div>}>
+            <TacticsSim />
+          </Suspense>
+        </Route>
         {/* The reference is a section of the match panel and a page of its
             own, from the same content and the same collapsible sections. */}
         <Route path="/how-to-play" component={HowToPlay} />
